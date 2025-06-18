@@ -6,7 +6,7 @@ import api from '@/api';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectReviewModal from '@/components/ProjectReviewModal';
 import ProjectReviewDetailModal from '@/components/ProjectReviewDetailModal';
-import ProjectReviewCards  from '@/components/ProjectReviewCards ';
+import ProjectReviewCards from '@/components/ProjectReviewCards ';
 
 
 export default function ProjectReviews() {
@@ -82,13 +82,20 @@ export default function ProjectReviews() {
     };
 
     const startNewReview = () => {
+        const lastReview = reviews[reviews.length - 1];
+        const lastResults = lastReview?.results || [];
+
         const results = checklist.flatMap(aspect =>
-            aspect.points.map(point => ({
-                point_id: point.id,
-                status: '',
-                observation: ''
-            }))
+            aspect.points.map(point => {
+                const previous = lastResults.find(r => r.point_id === point.id);
+                return {
+                    point_id: point.id,
+                    status: previous?.status || '',
+                    observation: previous?.observation || ''
+                };
+            })
         );
+
         setForm({ applied_at: new Date().toISOString().split('T')[0], results });
         setNewReviewVisible(true);
     };
@@ -121,7 +128,7 @@ export default function ProjectReviews() {
                         <FaPlus className="me-2" />Revisión
                     </button>
                     <button className="btn btn-sm btn-outline-success d-inline-flex align-items-center" onClick={() => exportGroupedReviewsToExcel(checklist, reviews)}>
-                        <FaFileExcel/>
+                        <FaFileExcel />
                     </button>
                 </div>
             </div>

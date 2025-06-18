@@ -9,8 +9,8 @@ import ProjectModal from '@/components/ProjectModal';
 export default function Projects() {
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Estado para proyecto
     const [formData, setFormData] = useState({
         id: null,
         name: '',
@@ -18,14 +18,17 @@ export default function Projects() {
         coordinator_id: '',
         developer_ids: [],
     });
-    const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(false);
     const [projectModalVisible, setProjectModalVisible] = useState(false);
 
-    // Estado para usuario
     const [userModalVisible, setUserModalVisible] = useState(false);
     const [userData, setUserData] = useState({});
     const [userEditing, setUserEditing] = useState(false);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchProjects();
@@ -54,7 +57,6 @@ export default function Projects() {
         }
     };
 
-    // Modal proyectos
     const openProjectModal = (project = null) => {
         if (project) {
             setFormData({
@@ -91,10 +93,10 @@ export default function Projects() {
                 developer_ids: formData.developer_ids,
             };
             if (editing) {
-                await api.put(`/projects/${formData.id}, payload`);
+                await api.put(`/projects/${formData.id}`, payload);
                 alert('Proyecto actualizado');
             } else {
-                await api.post(`/projects, payload`);
+                await api.post(`/projects`, payload);
                 alert('Proyecto creado');
             }
             fetchProjects();
@@ -123,10 +125,10 @@ export default function Projects() {
     const handleUserSubmit = async () => {
         try {
             if (userEditing) {
-                await api.put(`/users/${userData.id}, userData`);
+                await api.put(`/users/${userData.id}`, userData);
                 alert('Usuario actualizado');
             } else {
-                await api.post(`/users, userData`);
+                await api.post(`/users`, userData);
                 alert('Usuario creado');
             }
             fetchUsers();
@@ -142,12 +144,39 @@ export default function Projects() {
         return user ? user.name : 'N/A';
     };
 
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const filteredProjects = projects.filter(project =>
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.code.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const sortedProjects = [...filteredProjects].sort((a, b) => {
+        const key = sortConfig.key;
+        const aValue = (key === 'coordinator_id' ? getUserName(a[key]) : a[key])?.toString().toLowerCase() || '';
+        const bValue = (key === 'coordinator_id' ? getUserName(b[key]) : b[key])?.toString().toLowerCase() || '';
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const totalPages = Math.ceil(sortedProjects.length / itemsPerPage);
+    const paginatedProjects = sortedProjects.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h3>Proyectos de Software</h3>
-
-                <div className="">
+                <div>
                     <button className="btn btn-sm btn-primary d-inline-flex align-items-center me-1" onClick={() => openUserModal()}>
                         <FaPlus className="me-2" />Usuario
                     </button>
@@ -157,12 +186,29 @@ export default function Projects() {
                 </div>
             </div>
 
+            <input
+                type="text"
+                className="form-control mb-3"
+                placeholder="Buscar por nombre o código..."
+                value={searchTerm}
+                onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                }}
+            />
+
             <table className="table table-striped table-bordered table-hover">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Código</th>
-                        <th>Coordinador</th>
+                        <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
+                            Nombre {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('code')} style={{ cursor: 'pointer' }}>
+                            Código {sortConfig.key === 'code' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('coordinator_id')} style={{ cursor: 'pointer' }}>
+                            Coordinador {sortConfig.key === 'coordinator_id' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
                         <th>Desarrolladores</th>
                         <th className='text-center'>Acciones</th>
                     </tr>
@@ -170,8 +216,8 @@ export default function Projects() {
                 <tbody>
                     {loading ? (
                         <tr><td colSpan="5" className="text-center">Cargando...</td></tr>
-                    ) : projects.length > 0 ? (
-                        projects.map(project => (
+                    ) : paginatedProjects.length > 0 ? (
+                        paginatedProjects.map(project => (
                             <tr key={project.id}>
                                 <td>{project.name}</td>
                                 <td>{project.code}</td>
@@ -197,7 +243,26 @@ export default function Projects() {
                 </tbody>
             </table>
 
-            {/* Modal Proyectos */}
+            <div className="d-flex justify-content-between align-items-center mt-1">
+                <span>Página {currentPage} de {totalPages}</span>
+                <div className="btn-group">
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                        Anterior
+                    </button>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+
             <ProjectModal
                 show={projectModalVisible}
                 onClose={closeProjectModal}
@@ -208,7 +273,6 @@ export default function Projects() {
                 editing={editing}
             />
 
-            {/* Modal Usuarios */}
             <UserModal
                 show={userModalVisible}
                 onClose={closeUserModal}
@@ -217,6 +281,6 @@ export default function Projects() {
                 setUserData={setUserData}
                 editing={userEditing}
             />
-        </div >
+        </div>
     );
 }

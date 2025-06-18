@@ -32,15 +32,18 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
 
                                                     return (
                                                         <div key={point.id} className="row align-items-start border-bottom py-2 mb-2">
-                                                            <div className="col-md-5 fw-bold">{point.name}</div>
-                                                            <div className="col-md-1">
+                                                            <div className="col-md-12 d-flex justify-content-between fw-bold">
+                                                                {point.name}
+                                                            {/* </div>
+                                                            <div className="col-md-2"> */}
                                                                 <StatusBadge status={result.status} />
                                                             </div>
-                                                            <div className="col-md-6">
+                                                            <div className="col-md-12">
                                                                 {result.observation && (
                                                                     <div>
-                                                                        <span className="text-muted small">Observación:</span>
-                                                                        <p className="mb-0">{result.observation}</p>
+                                                                        <span className="text-muted small fw-bold">Observación</span>
+                                                                        <div dangerouslySetInnerHTML={{ __html: result.observation }} />
+                                                                        {/* <p className="mb-0">{result.observation}</p> */}
                                                                     </div>
                                                                 )}
                                                             </div>

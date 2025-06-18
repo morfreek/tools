@@ -44,7 +44,6 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                                             <div className="card-body">
                                                 {aspect.points.map(point => {
                                                     const result = form.results.find(r => r.point_id === point.id) || { status: '', observation: '' };
-
                                                     return (
                                                         <div key={point.id} className="mb-4 border-bottom pb-2">
                                                             <label className="form-label fw-bold">{point.name}</label>
