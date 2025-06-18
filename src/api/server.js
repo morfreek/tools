@@ -196,7 +196,7 @@ app.post('/projects/:id/reviews', async (req, res) => {
 // Obtener notas de un proyecto
 app.get('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
-    const { projectId } = req.params.id;
+    const projectId = req.params.id;
     try {
         const notes = await db.all('SELECT * FROM project_notes WHERE project_id = ? ORDER BY created_at DESC', [projectId]);
         res.json(notes);
@@ -209,7 +209,7 @@ app.get('/projects/:id/notes', async (req, res) => {
 // Crear una nueva nota
 app.post('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
-    const { projectId } = req.params.id;
+    const projectId = req.params.id;
     const { detail, created_at } = req.body;
 
     if (!detail) {
