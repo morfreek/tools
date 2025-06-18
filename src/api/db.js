@@ -64,9 +64,9 @@ export async function openDb() {
             project_id INTEGER NOT NULL,
             detail TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (project_id) REFERENCES projects(id)
         );
-
     `);
 
     // Insertar aspectos y puntos solo si no existen

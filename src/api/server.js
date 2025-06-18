@@ -228,6 +228,39 @@ app.post('/projects/:id/notes', async (req, res) => {
     }
 });
 
+// Edita una nota
+app.put('/projects/:id/notes', async (req, res) => {
+    const db = await openDb();
+    const projectId = req.params.id;
+    const { noteId, detail } = req.body;
+    try {
+        await db.run(
+            'UPDATE project_notes SET detail = ? WHERE id = ? and project_id = ?',
+            [detail, noteId, projectId]
+        );
+        const notes = await db.all('SELECT * FROM project_notes WHERE project_id = ? ORDER BY created_at DESC', [projectId]);
+        res.json(notes);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error actualizando nota', err, id, noteId });
+    }
+});
+
+// Elimina una nota
+app.delete('/projects/:id/notes', async (req, res) => {
+    const db = await openDb();
+    const projectId = req.params.id;
+    const { noteId } = req.body;
+    try {
+        await db.run('DELETE FROM project_notes WHERE id = ? and project_id = ?', [noteId, projectId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error eliminando nota', err });
+    }
+});
+
+
 app.listen(port, () => {
     console.log(`API escuchando en http://localhost:${port}`);
 });

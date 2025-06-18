@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaChevronLeft, FaPlus, FaFileExcel, FaEye } from 'react-icons/fa';
+import { FaChevronLeft, FaPlus, FaFileExcel } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import api from '@/api';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
@@ -105,7 +105,7 @@ export default function ProjectReviews() {
     };
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <div className="d-flex align-items-center">
                     <button
@@ -131,28 +131,7 @@ export default function ProjectReviews() {
             {reviews.length === 0 ? (
                 <p>No hay revisiones</p>
             ) : (
-                // <table className="table table-bordered">
-                //     <thead>
-                //         <tr>
-                //             <th>Fecha</th>
-                //             <th>Ver Detalles</th>
-                //         </tr>
-                //     </thead>
-                //     <tbody>
-                // {reviews.map(r => (
-                        <ProjectReviewCards reviews={reviews} startReview={handleViewDetail} />
-                //             <tr key={r.id}>
-                //                 <td>{r.applied_at}</td>
-                //                 <td>
-                //                     <button className="btn btn-sm btn-primary d-inline-flex align-items-center"
-                //                     onClick={()=>startReview(r)}>
-                //                         <FaEye />
-                //                     </button>
-                //                 </td>
-                //             </tr>
-                        // ))}
-                //     </tbody>
-                // </table>
+                <ProjectReviewCards reviews={reviews} startReview={handleViewDetail} />
             )}
 
             <ProjectReviewDetailModal

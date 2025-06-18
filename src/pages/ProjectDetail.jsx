@@ -82,6 +82,27 @@ export default function ProjectDetail() {
                         </div>
                     </div>
                 </div>
+
+                <div className="col-sm-12 col-md-6 col-lg-4">
+                    <div
+                        className="card h-100 shadow-sm border-success"
+                        style={{ cursor: 'pointer', minHeight: '100px' }}
+                        onClick={() => navigate(`/projects/${id}/notes`)}
+                    >
+                        <div className="card-body d-flex gap-3 align-items-center">
+                            <div
+                                className="d-flex justify-content-center align-items-center bg-success text-white rounded-circle"
+                                style={{ width: '48px', height: '48px', minWidth: '48px' }}
+                            >
+                                <FaClipboardCheck size={26} />
+                            </div>
+                            <div className="flex-grow-1">
+                                <h6 className="mb-1">Notas</h6>
+                                <small className="text-muted">Anotaciones realicionadas al proyecto</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <ProjectModal

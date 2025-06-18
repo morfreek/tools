@@ -9,6 +9,7 @@ import PhpStanViewer from './pages/PhpStanViewer';
 import Projects from './pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
 import ProjectReviews from './pages/ProjectReviews';
+import ProjectNotes from './pages/ProjectNotes';
 
 const basename = import.meta.env.VITE_BASE_URL;
 const App = () => {
@@ -37,7 +38,7 @@ const App = () => {
                         } />
                         <Route path="/projects/:id/notes" element={
                             <RequireAuth>
-                                <ProjectReviews />
+                                <ProjectNotes />
                             </RequireAuth>
                         } />
                         <Route path="/jmeter-test-generator" element={<JMeterTestGenerator />} />
