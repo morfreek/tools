@@ -193,6 +193,20 @@ app.post('/projects/:id/reviews', async (req, res) => {
     res.status(201).json({ success: true });
 });
 
+// DELETE /projects/:id/reviews - elimina review de un proyecto
+app.delete('/projects/:id/reviews', async (req, res) => {
+    const db = await openDb();
+    const projectId = req.params.id;
+    const { reviewId } = req.body;
+    try {
+        await db.run('DELETE FROM project_reviews WHERE id = ? and project_id = ?', [reviewId, projectId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error eliminando nota', err });
+    }
+});
+
 // Obtener notas de un proyecto
 app.get('/projects/:id/notes', async (req, res) => {
     const db = await openDb();

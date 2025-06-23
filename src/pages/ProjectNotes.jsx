@@ -117,7 +117,7 @@ export default function ProjectNotes() {
                         <p className="list-group-item text-muted">Sin notas registradas</p>
                     )}
 
-                    <div className="d-flex flex-wrap gap-3">
+                    <div className="d-flex flex-wrap gap-3 align-items-start">
                         {notes.map((note, i) => (
                             <div
                                 key={i}
@@ -128,6 +128,10 @@ export default function ProjectNotes() {
                                     borderRadius: '8px',
                                     transform: `rotate(${(i % 2 === 0 ? -1 : 1)}deg)`,
                                     whiteSpace: 'pre-wrap',
+                                    height: 'auto',
+                                    maxWidth: '400px', // opcional para evitar que se expandan mucho horizontalmente
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word',
                                 }}
                             >
                                 <div className="small text-muted mb-2 d-flex justify-content-between" style={{ fontSize: '0.75rem' }}>

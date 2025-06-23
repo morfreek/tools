@@ -229,7 +229,7 @@ const groupedRoutes = routes.reduce((acc, route, index) => {
 }, {});
 
 return (
-    <div className="container mt-4">
+    <div className="container-fluid mt-4">
         <h3>Laravel → JMeter Test Generator</h3>
 
         <div className="mb-3">

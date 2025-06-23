@@ -116,7 +116,7 @@ const PhpStanViewer = () => {
 
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid mt-4">
             <h3>Visor de Errores PHPStan</h3>
 
             <div className="mb-3">

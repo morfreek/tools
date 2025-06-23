@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaChevronLeft, FaPlus, FaFileExcel } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
+import { STATUS_OPTIONS } from '@/utils/Constants';
 import api from '@/api';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectReviewModal from '@/components/ProjectReviewModal';
@@ -90,7 +91,7 @@ export default function ProjectReviews() {
                 const previous = lastResults.find(r => r.point_id === point.id);
                 return {
                     point_id: point.id,
-                    status: previous?.status || '',
+                    status: STATUS_OPTIONS.includes(previous?.status) ? previous.status : '',
                     observation: previous?.observation || ''
                 };
             })

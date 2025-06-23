@@ -153,8 +153,9 @@ export default function Projects() {
     };
 
     const filteredProjects = projects.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.code.toLowerCase().includes(searchTerm.toLowerCase())
+        project.name.toLowerCase().includes(searchTerm.toLowerCase())
+        || project.code.toLowerCase().includes(searchTerm.toLowerCase())
+        // AGREGAR COORDINADOR O DESARROLLADOR
     );
 
     const sortedProjects = [...filteredProjects].sort((a, b) => {
@@ -173,7 +174,7 @@ export default function Projects() {
     );
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h3>Proyectos de Software</h3>
                 <div>

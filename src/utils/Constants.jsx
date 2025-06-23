@@ -1,0 +1,1 @@
+export const STATUS_OPTIONS = ['bien', 'regular', 'deficiente'];
