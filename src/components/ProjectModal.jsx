@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal } from 'bootstrap';
 import { Dropdown } from 'react-bootstrap';
 import { FaSave, FaBan, FaChevronDown } from 'react-icons/fa';
+import { useToast } from './ToastContext'; // Importa el contexto de Toast
 import api from '@/api';
 
 export default function ProjectModal({ show, onClose, formData: initialData }) {
+    const { showToast } = useToast(); // Usa el contexto de Toast
     const [users, setUsers] = useState([]);
     const modalRef = useRef(null);
     const bsModal = useRef(null);
@@ -19,15 +21,13 @@ export default function ProjectModal({ show, onClose, formData: initialData }) {
 
     const editing = formData.id !== null;
 
-    const fetchAlls = async () => {
+    const fetchUsers = async () => {
         try {
-            const [usersRes] = await Promise.all([
-                api.get(`/users`)
-            ]);
+            const usersRes = await api.get(`/users`);
             setUsers(usersRes.data);
         } catch (err) {
             console.error(err);
-            alert('Error al cargar datos del proyecto');
+            showToast('error', 'Error al cargar usuarios');
         }
     };
 
@@ -57,7 +57,7 @@ export default function ProjectModal({ show, onClose, formData: initialData }) {
                 coordinator_id: '',
                 developer_ids: [],
             });
-            fetchAlls()
+            fetchUsers();
             bsModal.current?.show();
         } else {
             bsModal.current?.hide();
@@ -81,15 +81,16 @@ export default function ProjectModal({ show, onClose, formData: initialData }) {
 
             if (editing) {
                 await api.put(`/projects/${formData.id}`, formData);
-                alert('Proyecto actualizado');
+                showToast('success', 'Proyecto actualizado');
             } else {
                 await api.post(`/projects`, formData);
-                alert('Proyecto creado');
+                showToast('success', 'Proyecto creado');
             }
 
             bsModal.current.hide();
         } catch (err) {
             console.error('Error al guardar proyecto:', err);
+            showToast('error', 'Error al guardar proyecto');
         }
     };
 

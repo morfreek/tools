@@ -43,7 +43,6 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
                                                                     <div>
                                                                         <span className="text-muted small fw-bold">Observación</span>
                                                                         <div dangerouslySetInnerHTML={{ __html: result.observation }} />
-                                                                        {/* <p className="mb-0">{result.observation}</p> */}
                                                                     </div>
                                                                 )}
                                                             </div>

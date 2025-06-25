@@ -146,6 +146,37 @@ app.put('/projects/:id', async (req, res) => {
     res.json({ id: projectId, name, code, coordinator_id, developer_ids });
 });
 
+// DELETE /projects/:id - actualizar proyecto
+app.delete('/projects/:id', async (req, res) => {
+    const projectId = req.params.id;
+    const db = await openDb();
+
+    try {
+        await db.exec('BEGIN');
+
+        // Eliminar relaciones
+        // Eliminar resultados de puntos por revisión
+        await db.run(
+            'DELETE FROM review_point_results WHERE review_id IN (SELECT id FROM project_reviews WHERE project_id = ?)',
+            [projectId]
+        );
+        await db.run('DELETE FROM project_reviews WHERE project_id = ?', [projectId]);
+        await db.run('DELETE FROM project_notes WHERE project_id = ?', [projectId]);
+        await db.run('DELETE FROM project_developers WHERE project_id = ?', [projectId]);
+
+        // Eliminar el proyecto
+        const result = await db.run('DELETE FROM projects WHERE id = ?', [projectId]);
+
+        await db.exec('COMMIT');
+        res.json({ success: true, deleted: result.changes });
+    } catch (error) {
+        await db.exec('ROLLBACK');
+        console.error('Error al eliminar proyecto:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar el proyecto' });
+    }
+
+});
+
 // GET /projects/:id/reviews - listado de reviews de un proyecto
 app.get('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
@@ -275,6 +306,6 @@ app.delete('/projects/:id/notes', async (req, res) => {
 });
 
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`API escuchando en http://localhost:${port}`);
 });
