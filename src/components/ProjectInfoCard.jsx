@@ -1,13 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import { Dropdown } from 'react-bootstrap';
-import { FaEdit, FaStickyNote, FaEye, FaEllipsisV } from 'react-icons/fa'; // Cambiar FaPlus por FaStickyNote
+import { FaEdit, FaStickyNote, FaEye, FaEllipsisV } from 'react-icons/fa';
 import { useToast } from './ToastContext'; // Importa el contexto de Toast
 import api from '@/api';
 import ProjectModal from './ProjectModal';
 import ProjectNoteModal from './ProjectNoteModal';
 import ProjectNotesList from './ProjectNotesList';
 
-export default function ProjectInfoCard({ id, onRefresh }) { // Eliminar refreshTrigger
+// Componente privado para el dropdown
+const OptionsDropdown = ({ options }) => {
+    return (
+        <Dropdown align="end">
+            <Dropdown.Toggle 
+                variant="link" 
+                size="sm" 
+                className="text-muted p-1"
+                style={{ 
+                    boxShadow: 'none',
+                    border: 'none',
+                    background: 'transparent'
+                }}
+            >
+                <FaEllipsisV size={14} />
+            </Dropdown.Toggle>
+            <Dropdown.Menu 
+                className="py-1"
+                style={{ 
+                    minWidth: '160px',
+                    fontSize: '0.875rem'
+                }}
+            >
+                {options.map((option, index) => (
+                    option.divider ? (
+                        <Dropdown.Divider key={`divider-${index}`} className="my-1" />
+                    ) : (
+                        <Dropdown.Item 
+                            key={option.label}
+                            onClick={option.onClick}
+                            className="px-2 py-1"
+                        >
+                            {option.icon && (
+                                <option.icon className="me-2" size={12} />
+                            )}
+                            {option.label}
+                        </Dropdown.Item>
+                    )
+                ))}
+            </Dropdown.Menu>
+        </Dropdown>
+    );
+};
+
+export default function ProjectInfoCard({ id, onRefresh }) {
     const { showToast } = useToast(); // Usa el contexto de Toast
     const [project, setProject] = useState({});
     const [users, setUsers] = useState([]);
@@ -38,7 +82,7 @@ export default function ProjectInfoCard({ id, onRefresh }) { // Eliminar refresh
 
     useEffect(() => {
         if (id) fetchAll();
-    }, [id]); // Eliminar refreshTrigger del array de dependencias
+    }, [id]);
 
     const handleEditClick = () => {
         setFormDataProject({
@@ -66,6 +110,25 @@ export default function ProjectInfoCard({ id, onRefresh }) { // Eliminar refresh
         setShowNoteModal(false);
     };
 
+    const dropdownOptions = [
+        {
+            label: 'Ver notas',
+            icon: FaEye,
+            onClick: () => setShowNotesList(true)
+        },
+        {
+            label: 'Agregar nota',
+            icon: FaStickyNote,
+            onClick: handleAddNote
+        },
+        { divider: true },
+        {
+            label: 'Editar proyecto',
+            icon: FaEdit,
+            onClick: handleEditClick
+        }
+    ];
+
     if (loading || !project) {
         return (
             <div className="card p-3 my-3">
@@ -84,26 +147,7 @@ export default function ProjectInfoCard({ id, onRefresh }) { // Eliminar refresh
             <div className="card p-3 my-3">
                 <div className="d-flex justify-content-between align-items-center">
                     <h5 className="mb-0">{project.name}</h5>
-                    <Dropdown>
-                        <Dropdown.Toggle variant="light" size="sm" id="project-actions">
-                            <FaEllipsisV />
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu align="end">
-                            <Dropdown.Item onClick={() => setShowNotesList(true)}>
-                                <FaEye className="me-2" />
-                                Ver notas
-                            </Dropdown.Item>
-                            <Dropdown.Item onClick={handleAddNote}>
-                                <FaStickyNote className="me-2" />
-                                Agregar nota
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item onClick={handleEditClick}>
-                                <FaEdit className="me-2" />
-                                Editar proyecto
-                            </Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>
+                    <OptionsDropdown options={dropdownOptions} />
                 </div>
                 <p className="mb-1"><strong>Código:</strong> {project.code}</p>
                 <p className="mb-1"><strong>Coordinador:</strong> {getUserName(project.coordinator_id)}</p>

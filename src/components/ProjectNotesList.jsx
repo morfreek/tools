@@ -1,24 +1,31 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useToast } from './ToastContext';
 import api from '@/api';
 import ProjectNoteModal from './ProjectNoteModal';
 
-export default function ProjectNotesList({ projectId, show, onClose }) {
+export default function ProjectNotesList({ 
+    projectId, 
+    show, 
+    onClose, 
+    className = '',
+    containerStyle = {}
+}) {
     const { showToast } = useToast();
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
+    const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
     const sidebarRef = useRef(null);
 
     const fetchNotes = async () => {
         setLoading(true);
         try {
             const response = await api.get(`/projects/${projectId}/notes`);
-            setNotes(response.data.sort((a, b) => 
+            setNotes(response.data.sort((a, b) =>
                 new Date(b.created_at) - new Date(a.created_at)
             ));
         } catch (err) {
@@ -51,7 +58,7 @@ export default function ProjectNotesList({ projectId, show, onClose }) {
 
     const handleDelete = async (noteId) => {
         if (!window.confirm('¿Estás seguro de eliminar esta nota?')) return;
-        
+
         try {
             await api.delete(`/projects/${projectId}/notes/${noteId}`);
             showToast('success', 'Nota eliminada correctamente');
@@ -62,67 +69,123 @@ export default function ProjectNotesList({ projectId, show, onClose }) {
         }
     };
 
+    const handleNext = () => {
+        setCurrentNoteIndex(prev => (prev + 1) % notes.length);
+    };
+
+    const handlePrev = () => {
+        setCurrentNoteIndex(prev => (prev - 1 + notes.length) % notes.length);
+    };
+
+    // Si no hay containerStyle, usar el estilo fixed por defecto
+    const defaultContainerStyle = !Object.keys(containerStyle).length ? {
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        height: '100%',
+        width: '400px',
+        zIndex: 1040,
+        transform: `translateX(${show ? '0' : '100%'})`,
+        transition: 'transform 0.3s ease-in-out'
+    } : containerStyle;
+
     if (!show) return null;
 
     return (
-        <div className="position-fixed top-0 end-0 h-100 bg-white shadow-lg" 
-             style={{ 
-                 width: '400px', 
-                 zIndex: 1040,
-                 transform: `translateX(${show ? '0' : '100%'})`,
-                 transition: 'transform 0.3s ease-in-out'
-             }}
-             ref={sidebarRef}>
-            <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
-                <h5 className="mb-0">Notas del Proyecto</h5>
-                <button 
-                    className="btn btn-sm btn-link text-dark" 
-                    onClick={onClose}
-                    style={{ fontSize: '1.2rem' }}
-                >
-                    <FaTimes />
-                </button>
-            </div>
-            <div className="p-3" style={{ height: 'calc(100vh - 60px)', overflowY: 'auto' }}>
-                {loading ? (
-                    <div className="placeholder-glow">
-                        <div className="placeholder col-12 mb-2"></div>
-                        <div className="placeholder col-12 mb-2"></div>
+        <div 
+            className={`bg-white shadow-lg ${className}`}
+            style={defaultContainerStyle}
+            ref={sidebarRef}
+        >
+            <div className="d-flex flex-column h-100">
+                <div className="border-bottom">
+                    <div className="d-flex justify-content-between align-items-center p-3">
+                        <h5 className="mb-0">Notas del Proyecto</h5>
+                        <button
+                            className="btn btn-sm btn-link text-dark"
+                            onClick={onClose}
+                            style={{ fontSize: '1.2rem' }}
+                        >
+                            <FaTimes />
+                        </button>
                     </div>
-                ) : notes.length === 0 ? (
-                    <p className="text-muted text-center">No hay notas registradas</p>
-                ) : (
-                    <div className="list-group list-group-flush">
-                        {notes.map(note => (
-                            <div key={note.id} className="list-group-item">
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <small className="text-muted">
-                                        {format(new Date(note.created_at), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
-                                    </small>
-                                    <div className="btn-group">
-                                        <button
-                                            className="btn btn-sm btn-outline-primary"
-                                            onClick={() => handleEdit(note)}
-                                        >
-                                            <FaEdit />
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-outline-danger"
-                                            onClick={() => handleDelete(note.id)}
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="border-start border-4 border-info ps-3">
-                                    <div dangerouslySetInnerHTML={{ __html: note.detail }} />
+                    {!loading && notes.length > 0 && (
+                        <div className="px-3 pb-3">
+                            <div className="d-flex justify-content-between align-items-start">
+                                <small className="text-muted">
+                                    {format(new Date(notes[currentNoteIndex].created_at),
+                                        "d 'de' MMMM 'de' yyyy, HH:mm",
+                                        { locale: es })}
+                                </small>
+                                <div className="btn-group">
+                                    <button
+                                        className="btn btn-sm btn-outline-primary p-1"
+                                        onClick={() => handleEdit(notes[currentNoteIndex])}
+                                    >
+                                        <FaEdit />
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-outline-danger p-1"
+                                        onClick={() => handleDelete(notes[currentNoteIndex].id)}
+                                    >
+                                        <FaTrash />
+                                    </button>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex-grow-1 overflow-auto">
+                    {loading ? (
+                        <div className="p-3">
+                            <div className="placeholder-glow">
+                                <div className="placeholder col-12 mb-2"></div>
+                                <div className="placeholder col-12 mb-2"></div>
+                            </div>
+                        </div>
+                    ) : notes.length === 0 ? (
+                        <div className="p-3">
+                            <p className="text-muted text-center">No hay notas registradas</p>
+                        </div>
+                    ) : (
+                        <div className="p-3">
+                            <div key={notes[currentNoteIndex].id}>
+                                <div className="border-start border-4 border-info ps-3">
+                                    <div dangerouslySetInnerHTML={{
+                                        __html: notes[currentNoteIndex].detail
+                                    }} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {!loading && notes.length > 0 && (
+                    <div className="border-top p-3">
+                        <div className="d-flex justify-content-between align-items-center">
+                            <button
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={handlePrev}
+                                disabled={notes.length <= 1}
+                            >
+                                <FaChevronLeft /> Anterior
+                            </button>
+                            <small className="text-muted">
+                                {currentNoteIndex + 1} de {notes.length}
+                            </small>
+                            <button
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={handleNext}
+                                disabled={notes.length <= 1}
+                            >
+                                Siguiente <FaChevronRight />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
-            
+
             <ProjectNoteModal
                 show={showEditModal}
                 onClose={() => {
