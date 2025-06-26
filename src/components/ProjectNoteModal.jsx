@@ -34,13 +34,12 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
                 });
             }
             showToast('success', 'Nota guardada correctamente.');
-            onSaved();
-            setTimeout(() => {
-                onClose();
-            }, 1200);
+            await onSaved(); // Esperamos a que se complete la actualización
+            onClose(); // Cerramos el modal después de que todo esté listo
         } catch (err) {
             console.error('Error al guardar nota', err);
             showToast('error', 'Error al guardar nota.');
+        } finally {
             setLoading(false);
         }
     };

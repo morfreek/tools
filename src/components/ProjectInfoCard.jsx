@@ -51,7 +51,7 @@ const OptionsDropdown = ({ options }) => {
     );
 };
 
-export default function ProjectInfoCard({ id, onRefresh }) {
+export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
     const { showToast } = useToast(); // Usa el contexto de Toast
     const [project, setProject] = useState({});
     const [users, setUsers] = useState([]);
@@ -108,6 +108,7 @@ export default function ProjectInfoCard({ id, onRefresh }) {
 
     const handleCloseNoteModal = () => {
         setShowNoteModal(false);
+        if (onNoteAdded) onNoteAdded();
     };
 
     const dropdownOptions = [
@@ -174,6 +175,7 @@ export default function ProjectInfoCard({ id, onRefresh }) {
                 projectId={id}
                 show={showNotesList}
                 onClose={() => setShowNotesList(false)}
+                // refreshKey={refreshKey}
             />
         </>
     );

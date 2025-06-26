@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaChevronLeft } from 'react-icons/fa';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
@@ -7,6 +7,11 @@ import ProjectNotesList from '@/components/ProjectNotesList';
 export default function ProjectNotes() {
     const navigate = useNavigate();
     const { id } = useParams();
+    const [notesRefreshKey, setNotesRefreshKey] = useState(0);
+
+    const handleNoteAdded = () => {
+        setNotesRefreshKey(prev => prev + 1);
+    };
 
     return (
         <div className="container-fluid mt-4">
@@ -23,19 +28,27 @@ export default function ProjectNotes() {
                 </div>
             </div>
 
-            <ProjectInfoCard id={id} />
+            <ProjectInfoCard 
+                id={id} 
+                onNoteAdded={handleNoteAdded}
+            />
 
-            <div className="card">
+            <div 
+                className="card"
+                style={{
+                    height: 'calc(100vh - 245px)'
+                }}
+            >
                 <ProjectNotesList 
                     projectId={id} 
                     show={true}
-                    className="position-relative w-100"
+                    className="position-relative w-100 h-100"
                     containerStyle={{
                         position: 'relative',
                         width: '100%',
-                        height: 'calc(100vh - 400px)',
                         transform: 'none'
                     }}
+                    refreshKey={notesRefreshKey}
                 />
             </div>
         </div>

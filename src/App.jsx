@@ -1,26 +1,29 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from 'react-router-dom'; // Import useLocation and matchPath
-import Sidebar from './components/Sidebar';
-import RequireAuth from './components/RequireAuth';
-import Home from './pages/Home';
-import JMeterTestGenerator from './pages/JMeterTestGenerator';
-import PhpStanViewer from './pages/PhpStanViewer';
-import NotFound from './pages/NotFound'; // Import the 404 page component
+import Sidebar from '@/components/Sidebar';
+import RequireAuth from '@/components/RequireAuth';
+import Home from '@/pages/Home';
+import JMeterTestGenerator from '@/pages/JMeterTestGenerator';
+import PhpStanViewer from '@/pages/PhpStanViewer';
+import NotFound from '@/pages/NotFound'; // Import the 404 page component
 
-import Projects from './pages/Projects';
+import Projects from '@/pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
-import ProjectReviews from './pages/ProjectReviews';
-import ProjectNotes from './pages/ProjectNotes';
-import { ToastProvider } from './components/ToastContext'; // Importa el ToastProvider
+import ProjectReviews from '@/pages/ProjectReviews';
+import ProjectNotes from '@/pages/ProjectNotes';
+import { ToastProvider } from '@/components/ToastContext'; // Importa el ToastProvider
+import { ConfirmProvider } from '@/components/ConfirmContext'; // Import ConfirmProvider
 
 const basename = import.meta.env.VITE_BASE_URL;
 
 const App = () => {
     return (
         <ToastProvider>
-            <Router basename={basename}>{/* si usas subdirectorio */}
-                <LocationWrapper />
-            </Router>
+            <ConfirmProvider>
+                <Router basename={basename}>{/* si usas subdirectorio */}
+                    <LocationWrapper />
+                </Router>
+            </ConfirmProvider>
         </ToastProvider>
     );
 };
