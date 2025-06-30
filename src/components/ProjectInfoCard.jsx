@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Dropdown } from 'react-bootstrap';
-import { FaEdit, FaStickyNote, FaEye, FaEllipsisV } from 'react-icons/fa';
+import { Dropdown, Button } from 'react-bootstrap';
+import { FaEdit, FaStickyNote, FaEye, FaEllipsisV, FaUpload, FaFile } from 'react-icons/fa'; // Import FaUpload and FaFile
 import { useToast } from './ToastContext'; // Importa el contexto de Toast
 import api from '@/api';
 import ProjectModal from './ProjectModal';
 import ProjectNoteModal from './ProjectNoteModal';
 import ProjectNotesList from './ProjectNotesList';
+import ProjectFileUploader from './ProjectFileUploader';
+import ProjectFilesList from './ProjectFilesList'; // Importa ProjectFilesList
+import { Link } from 'react-router-dom'; // Importa Link para navegación
 
 // Componente privado para el dropdown
 const OptionsDropdown = ({ options }) => {
@@ -60,6 +63,8 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
     const [formDataProject, setFormDataProject] = useState(null);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [showNotesList, setShowNotesList] = useState(false);
+    const [showUploader, setShowUploader] = useState(false);
+    const [showFilesList, setShowFilesList] = useState(false);
 
     const fetchAll = async () => {
         setLoading(true);
@@ -113,21 +118,32 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
 
     const dropdownOptions = [
         {
-            label: 'Ver notas',
-            icon: FaEye,
-            onClick: () => setShowNotesList(true)
+            label: 'Editar proyecto',
+            icon: FaEdit,
+            onClick: handleEditClick
         },
+        { divider: true },
         {
             label: 'Agregar nota',
             icon: FaStickyNote,
             onClick: handleAddNote
         },
+        {
+            label: 'Ver notas',
+            icon: FaEye,
+            onClick: () => setShowNotesList(true)
+        },
         { divider: true },
         {
-            label: 'Editar proyecto',
-            icon: FaEdit,
-            onClick: handleEditClick
-        }
+            label: 'Subir archivos',
+            icon: FaUpload,
+            onClick: () => setShowUploader(true)
+        },
+        {
+            label: 'Ver archivos',
+            icon: FaEye,
+            onClick: () => setShowFilesList(true)
+        },
     ];
 
     if (loading || !project) {
@@ -175,7 +191,19 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
                 projectId={id}
                 show={showNotesList}
                 onClose={() => setShowNotesList(false)}
-                // refreshKey={refreshKey}
+            />
+
+            <ProjectFileUploader
+                show={showUploader}
+                onClose={() => setShowUploader(false)}
+                projectId={id}
+                onUploadComplete={fetchAll}
+            />
+
+            <ProjectFilesList
+                projectId={id}
+                show={showFilesList}
+                onClose={() => setShowFilesList(false)}
             />
         </>
     );

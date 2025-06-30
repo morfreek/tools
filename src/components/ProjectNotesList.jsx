@@ -143,13 +143,13 @@ export default function ProjectNotesList({
                                     </small>
                                     <div className="btn-group">
                                         <button
-                                            className="btn btn-sm btn-outline-primary p-1"
+                                            className="btn btn-sm btn-outline-primary p-1 d-inline-flex align-items-center"
                                             onClick={() => handleEdit(notes[currentNoteIndex])}
                                         >
                                             <FaEdit />
                                         </button>
                                         <button
-                                            className="btn btn-sm btn-outline-danger p-1"
+                                            className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center"
                                             onClick={() => handleDelete(notes[currentNoteIndex].id)}
                                         >
                                             <FaTrash />

@@ -1,23 +1,28 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import multer from 'multer';
 import { openDb } from './db.js';
 
 const app = express();
 const port = 3001;
 
+// Configurar middleware globalmente
 app.use(cors());
 app.use(bodyParser.json());
 
+// Crear router para las APIs
+const router = express.Router();
+
 // GET /users - listar todos los usuarios
-app.get('/users', async (req, res) => {
+router.get('/users', async (req, res) => {
     const db = await openDb();
     const users = await db.all('SELECT id, name FROM users ORDER BY name');
     res.json(users);
 });
 
 // POST /users - crear usuario
-app.post('/users', async (req, res) => {
+router.post('/users', async (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'El nombre es obligatorio' });
     const db = await openDb();
@@ -25,7 +30,7 @@ app.post('/users', async (req, res) => {
     res.status(201).json({ id: result.lastID, name });
 });
 
-app.get('/checklist', async (req, res) => {
+router.get('/checklist', async (req, res) => {
     const db = await openDb();
     const aspects = await db.all(`SELECT * FROM checklist_aspects`);
     const checklist = [];
@@ -39,7 +44,7 @@ app.get('/checklist', async (req, res) => {
 });
 
 // GET /projects - listar proyectos con coordinador y desarrolladores
-app.get('/projects', async (req, res) => {
+router.get('/projects', async (req, res) => {
     const db = await openDb();
     // Obtener proyectos con coordinador
     const projects = await db.all(`
@@ -67,7 +72,7 @@ app.get('/projects', async (req, res) => {
 });
 
 // GET /projects/:id - Obtener detalle de un proyecto
-app.get('/projects/:id', async (req, res) => {
+router.get('/projects/:id', async (req, res) => {
     const db = await openDb();
     const projectId = parseInt(req.params.id, 10);
     const project = await db.get(`
@@ -94,7 +99,7 @@ app.get('/projects/:id', async (req, res) => {
 });
 
 // POST /projects - crear proyecto
-app.post('/projects', async (req, res) => {
+router.post('/projects', async (req, res) => {
     const { name, code, coordinator_id, developer_ids } = req.body;
     if (!name || !code || !coordinator_id || !Array.isArray(developer_ids)) {
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
@@ -118,7 +123,7 @@ app.post('/projects', async (req, res) => {
 });
 
 // PUT /projects/:id - actualizar proyecto
-app.put('/projects/:id', async (req, res) => {
+router.put('/projects/:id', async (req, res) => {
     const projectId = req.params.id;
     const { name, code, coordinator_id, developer_ids } = req.body;
     if (!name || !code || !coordinator_id || !Array.isArray(developer_ids)) {
@@ -147,7 +152,7 @@ app.put('/projects/:id', async (req, res) => {
 });
 
 // DELETE /projects/:id - actualizar proyecto
-app.delete('/projects/:id', async (req, res) => {
+router.delete('/projects/:id', async (req, res) => {
     const projectId = req.params.id;
     const db = await openDb();
 
@@ -178,7 +183,7 @@ app.delete('/projects/:id', async (req, res) => {
 });
 
 // GET /projects/:id/reviews - listado de reviews de un proyecto
-app.get('/projects/:id/reviews', async (req, res) => {
+router.get('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
     const reviews = await db.all(`
         SELECT *
@@ -202,7 +207,7 @@ app.get('/projects/:id/reviews', async (req, res) => {
 });
 
 // POST /projects/:id/reviews - crea review de un proyecto
-app.post('/projects/:id/reviews', async (req, res) => {
+router.post('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
     const { applied_at, results } = req.body;
 
@@ -225,7 +230,7 @@ app.post('/projects/:id/reviews', async (req, res) => {
 });
 
 // DELETE /projects/:id/reviews - elimina review de un proyecto
-app.delete('/projects/:id/reviews', async (req, res) => {
+router.delete('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
     const projectId = req.params.id;
     const { reviewId } = req.body;
@@ -239,7 +244,7 @@ app.delete('/projects/:id/reviews', async (req, res) => {
 });
 
 // Obtener notas de un proyecto
-app.get('/projects/:id/notes', async (req, res) => {
+router.get('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
     const projectId = req.params.id;
     try {
@@ -252,7 +257,7 @@ app.get('/projects/:id/notes', async (req, res) => {
 });
 
 // Crear una nueva nota
-app.post('/projects/:id/notes', async (req, res) => {
+router.post('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
     const projectId = req.params.id;
     const { detail, created_at } = req.body;
@@ -274,7 +279,7 @@ app.post('/projects/:id/notes', async (req, res) => {
 });
 
 // Edita una nota
-app.put('/projects/:id/notes', async (req, res) => {
+router.put('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
     const projectId = req.params.id;
     const { noteId, detail } = req.body;
@@ -292,7 +297,7 @@ app.put('/projects/:id/notes', async (req, res) => {
 });
 
 // Elimina una nota
-app.delete('/projects/:id/notes', async (req, res) => {
+router.delete('/projects/:id/notes', async (req, res) => {
     const db = await openDb();
     const projectId = req.params.id;
     const { noteId } = req.body;
@@ -305,7 +310,143 @@ app.delete('/projects/:id/notes', async (req, res) => {
     }
 });
 
+// Configuración de multer para memoria en lugar de disco
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // límite de 10MB por archivo
+    }
+});
+
+// POST /projects/:id/files - Subir archivos
+router.post('/projects/:id/files', upload.array('files[]'), async (req, res) => {
+    const db = await openDb();
+    const projectId = req.params.id;
+    const files = req.files;
+
+    try {
+        await db.exec('BEGIN TRANSACTION');
+
+        for (const file of files) {
+            await db.run(
+                'INSERT INTO project_files (project_id, filename, file_data, mime_type, file_size) VALUES (?, ?, ?, ?, ?)',
+                [
+                    projectId,
+                    file.originalname,
+                    file.buffer,
+                    file.mimetype,
+                    file.size
+                ]
+            );
+        }
+
+        await db.exec('COMMIT');
+        res.status(201).json({ message: 'Archivos subidos correctamente' });
+    } catch (err) {
+        await db.exec('ROLLBACK');
+        console.error('Error al guardar archivos:', err);
+        res.status(500).json({ error: 'Error al guardar los archivos', err });
+    }
+});
+
+// GET /projects/:id/files - Listar archivos
+router.get('/projects/:id/files', async (req, res) => {
+    const db = await openDb();
+    const projectId = req.params.id;
+    try {
+        const files = await db.all(
+            'SELECT id, filename, mime_type, file_size, created_at FROM project_files WHERE project_id = ? ORDER BY created_at DESC',
+            [projectId]
+        );
+        res.json(files);
+    } catch (err) {
+        console.error('Error al obtener archivos:', err);
+        res.status(500).json({ error: 'Error al obtener los archivos', err });
+    }
+});
+
+// GET /projects/:id/files/:fileId/download - Descargar archivo
+router.get('/projects/:id/files/:fileId/download', async (req, res) => {
+    const db = await openDb();
+    const { id: projectId, fileId } = req.params;
+
+    try {
+        const file = await db.get(
+            'SELECT filename, file_data, mime_type FROM project_files WHERE id = ? AND project_id = ?',
+            [fileId, projectId]
+        );
+
+        if (!file) {
+            return res.status(404).json({ error: 'Archivo no encontrado' });
+        }
+
+        res.setHeader('Content-Type', file.mime_type);
+        res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+        res.send(file.file_data);
+    } catch (err) {
+        console.error('Error al descargar archivo:', err);
+        res.status(500).json({ error: 'Error al descargar el archivo', err });
+    }
+});
+
+// GET /projects/:id/files/:fileId/preview - Previsualizar imagen
+router.get('/projects/:id/files/:fileId/preview', async (req, res) => {
+    const db = await openDb();
+    const { id: projectId, fileId } = req.params;
+
+    try {
+        const file = await db.get(
+            'SELECT filename, file_data, mime_type FROM project_files WHERE id = ? AND project_id = ? AND mime_type LIKE "image/%"',
+            [fileId, projectId]
+        );
+
+        if (!file) {
+            return res.status(404).json({ error: 'Imagen no encontrada' });
+        }
+
+        res.setHeader('Content-Type', file.mime_type);
+        res.send(file.file_data);
+    } catch (err) {
+        console.error('Error al obtener preview:', err);
+        res.status(500).json({ error: 'Error al obtener la preview', err });
+    }
+});
+
+// DELETE /projects/:id/files/:fileId - Eliminar archivo
+router.delete('/projects/:id/files/:fileId', async (req, res) => {
+    const db = await openDb();
+    const { id: projectId, fileId } = req.params;
+
+    try {
+        await db.run(
+            'DELETE FROM project_files WHERE id = ? AND project_id = ?',
+            [fileId, projectId]
+        );
+        res.json({ message: 'Archivo eliminado correctamente' });
+    } catch (err) {
+        console.error('Error al eliminar archivo:', err);
+        res.status(500).json({ error: 'Error al eliminar el archivo', err });
+    }
+});
+
+// Ruta de prueba para redirección
+router.get('/test-redirect', (req, res) => {
+    console.log('Headers recibidos:', req.headers);
+    console.log('URL original:', req.originalUrl);
+    res.redirect('/tools/api/test-destination');
+});
+
+router.get('/test-destination', (req, res) => {
+    res.json({
+        message: 'Redirección exitosa',
+        originalUrl: req.originalUrl,
+        headers: req.headers
+    });
+});
+
+// Montar el router en el prefijo base
+app.use('/tools/api', router);
 
 app.listen(port, '0.0.0.0', () => {
-    console.log(`API escuchando en http://localhost:${port}`);
+    console.log(`API escuchando en http://localhost:${port}/tools/api`);
 });
