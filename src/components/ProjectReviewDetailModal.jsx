@@ -4,6 +4,7 @@ import { FaBan } from 'react-icons/fa';
 import StatusBadge from './StatusBadge';
 
 export default function ProjectReviewDetailModal({ visible, checklist, review, onClose }) {
+    if (!visible) return null;
     return (
         <Modal show={visible} onHide={onClose} size="lg" scrollable>
             <Modal.Header closeButton>

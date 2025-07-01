@@ -1,9 +1,10 @@
 // src/pages/ProjectDetail.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaChevronLeft, FaClipboardCheck, FaStickyNote } from 'react-icons/fa';
+import { FaClipboardCheck, FaStickyNote } from 'react-icons/fa';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectNotesList from '@/components/ProjectNotesList';
+import Breadcrumb from '@/components/Breadcrumb';
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -11,15 +12,8 @@ export default function ProjectDetail() {
 
     return (
         <div className="container-fluid mt-4">
-            <div className="d-flex align-items-center">
-                <button
-                    className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center me-2"
-                    title="Volver a Proyectos" 
-                    onClick={() => navigate(`/projects/`)}>
-                    <FaChevronLeft style={{ verticalAlign: 'middle' }} />
-                </button>
-                <h3 className="mb-0">Detalle del Proyecto</h3>
-            </div>
+            
+            <Breadcrumb />
 
             <ProjectInfoCard id={id} />
             

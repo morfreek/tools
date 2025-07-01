@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaChevronLeft, FaPlus, FaFileExcel } from 'react-icons/fa';
+import { useParams } from 'react-router-dom';
+import { FaPlus, FaFileExcel } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import { STATUS_OPTIONS } from '@/utils/Constants';
 import api from '@/api';
@@ -8,10 +8,10 @@ import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectReviewModal from '@/components/ProjectReviewModal';
 import ProjectReviewDetailModal from '@/components/ProjectReviewDetailModal';
 import ProjectReviewCards from '@/components/ProjectReviewCards ';
+import Breadcrumb from '@/components/Breadcrumb';
 
 
 export default function ProjectReviews() {
-    const navigate = useNavigate();
     const { id } = useParams();
     const [reviews, setReviews] = useState([]);
     const [checklist, setChecklist] = useState([]);
@@ -115,14 +115,9 @@ export default function ProjectReviews() {
     return (
         <div className="container-fluid mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="d-flex align-items-center">
-                    <button
-                        className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center me-2"
-                        title="Volver a Proyectos" onClick={() => navigate(-1)}>
-                        <FaChevronLeft style={{ verticalAlign: 'middle' }} />
-                    </button>
-                    <h3 className="mb-0">Revisiones Técnicas</h3>
-                </div>
+                
+                <Breadcrumb />
+                
                 <div className="btn-group" role="group" aria-label="Basic example">
                     {/* <Link to="/projects/" className="btn btn-sm btn-secondary mb-3">Volver a Proyectos</Link> */}
                     <button className="btn btn-sm btn-success d-inline-flex align-items-center" onClick={startNewReview}>
