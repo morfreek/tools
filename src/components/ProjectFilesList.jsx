@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaDownload, FaTrash, FaTimes, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
+import { ListGroup, Button, Placeholder, ButtonGroup, Image } from 'react-bootstrap';
 import { useToast } from '@/components/ToastContext';
 import { useConfirm } from '@/components/ConfirmContext';
 import api from '@/api';
@@ -136,13 +137,15 @@ export default function ProjectFilesList({
                     <div className="d-flex justify-content-between align-items-center p-3">
                         <h5 className="mb-0">Archivos del Proyecto</h5>
                         {typeof onClose === 'function' && (
-                            <button
-                                className="btn btn-sm btn-link text-dark"
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="text-dark p-0"
                                 onClick={onClose}
                                 style={{ fontSize: '1.2rem' }}
                             >
                                 <FaTimes />
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -150,21 +153,21 @@ export default function ProjectFilesList({
                 <div className="flex-grow-1 overflow-auto">
                     {loading ? (
                         <div className="p-3">
-                            <div className="placeholder-glow">
-                                <div className="placeholder col-12 mb-2"></div>
-                                <div className="placeholder col-12 mb-2"></div>
-                            </div>
+                            <Placeholder animation="glow">
+                                <Placeholder xs={12} className="mb-2" />
+                                <Placeholder xs={12} className="mb-2" />
+                            </Placeholder>
                         </div>
                     ) : files.length === 0 ? (
-                        <div className="p-3">
-                            <p className="text-muted text-center">No hay archivos cargados</p>
+                        <div className="p-3 text-muted text-center">
+                            No hay archivos cargados
                         </div>
                     ) : (
-                        <div className="list-group list-group-flush">
+                        <ListGroup variant="flush">
                             {files.map(file => {
                                 const FileIcon = getFileIcon(file.mime_type);
                                 return (
-                                    <div key={file.id} className="list-group-item hover-actions">
+                                    <ListGroup.Item key={file.id} className="hover-actions">
                                         <div className="d-flex align-items-center mb-2">
                                             <FileIcon className="me-2 text-muted" size={20} />
                                             <div className="flex-grow-1 text-break">
@@ -183,37 +186,41 @@ export default function ProjectFilesList({
                                                     <div>Subido por: {file.uploaded_by}</div>
                                                 )}
                                             </div>
-                                            <div className="btn-group">
-                                                <button
-                                                    className="btn btn-sm btn-outline-primary p-1 d-inline-flex align-items-center"
+                                            <ButtonGroup>
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    className="p-1 d-inline-flex align-items-center"
                                                     onClick={() => handleDownload(file.id, file.name)}
                                                     title="Descargar archivo"
                                                 >
                                                     <FaDownload />
-                                                </button>
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center"
+                                                </Button>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    className="p-1 d-inline-flex align-items-center"
                                                     onClick={() => handleDelete(file.id)}
                                                     title="Eliminar archivo"
                                                 >
                                                     <FaTrash />
-                                                </button>
-                                            </div>
+                                                </Button>
+                                            </ButtonGroup>
                                         </div>
                                         {file.mime_type.startsWith('image/') && (
                                             <div className="mt-2">
-                                                <img 
+                                                <Image
                                                     src={`${import.meta.env.VITE_API_URL}/projects/${projectId}/files/${file.id}/preview`}
                                                     alt={file.name}
-                                                    className="img-thumbnail"
+                                                    thumbnail
                                                     style={{ maxHeight: '100px' }}
                                                 />
                                             </div>
                                         )}
-                                    </div>
+                                    </ListGroup.Item>
                                 );
                             })}
-                        </div>
+                        </ListGroup>
                     )}
                 </div>
             </div>

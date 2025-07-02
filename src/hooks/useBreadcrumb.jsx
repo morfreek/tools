@@ -6,10 +6,11 @@ const routeConfig = {
     'detail': 'Detalle del Proyecto',
     'review': 'Revisión Técnica',
     'notes': 'Notas',
-    'files': 'Archivos'
+    'files': 'Archivos',
+    'continuous-deployment': 'Despliegue continuo'
 };
 
-const validPages = ['detail', 'review', 'notes', 'files'];
+const validPages = ['detail', 'review', 'notes', 'files', 'continuous-deployment'];
 
 export const useBreadcrumb = () => {
     const location = useLocation();

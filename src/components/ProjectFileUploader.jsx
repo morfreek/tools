@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, Form, ListGroup } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
 import api from '@/api';
 import { useToast } from './ToastContext';
@@ -56,19 +56,19 @@ const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => 
                 <Modal.Title>Subir archivos</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <input
+                <Form.Control
                     type="file"
                     ref={fileInput}
                     onChange={handleFileSelect}
                     multiple
-                    className="form-control mb-3"
+                    className="mb-3"
                 />
                 {selectedFiles.length > 0 && (
                     <div className="mt-3">
                         <h6>Archivos seleccionados:</h6>
-                        <ul className="list-group">
+                        <ListGroup>
                             {selectedFiles.map((file, index) => (
-                                <li key={index} className="list-group-item">
+                                <ListGroup.Item key={index}>
                                     <div className="d-flex justify-content-between align-items-center">
                                         <span>{file.name}</span>
                                         <small className="text-muted">
@@ -78,26 +78,28 @@ const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => 
                                     <small className="text-muted d-block">
                                         Tipo: {file.type || 'Desconocido'}
                                     </small>
-                                </li>
+                                </ListGroup.Item>
                             ))}
-                        </ul>
+                        </ListGroup>
                     </div>
                 )}
             </Modal.Body>
             <Modal.Footer>
                 <Button
-                    variant="primary"
+                    variant="success"
+                    size="sm"
                     onClick={handleUpload}
                     disabled={selectedFiles.length === 0}
-                    className="btn btn-sm btn-success d-inline-flex align-items-center"
+                    className="d-inline-flex align-items-center"
                 >
                     <FaSave className="me-2" />
                     Subir archivos
                 </Button>
                 <Button
-                    variant="secondary"
+                    variant="danger"
+                    size="sm"
                     onClick={handleClose}
-                    className="btn btn-sm btn-danger d-inline-flex align-items-center"
+                    className="d-inline-flex align-items-center"
                 >
                     <FaBan className="me-2" />
                     Cancelar

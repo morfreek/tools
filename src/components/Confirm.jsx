@@ -1,4 +1,5 @@
 import React from 'react';
+import { Modal, Button } from 'react-bootstrap';
 
 export default function Confirm({ 
     show, 
@@ -8,46 +9,50 @@ export default function Confirm({
     message = '¿Estás seguro de realizar esta acción?',
     confirmText = 'Confirmar',
     cancelText = 'Cancelar',
-    confirmButtonClass = 'btn-outline-secondary',
+    confirmButtonVariant = 'outline-secondary',
     size = 'sm'
 }) {
     return (
-        <div 
-            className={`modal fade ${show ? 'show d-block' : ''}`} 
-            tabIndex="-1" 
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-        >
-            <div className={`modal-dialog modal-dialog-centered modal-${size}`}>
-                <div className="modal-content">
-                    <div className="modal-header pb-1 pt-2">
-                        <h5 className="modal-title">{title}</h5>
-                        <button 
-                            type="button" 
-                            className="btn-close" 
-                            onClick={onClose}
-                        ></button>
-                    </div>
-                    <div className="modal-body">
-                        <p className="mb-0">{message}</p>
-                    </div>
-                    <div className="modal-footer pt-1 pb-2">
-                        <button 
-                            type="button" 
-                            className={`btn btn-sm ${confirmButtonClass}`}
-                            onClick={onConfirm}
-                        >
-                            {confirmText}
-                        </button>
-                        <button 
-                            type="button" 
-                            className="btn btn-sm btn-danger"
-                            onClick={onClose}
-                        >
-                            {cancelText}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <>
+            <style>
+                {`
+                    .modal-backdrop {
+                        z-index: 1055 !important;
+                    }
+                `}
+            </style>
+            <Modal
+                show={show}
+                onHide={onClose}
+                centered
+                size={size}
+                backdrop="static"
+                style={{ zIndex: 1056 }}
+                className="confirm-modal"
+            >
+                <Modal.Header closeButton className="pb-1 pt-2">
+                    <Modal.Title>{title}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p className="mb-0">{message}</p>
+                </Modal.Body>
+                <Modal.Footer className="pt-1 pb-2">
+                    <Button
+                        variant={confirmButtonVariant}
+                        size="sm"
+                        onClick={onConfirm}
+                    >
+                        {confirmText}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={onClose}
+                    >
+                        {cancelText}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        </>
     );
 }

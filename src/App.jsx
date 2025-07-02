@@ -12,6 +12,7 @@ import ProjectDetail from '@/pages/ProjectDetail';
 import ProjectReviews from '@/pages/ProjectReviews';
 import ProjectNotes from '@/pages/ProjectNotes';
 import ProjectFiles from '@/pages/ProjectFiles'; // Import ProjectFiles
+import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment'; // Import ProjectContinuousDeployment
 import { ToastProvider } from '@/components/ToastContext'; // Importa el ToastProvider
 import { ConfirmProvider } from '@/components/ConfirmContext'; // Import ConfirmProvider
 
@@ -40,6 +41,7 @@ const LocationWrapper = () => {
         { path: '/projects/:id/review', element: <RequireAuth><ProjectReviews /></RequireAuth> },
         { path: '/projects/:id/notes', element: <RequireAuth><ProjectNotes /></RequireAuth> },
         { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> }, // Add ProjectFiles route
+        { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
         { path: '/jmeter-test-generator', element: <JMeterTestGenerator /> },
         { path: '/phpstan', element: <PhpStanViewer /> }
     ];

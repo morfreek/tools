@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
+import { Breadcrumb as BSBreadcrumb } from 'react-bootstrap';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 export default function Breadcrumb() {
@@ -8,26 +9,22 @@ export default function Breadcrumb() {
 
     return (
         <div className="d-flex align-items-center">
-            <nav aria-label="breadcrumb">
-                <ol className="breadcrumb mb-0">
-                    <li className="breadcrumb-item">
-                        <Link to="/" className="text-decoration-none">
-                            <FaHome />
-                        </Link>
-                    </li>
-                    {items.map((item, index) => (
-                        <li key={index} className={`breadcrumb-item ${item.isLast ? 'active' : ''}`}>
-                            {item.path ? (
-                                <Link to={item.path} className="text-decoration-none">
-                                    {item.label}
-                                </Link>
-                            ) : (
-                                <span>{item.label}</span>
-                            )}
-                        </li>
-                    ))}
-                </ol>
-            </nav>
+            <BSBreadcrumb>
+                <BSBreadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
+                    <FaHome />
+                </BSBreadcrumb.Item>
+                {items.map((item, index) => (
+                    <BSBreadcrumb.Item
+                        key={index}
+                        active={item.isLast}
+                        linkAs={item.path ? Link : undefined}
+                        linkProps={item.path ? { to: item.path } : undefined}
+                    >
+                        {item.label}
+                    </BSBreadcrumb.Item>
+
+                ))}
+            </BSBreadcrumb>
         </div>
     );
 }

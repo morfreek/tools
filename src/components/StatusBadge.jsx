@@ -1,22 +1,30 @@
 import React from 'react';
+import { Badge } from 'react-bootstrap';
 
-export default function StatusBadge({ status }) {
-    const getClass = () => {
+export default function StatusBadge({ status, text }) {
+    const getVariant = () => {
         switch (status) {
             case 'bien':
-                return 'bg-success';
+                return 'success';
             case 'regular':
-                return 'bg-warning text-dark';
+                return 'warning';
             case 'deficiente':
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     };
 
+    const shouldShowText = text !== null && text !== undefined && text !== '';
+
     return (
-        <span className={`badge ${getClass()}`}>
-            {status || 'Sin estado'}
-        </span>
+        <Badge bg={getVariant()} text={status === 'regular' ? 'dark' : undefined} className='me-2'>
+            {status.toUpperCase() || 'Sin estado'}
+            {shouldShowText && (
+                <span>
+                    {text}
+                </span>
+            )}
+        </Badge>
     );
 }

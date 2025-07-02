@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaPlus, FaFileExcel } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
+import { Container, ButtonGroup, Button } from 'react-bootstrap';
 import { STATUS_OPTIONS } from '@/utils/Constants';
 import api from '@/api';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectReviewModal from '@/components/ProjectReviewModal';
 import ProjectReviewDetailModal from '@/components/ProjectReviewDetailModal';
-import ProjectReviewCards from '@/components/ProjectReviewCards ';
+import ProjectReviewCards from '@/components/ProjectReviewCards';
 import Breadcrumb from '@/components/Breadcrumb';
-
 
 export default function ProjectReviews() {
     const { id } = useParams();
@@ -113,20 +113,28 @@ export default function ProjectReviews() {
     };
 
     return (
-        <div className="container-fluid mt-4">
+        <Container fluid className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                
                 <Breadcrumb />
                 
-                <div className="btn-group" role="group" aria-label="Basic example">
-                    {/* <Link to="/projects/" className="btn btn-sm btn-secondary mb-3">Volver a Proyectos</Link> */}
-                    <button className="btn btn-sm btn-success d-inline-flex align-items-center" onClick={startNewReview}>
+                <ButtonGroup>
+                    <Button 
+                        variant="success" 
+                        size="sm" 
+                        className="d-inline-flex align-items-center"
+                        onClick={startNewReview}
+                    >
                         <FaPlus className="me-2" />Revisión
-                    </button>
-                    <button className="btn btn-sm btn-outline-success d-inline-flex align-items-center" onClick={() => exportGroupedReviewsToExcel(checklist, reviews)}>
+                    </Button>
+                    <Button 
+                        variant="outline-success" 
+                        size="sm" 
+                        className="d-inline-flex align-items-center"
+                        onClick={() => exportGroupedReviewsToExcel(checklist, reviews)}
+                    >
                         <FaFileExcel />
-                    </button>
-                </div>
+                    </Button>
+                </ButtonGroup>
             </div>
 
             <ProjectInfoCard id={id} />
@@ -152,6 +160,6 @@ export default function ProjectReviews() {
                 onClose={() => setNewReviewVisible(false)}
                 onSave={saveReview}
             />
-        </div>
+        </Container>
     );
 }

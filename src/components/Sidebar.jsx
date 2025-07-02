@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Nav, Button } from 'react-bootstrap';
 import {
     FaBars,
     FaChevronLeft,
@@ -50,39 +51,34 @@ const Sidebar = () => {
         >
             <div className="d-flex justify-content-between align-items-center mb-3">
                 {!collapsed && <h4 className="mb-0">Menú</h4>}
-                <button
+                <Button
                     onClick={toggleSidebar}
-                    className="btn btn-sm btn-outline-light mb-3 d-flex align-items-center justify-content-center"
+                    variant="outline-light"
+                    size="sm"
+                    className="mb-3 d-flex align-items-center justify-content-center"
                 >
                     {collapsed ? <FaBars /> : <FaChevronLeft />}
-                </button>
+                </Button>
             </div>
 
-            <ul className="nav flex-column">
+            <Nav className="flex-column" defaultActiveKey="/">
                 {menuItems.map((item) => (
-                    <li className="nav-item" key={item.path}>
-                        <Link
+                    <Nav.Item key={item.path}>
+                        <Nav.Link
+                            as={Link}
                             to={item.path}
-                            className={`nav-link d-flex align-items-center gap-2 px-2 py-2 rounded ${isActive(item.path)
-                                ? 'bg-primary text-white'
-                                : 'text-white hover-bg'
-                                }`}
-                            style={{ textDecoration: 'none' }}
+                            className={`d-flex align-items-center gap-2 px-2 py-2 rounded ${
+                                isActive(item.path)
+                                    ? 'bg-primary text-white'
+                                    : 'text-white hover-bg'
+                            }`}
                         >
                             {item.icon}
                             {!collapsed && item.label}
-                        </Link>
-                    </li>
+                        </Nav.Link>
+                    </Nav.Item>
                 ))}
-            </ul>
-
-            {/* Hover styles */}
-            <style>{`
-                .hover-bg:hover {
-                    background-color: #495057;
-                    color: white;
-                }
-            `}</style>
+            </Nav>
         </div>
     );
 };

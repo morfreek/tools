@@ -4,12 +4,15 @@ import { Modal, Button } from 'react-bootstrap';
 import Editor from 'react-simple-wysiwyg';
 import { FaSave, FaBan } from 'react-icons/fa';
 import { useToast } from './ToastContext'; // Importa el contexto de Toast
+import { useConfirm } from './ConfirmContext'; // Importa el contexto de Confirm
 import api from '@/api';
 
 export default function ProjectNoteModal({ show, onClose, onSaved, projectId, note }) {
     const [content, setContent] = useState(note?.detail || '');
     const [loading, setLoading] = useState(false); // Nuevo estado
+    const [initialContent] = useState(note?.detail || ''); // Estado inicial del contenido
     const { showToast } = useToast(); // Usa el contexto de Toast
+    const { showConfirm } = useConfirm(); // Usa el contexto de Confirm
 
     useEffect(() => {
         setContent(note?.detail || '');
@@ -45,8 +48,25 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
         }
     };
 
+    const handleClose = () => {
+        const hasUnsavedChanges = content !== initialContent && content.trim() !== '';
+        
+        if (hasUnsavedChanges) {
+            showConfirm({
+                title: "Confirmar cierre",
+                message: "Hay cambios sin guardar. ¿Desea cerrar y perder los cambios?",
+                confirmText: "Aceptar",
+                cancelText: "Cerrar",
+                confirmButtonClass: "btn-danger",
+                onConfirm: () => onClose()
+            });
+        } else {
+            onClose();
+        }
+    };
+
     return (
-        <Modal show={show} onHide={onClose} size="xl" centered>
+        <Modal show={show} onHide={handleClose} size="xl" centered>
             <Modal.Header closeButton>
                 <Modal.Title>{note ? 'Editar Nota' : 'Nueva Nota'}</Modal.Title>
             </Modal.Header>
@@ -73,7 +93,7 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
                     variant="danger"
                     size="sm"
                     className="d-inline-flex align-items-center"
-                    onClick={onClose}
+                    onClick={handleClose}
                     disabled={loading}
                 >
                     <FaBan className="me-2" />

@@ -1,10 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTasks } from 'react-icons/fa';
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { FaPlus, FaTasks } from 'react-icons/fa';
+import { Container, Row, Col, Button, Form, Table, ButtonGroup, Spinner } from 'react-bootstrap';
 import api from '@/api';
 import UserModal from '@/components/UserModal';
 import ProjectModal from '@/components/ProjectModal';
+
+const SortableHeader = ({ title, sortKey, currentSort, onSort }) => (
+    <th onClick={() => onSort(sortKey)} style={{ cursor: 'pointer' }}>
+        {title} {currentSort.key === sortKey ? (currentSort.direction === 'asc' ? '▲' : '▼') : ''}
+    </th>
+);
+
+const TableHeader = ({ sortConfig, handleSort }) => (
+    <thead>
+        <tr>
+            <SortableHeader title="Nombre" sortKey="name" currentSort={sortConfig} onSort={handleSort} />
+            <SortableHeader title="Código" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
+            <SortableHeader title="Coordinador" sortKey="coordinator_id" currentSort={sortConfig} onSort={handleSort} />
+            <th>Desarrolladores</th>
+            <th className="text-center">Acciones</th>
+        </tr>
+    </thead>
+);
+
+const LoadingRow = () => (
+    <tr>
+        <td colSpan="5" className="text-center">
+            <Spinner animation="border" size="sm" /> Cargando...
+        </td>
+    </tr>
+);
+
+const EmptyRow = () => (
+    <tr>
+        <td colSpan="5" className="text-center text-muted">
+            No existen datos
+        </td>
+    </tr>
+);
+
+const ProjectRow = ({ project, getUserName }) => (
+    <tr>
+        <td>{project.name}</td>
+        <td>{project.code}</td>
+        <td>{getUserName(project.coordinator_id)}</td>
+        <td>{(project.developer_ids || []).map(getUserName).join(', ')}</td>
+        <td className="text-center">
+            <Button
+                as={Link}
+                to={`/projects/${project.id}/detail`}
+                variant="primary"
+                size="sm"
+                className="d-inline-flex align-items-center"
+            >
+                <FaTasks />
+            </Button>
+        </td>
+    </tr>
+);
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -152,11 +206,21 @@ export default function Projects() {
         setSortConfig({ key, direction });
     };
 
-    const filteredProjects = projects.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase())
-        || project.code.toLowerCase().includes(searchTerm.toLowerCase())
-        // AGREGAR COORDINADOR O DESARROLLADOR
-    );
+    const normalizeString = (str) => {
+        return str.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+    };
+
+    const filteredProjects = projects.filter(project => {
+        const searchTermNormalized = normalizeString(searchTerm);
+        return normalizeString(project.name).includes(searchTermNormalized)
+            || normalizeString(project.code).includes(searchTermNormalized)
+            || normalizeString(getUserName(project.coordinator_id)).includes(searchTermNormalized)
+            || (project.developer_ids || [])
+                .map(id => normalizeString(getUserName(id)))
+                .some(name => name.includes(searchTermNormalized));
+    });
 
     const sortedProjects = [...filteredProjects].sort((a, b) => {
         const key = sortConfig.key;
@@ -174,22 +238,24 @@ export default function Projects() {
     );
 
     return (
-        <div className="container-fluid mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h3>Proyectos de Software</h3>
-                <div>
-                    <button className="btn btn-sm btn-primary d-inline-flex align-items-center me-1" onClick={() => openUserModal()}>
+        <Container fluid className="mt-4">
+            <Row className="mb-3">
+                <Col>
+                    <h3>Proyectos de Software</h3>
+                </Col>
+                <Col xs="auto">
+                    <Button variant="primary" size="sm" className="d-inline-flex align-items-center me-1" onClick={() => openUserModal()}>
                         <FaPlus className="me-2" />Usuario
-                    </button>
-                    <button className="btn btn-sm btn-success d-inline-flex align-items-center" onClick={() => openProjectModal()}>
+                    </Button>
+                    <Button variant="success" size="sm" className="d-inline-flex align-items-center" onClick={() => openProjectModal()}>
                         <FaPlus className="me-2" />Proyecto
-                    </button>
-                </div>
-            </div>
+                    </Button>
+                </Col>
+            </Row>
 
-            <input
+            <Form.Control
                 type="text"
-                className="form-control mb-3"
+                className="mb-3"
                 placeholder="Buscar por nombre o código..."
                 value={searchTerm}
                 onChange={(e) => {
@@ -198,71 +264,50 @@ export default function Projects() {
                 }}
             />
 
-            <table className="table table-striped table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                            Nombre {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
-                        </th>
-                        <th onClick={() => handleSort('code')} style={{ cursor: 'pointer' }}>
-                            Código {sortConfig.key === 'code' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
-                        </th>
-                        <th onClick={() => handleSort('coordinator_id')} style={{ cursor: 'pointer' }}>
-                            Coordinador {sortConfig.key === 'coordinator_id' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
-                        </th>
-                        <th>Desarrolladores</th>
-                        <th className='text-center'>Acciones</th>
-                    </tr>
-                </thead>
+            <Table striped bordered hover>
+                <TableHeader sortConfig={sortConfig} handleSort={handleSort} />
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="5" className="text-center">Cargando...</td></tr>
+                        <LoadingRow />
                     ) : paginatedProjects.length > 0 ? (
                         paginatedProjects.map(project => (
-                            <tr key={project.id}>
-                                <td>{project.name}</td>
-                                <td>{project.code}</td>
-                                <td>{getUserName(project.coordinator_id)}</td>
-                                <td>{(project.developer_ids || []).map(getUserName).join(', ')}</td>
-                                <td className='text-center'>
-                                    <Link
-                                        to={`/projects/${project.id}/detail`}
-                                        className="btn btn-sm btn-primary d-inline-flex align-items-center"
-                                    >
-                                        <FaTasks />
-                                    </Link>
-                                </td>
-                            </tr>
+                            <ProjectRow 
+                                key={project.id}
+                                project={project}
+                                getUserName={getUserName}
+                            />
                         ))
                     ) : (
-                        <tr>
-                            <td colSpan="5" className="text-center text-muted">
-                                No existen datos
-                            </td>
-                        </tr>
+                        <EmptyRow />
                     )}
                 </tbody>
-            </table>
+            </Table>
 
-            <div className="d-flex justify-content-between align-items-center mt-1">
-                <span>Página {currentPage} de {totalPages}</span>
-                <div className="btn-group">
-                    <button
-                        className="btn btn-sm btn-outline-secondary"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                    >
-                        Anterior
-                    </button>
-                    <button
-                        className="btn btn-sm btn-outline-secondary"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                    >
-                        Siguiente
-                    </button>
-                </div>
-            </div>
+            <Row className="align-items-center mt-1">
+                <Col>
+                    <span>Página {currentPage} de {totalPages}</span>
+                </Col>
+                <Col xs="auto">
+                    <ButtonGroup>
+                        <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                        >
+                            Anterior
+                        </Button>
+                        <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                        >
+                            Siguiente
+                        </Button>
+                    </ButtonGroup>
+                </Col>
+            </Row>
 
             <ProjectModal
                 show={projectModalVisible}
@@ -282,6 +327,6 @@ export default function Projects() {
                 setUserData={setUserData}
                 editing={userEditing}
             />
-        </div>
+        </Container>
     );
 }

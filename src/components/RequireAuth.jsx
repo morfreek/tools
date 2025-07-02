@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSave, FaBan } from 'react-icons/fa';
+import { Modal, Form, Button } from 'react-bootstrap';
 
 const USER = 'admin';
 const PASS = '1234';
@@ -9,7 +10,6 @@ export default function RequireAuth({ children }) {
     const [authenticated, setAuthenticated] = useState(() => {
         return sessionStorage.getItem('authenticated') === 'true';
     });
-
     const [user, setUser] = useState('');
     const [pass, setPass] = useState('');
     const [error, setError] = useState('');
@@ -27,65 +27,59 @@ export default function RequireAuth({ children }) {
     };
 
     const handleCancel = () => {
-        // Si cancela o cierra el modal, redirige a home
         navigate('/');
     };
 
     if (!authenticated) {
         return (
-            <>
-                {/* Overlay / fade */}
-                <div
-                    className="modal-backdrop fade show"
-                    style={{ zIndex: 1040 }}
-                    onClick={handleCancel}
-                ></div>
-
-                {/* Modal */}
-                <div
-                    className="modal fade show d-block"
-                    tabIndex="-1"
-                    role="dialog"
-                    style={{ zIndex: 1050 }}
-                    aria-modal="true"
-                >
-                    <div className="modal-dialog modal-dialog-centered" role="document" onClick={e => e.stopPropagation()}>
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Autenticación requerida</h5>
-                                <button type="button" className="btn-close" aria-label="Close" onClick={handleCancel}></button>
-                            </div>
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    <input
-                                        className="form-control mb-3"
-                                        placeholder="Usuario"
-                                        value={user}
-                                        onChange={e => setUser(e.target.value)}
-                                        autoFocus
-                                    />
-                                    <input
-                                        className="form-control mb-3"
-                                        type="password"
-                                        placeholder="Contraseña"
-                                        value={pass}
-                                        onChange={e => setPass(e.target.value)}
-                                    />
-                                    {error && <div className="text-danger">{error}</div>}
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-sm btn-success d-inline-flex align-items-center">
-                                        <FaSave className="me-2" />Ingresar
-                                    </button>
-                                    <button type="button" className="btn btn-sm btn-danger d-inline-flex align-items-center" onClick={handleCancel}>
-                                        <FaBan className="me-2" />Cancelar
-                                    </button>
-                                </div>
-                            </form>
+            <Modal
+                show={true}
+                onHide={handleCancel}
+                fullscreen
+                backdrop="static"
+                keyboard={false}
+                className="bg-light bg-gradient"
+            >
+                <Modal.Header closeButton className="border-0 bg-transparent">
+                    <Modal.Title>Autenticación requerida</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="d-flex align-items-center justify-content-center">
+                    <Form 
+                        onSubmit={handleSubmit} 
+                        className="bg-white p-4 rounded-3 shadow-lg"
+                        style={{ maxWidth: '400px', width: '100%' }}
+                    >
+                        <h4 className="text-center mb-4">Iniciar Sesión</h4>
+                        <Form.Group className="mb-3">
+                            <Form.Control
+                                className="border-secondary"
+                                placeholder="Usuario"
+                                value={user}
+                                onChange={e => setUser(e.target.value)}
+                                autoFocus
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Control
+                                className="border-secondary"
+                                type="password"
+                                placeholder="Contraseña"
+                                value={pass}
+                                onChange={e => setPass(e.target.value)}
+                            />
+                        </Form.Group>
+                        {error && <div className="text-danger fw-bold">{error}</div>}
+                        <div className="d-flex justify-content-end gap-2 mt-4">
+                            <Button variant="success" size="sm" type="submit" className="d-inline-flex align-items-center px-4">
+                                <FaSave className="me-2" />Ingresar
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={handleCancel} className="d-inline-flex align-items-center px-4">
+                                <FaBan className="me-2" />Cancelar
+                            </Button>
                         </div>
-                    </div>
-                </div>
-            </>
+                    </Form>
+                </Modal.Body>
+            </Modal>
         );
     }
 

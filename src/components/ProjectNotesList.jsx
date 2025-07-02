@@ -1,16 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
+import {
+    Button,
+    ButtonGroup,
+    Placeholder,
+    Container,
+    Card,
+    CloseButton
+} from 'react-bootstrap';
 import { useToast } from '@/components/ToastContext';
 import { useConfirm } from '@/components/ConfirmContext';
 import api from '@/api';
 import ProjectNoteModal from './ProjectNoteModal';
 
-export default function ProjectNotesList({ 
-    projectId, 
-    show, 
-    onClose, 
+export default function ProjectNotesList({
+    projectId,
+    show,
+    onClose,
     className = '',
     containerStyle = {},
     refreshKey
@@ -20,6 +28,7 @@ export default function ProjectNotesList({
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
     const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
     const sidebarRef = useRef(null);
@@ -49,19 +58,19 @@ export default function ProjectNotesList({
         }
     }, [projectId, refreshKey]);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && 
-                !sidebarRef.current.contains(event.target) && 
-                show && 
-                typeof onClose === 'function') {
-                onClose();
-            }
-        };
+    // useEffect(() => {
+    //     const handleClickOutside = (event) => {
+    //         if (sidebarRef.current &&
+    //             !sidebarRef.current.contains(event.target) &&
+    //             show &&
+    //             typeof onClose === 'function') {
+    //             onClose();
+    //         }
+    //     };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [show, onClose]);
+    //     document.addEventListener('mousedown', handleClickOutside);
+    //     return () => document.removeEventListener('mousedown', handleClickOutside);
+    // }, [show, onClose]);
 
     const handleEdit = (note) => {
         setSelectedNote(note);
@@ -76,7 +85,7 @@ export default function ProjectNotesList({
             cancelText: "Cancelar",
             onConfirm: async () => {
                 try {
-                    await api.delete(`/projects/${projectId}/notes/`, { data: {noteId} });
+                    await api.delete(`/projects/${projectId}/notes/`, { data: { noteId } });
                     showToast('success', 'Nota eliminada correctamente');
                     fetchNotes();
                 } catch (err) {
@@ -110,114 +119,138 @@ export default function ProjectNotesList({
         transition: 'transform 0.3s ease-in-out'
     } : containerStyle;
 
+    const isModal = defaultContainerStyle.position === 'fixed';
+
     if (!show) return null;
 
     return (
         <>
-            <div 
-                className={`bg-white shadow-lg ${className}`}
+            {isModal && (
+                <div 
+                    className="position-fixed top-0 start-0 w-100 h-100"
+                    style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        zIndex: 1039
+                    }}
+                    onClick={onClose}
+                />
+            )}
+            <Card
+                className={`h-100 border-0 ${className} ${isModal && 'rounded-0'}`}
                 style={defaultContainerStyle}
                 ref={sidebarRef}
             >
-                <div className="d-flex flex-column h-100">
-                    <div className="border-bottom">
-                        <div className="d-flex justify-content-between align-items-center p-3">
-                            <h5 className="mb-0">Notas del Proyecto</h5>
+                <Card.Header className="bg-white">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <Card.Title className="h5 mb-0">Notas del Proyecto</Card.Title>
+                        <div className="d-flex align-items-center gap-2">
+                            <Button
+                                variant="outline-success"
+                                size="sm"
+                                className="d-inline-flex align-items-center"
+                                onClick={() => setShowCreateModal(true)}
+                            >
+                                <FaPlus className="me-1" /> Nueva Nota
+                            </Button>
                             {typeof onClose === 'function' && (
-                                <button
-                                    className="btn btn-sm btn-link text-dark"
-                                    onClick={onClose}
-                                    style={{ fontSize: '1.2rem' }}
-                                >
-                                    <FaTimes />
-                                </button>
+                                <CloseButton onClick={onClose} />
                             )}
                         </div>
-                        {!loading && notes.length > 0 && (
-                            <div className="px-3 pb-3">
-                                <div className="d-flex justify-content-between align-items-start">
-                                    <small className="text-muted">
-                                        {format(new Date(notes[currentNoteIndex].created_at),
-                                            "d 'de' MMMM 'de' yyyy, HH:mm",
-                                            { locale: es })}
-                                    </small>
-                                    <div className="btn-group">
-                                        <button
-                                            className="btn btn-sm btn-outline-primary p-1 d-inline-flex align-items-center"
-                                            onClick={() => handleEdit(notes[currentNoteIndex])}
-                                        >
-                                            <FaEdit />
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center"
-                                            onClick={() => handleDelete(notes[currentNoteIndex].id)}
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
-
-                    <div className="flex-grow-1 overflow-hidden">
-                        {loading ? (
-                            <div className="p-3">
-                                <div className="placeholder-glow">
-                                    <div className="placeholder col-12 mb-2"></div>
-                                    <div className="placeholder col-12 mb-2"></div>
-                                </div>
-                            </div>
-                        ) : notes.length === 0 ? (
-                            <div className="p-3">
-                                <p className="text-muted text-center">No hay notas registradas</p>
-                            </div>
-                        ) : (
-                            <div className="p-3 h-100 overflow-auto">
-                                <div key={notes[currentNoteIndex].id}>
-                                    <div className="border-start border-4 border-info ps-3">
-                                        <div 
-                                            className="note-content"
-                                            dangerouslySetInnerHTML={{
-                                                __html: notes[currentNoteIndex].detail
-                                            }} 
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
                     {!loading && notes.length > 0 && (
-                        <div className="border-top p-3">
+                        <Container fluid className="px-0 mt-3">
+                            <div className="d-flex justify-content-between align-items-start">
+                                <small className="text-muted">
+                                    {format(new Date(notes[currentNoteIndex].created_at),
+                                        "d 'de' MMMM 'de' yyyy, HH:mm",
+                                        { locale: es })}
+                                </small>
+                                <ButtonGroup>
+                                    <Button
+                                        className="d-inline-flex align-items-center"
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() => handleEdit(notes[currentNoteIndex])}
+                                    >
+                                        <FaEdit />
+                                    </Button>
+                                    <Button
+                                        className="d-inline-flex align-items-center"
+                                        variant="outline-danger"
+                                        size="sm"
+                                        onClick={() => handleDelete(notes[currentNoteIndex].id)}
+                                    >
+                                        <FaTrash />
+                                    </Button>
+                                </ButtonGroup>
+                            </div>
+                        </Container>
+                    )}
+                </Card.Header>
+
+                <Card.Body className="overflow-auto p-0">
+                    {loading ? (
+                        <Container fluid className="p-3">
+                            <Placeholder animation="glow">
+                                <Placeholder xs={12} className="mb-2" />
+                                <Placeholder xs={12} className="mb-2" />
+                            </Placeholder>
+                        </Container>
+                    ) : notes.length === 0 ? (
+                        <Container fluid className="p-3 text-muted text-center">
+                            No hay notas registradas
+                        </Container>
+                    ) : (
+                        <Container fluid className="p-3">
+                            <div key={notes[currentNoteIndex].id}>
+                                <div className="border-start border-4 border-info ps-3">
+                                    <div
+                                        className="note-content"
+                                        dangerouslySetInnerHTML={{
+                                            __html: notes[currentNoteIndex].detail
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </Container>
+                    )}
+                </Card.Body>
+
+                {!loading && notes.length > 0 && (
+                    <Card.Footer className="bg-white">
+                        <Container fluid className="px-0">
                             <div className="d-flex justify-content-between align-items-center">
-                                <button
-                                    className="btn btn-sm btn-outline-secondary"
+                                <Button
+                                    className="d-inline-flex align-items-center"
+                                    variant="outline-secondary"
+                                    size="sm"
                                     onClick={handlePrev}
                                     disabled={notes.length <= 1 || currentNoteIndex === 0}
                                 >
                                     <FaChevronLeft /> Anterior
-                                </button>
+                                </Button>
                                 <small className="text-muted">
                                     {currentNoteIndex + 1} de {notes.length}
                                 </small>
-                                <button
-                                    className="btn btn-sm btn-outline-secondary"
+                                <Button
+                                    className="d-inline-flex align-items-center"
+                                    variant="outline-secondary"
+                                    size="sm"
                                     onClick={handleNext}
                                     disabled={notes.length <= 1 || currentNoteIndex === notes.length - 1}
                                 >
                                     Siguiente <FaChevronRight />
-                                </button>
+                                </Button>
                             </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
+                        </Container>
+                    </Card.Footer>
+                )}
+            </Card>
             <ProjectNoteModal
-                show={showEditModal}
+                show={showEditModal || showCreateModal}
                 onClose={() => {
                     setShowEditModal(false);
+                    setShowCreateModal(false);
                     setSelectedNote(null);
                 }}
                 onSaved={fetchNotes}
