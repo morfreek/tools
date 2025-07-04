@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
 import {
     Button,
     ButtonGroup,
@@ -57,20 +57,6 @@ export default function ProjectNotesList({
             fetchNotes();
         }
     }, [projectId, refreshKey]);
-
-    // useEffect(() => {
-    //     const handleClickOutside = (event) => {
-    //         if (sidebarRef.current &&
-    //             !sidebarRef.current.contains(event.target) &&
-    //             show &&
-    //             typeof onClose === 'function') {
-    //             onClose();
-    //         }
-    //     };
-
-    //     document.addEventListener('mousedown', handleClickOutside);
-    //     return () => document.removeEventListener('mousedown', handleClickOutside);
-    // }, [show, onClose]);
 
     const handleEdit = (note) => {
         setSelectedNote(note);

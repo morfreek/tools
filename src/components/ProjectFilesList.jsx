@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaDownload, FaTrash, FaTimes, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
-import { ListGroup, Button, Placeholder, ButtonGroup, Image } from 'react-bootstrap';
+import { FaDownload, FaTrash, FaPlus, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
+import { ListGroup, Button, Placeholder, ButtonGroup, Image, Offcanvas } from 'react-bootstrap';
 import { useToast } from '@/components/ToastContext';
 import { useConfirm } from '@/components/ConfirmContext';
+import ProjectFileUploader from '@/components/ProjectFileUploader';
 import api from '@/api';
 
 // Función auxiliar para formatear el tamaño del archivo
@@ -25,10 +26,10 @@ const getFileIcon = (mimeType) => {
     return FaFile;
 };
 
-export default function ProjectFilesList({ 
-    projectId, 
-    show, 
-    onClose, 
+export default function ProjectFilesList({
+    projectId,
+    show,
+    onClose,
     className = '',
     containerStyle = {},
     refreshKey
@@ -37,7 +38,7 @@ export default function ProjectFilesList({
     const { showConfirm } = useConfirm();
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const sidebarRef = useRef(null);
+    const [showUploader, setShowUploader] = useState(false);
 
     const fetchFiles = async () => {
         setLoading(true);
@@ -54,6 +55,11 @@ export default function ProjectFilesList({
         }
     };
 
+    const handleUploadSuccess = () => {
+        fetchFiles();
+        setShowUploader(false);
+    };
+
     useEffect(() => {
         if (projectId) fetchFiles();
     }, [projectId]);
@@ -61,20 +67,6 @@ export default function ProjectFilesList({
     useEffect(() => {
         if (projectId) fetchFiles();
     }, [projectId, refreshKey]);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && 
-                !sidebarRef.current.contains(event.target) && 
-                show && 
-                typeof onClose === 'function') {
-                onClose();
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [show, onClose]);
 
     const handleDownload = async (fileId, fileName) => {
         try {
@@ -113,44 +105,30 @@ export default function ProjectFilesList({
         });
     };
 
-    const defaultContainerStyle = !Object.keys(containerStyle).length ? {
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        height: '100%',
-        width: '400px',
-        zIndex: 1040,
-        transform: `translateX(${show ? '0' : '100%'})`,
-        transition: 'transform 0.3s ease-in-out'
-    } : containerStyle;
-
     if (!show) return null;
 
     return (
-        <div 
-            className={`bg-white shadow-lg ${className}`}
-            style={defaultContainerStyle}
-            ref={sidebarRef}
-        >
-            <div className="d-flex flex-column h-100">
-                <div className="border-bottom">
-                    <div className="d-flex justify-content-between align-items-center p-3">
-                        <h5 className="mb-0">Archivos del Proyecto</h5>
-                        {typeof onClose === 'function' && (
-                            <Button
-                                variant="link"
-                                size="sm"
-                                className="text-dark p-0"
-                                onClick={onClose}
-                                style={{ fontSize: '1.2rem' }}
-                            >
-                                <FaTimes />
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex-grow-1 overflow-auto">
+        <>
+            <Offcanvas 
+                show={show} 
+                onHide={onClose} 
+                placement="end" 
+                backdrop={true}
+                className={className}
+            >
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title className="flex-grow-1">Archivos del Proyecto</Offcanvas.Title>
+                    <Button
+                        variant="outline-success"
+                        size="sm"
+                        className="d-inline-flex align-items-center me-2"
+                        onClick={() => setShowUploader(true)}
+                    >
+                        <FaPlus className="me-1" /> 
+                        Subir
+                    </Button>
+                </Offcanvas.Header>
+                <Offcanvas.Body>
                     {loading ? (
                         <div className="p-3">
                             <Placeholder animation="glow">
@@ -222,8 +200,15 @@ export default function ProjectFilesList({
                             })}
                         </ListGroup>
                     )}
-                </div>
-            </div>
-        </div>
+                </Offcanvas.Body>
+            </Offcanvas>
+
+            <ProjectFileUploader
+                show={showUploader}
+                onClose={() => setShowUploader(false)}
+                projectId={projectId}
+                onUploadComplete={handleUploadSuccess}
+            />
+        </>
     );
 }

@@ -117,12 +117,7 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
         },
         { divider: true },
         {
-            label: 'Subir archivos',
-            icon: FaUpload,
-            onClick: () => setShowUploader(true)
-        },
-        {
-            label: 'Ver archivos',
+            label: 'Archivos',
             icon: FaEye,
             onClick: () => setShowFilesList(true)
         },
