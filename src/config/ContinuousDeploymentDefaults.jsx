@@ -38,11 +38,6 @@ export const defaultConfig = {
     }
 };
 
-export const defaultEnvValues = {
-    "DB_RETRACTO_CONNECTION": "oracle",
-};
-
 export default {
-    defaultConfig,
-    defaultEnvValues
+    defaultConfig
 };

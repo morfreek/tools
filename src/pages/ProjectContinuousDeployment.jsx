@@ -10,10 +10,11 @@ import SshInstructionsModal from '@/components/cd/SshInstructionsModal';
 import SaveConfigModal from '@/components/cd/SaveConfigModal';
 import LoadConfigModal from '@/components/cd/LoadConfigModal';
 import EnvVariableRow from '@/components/cd/EnvVariableRow';
-import { defaultConfig, defaultEnvValues } from '@/config/ContinuousDeploymentDefaults';
+import { defaultConfig } from '@/config/ContinuousDeploymentDefaults';
 import { generateYamlContent } from '@/utils/ContinuousDeploymentYamlGenerator';
+import api from '@/api';
 
-const ProjectContinuousDeployment = () => {
+export default function ProjectContinuousDeployment() {
     const { id } = useParams();
     const { showToast } = useToast();
     const [config, setConfig] = useState(defaultConfig);
@@ -25,33 +26,49 @@ const ProjectContinuousDeployment = () => {
     const [savedConfigs, setSavedConfigs] = useState([]);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showLoadModal, setShowLoadModal] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const saved = localStorage.getItem('cicd-configs');
-        if (saved) {
-            setSavedConfigs(JSON.parse(saved));
-        }
+        fetchSavedConfigs();
     }, []);
 
-    const handleSaveConfig = (name) => {
+    const fetchSavedConfigs = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/projects/${id}/configs`);
+            setSavedConfigs(response.data);
+        } catch (error) {
+            console.error('Error al cargar configuraciones:', error);
+            showToast('error', 'Error al cargar las configuraciones guardadas');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveConfig = async (name) => {
         if (!name.trim()) {
             showToast('error', 'Debe ingresar un nombre para la configuración');
             return;
         }
 
-        const newConfigs = [
-            ...savedConfigs,
-            {
+        try {
+            setLoading(true);
+            const configData = {
                 name: name,
                 config: config,
+                projectId: id || 'global',
                 savedAt: new Date().toISOString()
-            }
-        ];
-
-        localStorage.setItem('cicd-configs', JSON.stringify(newConfigs));
-        setSavedConfigs(newConfigs);
-        setShowSaveModal(false);
-        showToast('success', 'Configuración guardada correctamente');
+            };
+            await api.post(`/projects/${id}/configs`, configData);
+            await fetchSavedConfigs();
+            setShowSaveModal(false);
+            showToast('success', 'Configuración guardada correctamente');
+        } catch (error) {
+            console.error('Error al guardar configuración:', error);
+            showToast('error', 'Error al guardar la configuración');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleLoadConfig = (savedConfig) => {
@@ -60,11 +77,18 @@ const ProjectContinuousDeployment = () => {
         showToast('success', 'Configuración cargada correctamente');
     };
 
-    const handleDeleteConfig = (index) => {
-        const newConfigs = savedConfigs.filter((_, i) => i !== index);
-        localStorage.setItem('cicd-configs', JSON.stringify(newConfigs));
-        setSavedConfigs(newConfigs);
-        showToast('success', 'Configuración eliminada correctamente');
+    const handleDeleteConfig = async (id) => {
+        try {
+            setLoading(true);
+            await api.delete(`/projects/${id}/configs`);
+            await fetchSavedConfigs();
+            showToast('success', 'Configuración eliminada correctamente');
+        } catch (error) {
+            console.error('Error al eliminar configuración:', error);
+            showToast('error', 'Error al eliminar la configuración');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleConfigChange = (section, field, value) => {
@@ -78,7 +102,7 @@ const ProjectContinuousDeployment = () => {
     };
 
     const handleEnvChange = (key, value) => {
-        const newValue = defaultEnvValues.hasOwnProperty(key) ? defaultEnvValues[key] : value;
+        const newValue = value;
         setConfig(prev => ({
             ...prev,
             deploy: {
@@ -225,11 +249,21 @@ const ProjectContinuousDeployment = () => {
                 <Card.Header className="d-flex justify-content-between align-items-center">
                     <h5 className="mb-0">Configuración de Despliegue Continuo</h5>
                     <div className="d-flex gap-2">
-                        <Button size="sm" variant="outline-secondary" onClick={() => setShowLoadModal(true)}>
-                            Cargar Configuración
+                        <Button 
+                            size="sm" 
+                            variant="outline-secondary" 
+                            onClick={() => setShowLoadModal(true)}
+                            disabled={loading}
+                        >
+                            {loading ? 'Cargando...' : 'Cargar Configuración'}
                         </Button>
-                        <Button size="sm" variant="outline-primary" onClick={() => setShowSaveModal(true)}>
-                            Guardar Configuración
+                        <Button 
+                            size="sm" 
+                            variant="outline-primary" 
+                            onClick={() => setShowSaveModal(true)}
+                            disabled={loading}
+                        >
+                            {loading ? 'Guardando...' : 'Guardar Configuración'}
                         </Button>
                         <Button size="sm" variant="primary" onClick={handlePreview}>
                             Previsualizar YAML
@@ -387,6 +421,7 @@ const ProjectContinuousDeployment = () => {
                 show={showSaveModal}
                 onHide={() => setShowSaveModal(false)}
                 onSave={handleSaveConfig}
+                loading={loading}
             />
             <LoadConfigModal
                 show={showLoadModal}
@@ -394,6 +429,7 @@ const ProjectContinuousDeployment = () => {
                 configs={savedConfigs}
                 onLoad={handleLoadConfig}
                 onDelete={handleDeleteConfig}
+                loading={loading}
             />
             <SshInstructionsModal
                 show={showSshInstructions}
@@ -431,11 +467,20 @@ const ProjectContinuousDeployment = () => {
                         <Button size="sm" variant="primary" onClick={handleDownload}>
                             Descargar YAML
                         </Button>
+                        <Button 
+                            size="sm" 
+                            variant="success" 
+                            onClick={() => {
+                                handleDownload();
+                                showToast('success', 'Archivo .gitlab-ci.yml generado correctamente');
+                                setShowPreview(false);
+                            }}
+                        >
+                            Descargar y Finalizar
+                        </Button>
                     </Modal.Footer>
                 </div>
             </Modal>
         </Container>
     );
 };
-
-export default ProjectContinuousDeployment;

@@ -1,44 +1,59 @@
 import React from 'react';
-import { Modal, Button, ListGroup } from 'react-bootstrap';
+import { Modal, Button, ListGroup, Spinner } from 'react-bootstrap';
+import { FaTrash } from 'react-icons/fa';
 
-const LoadConfigModal = ({ show, onHide, configs, onLoad, onDelete }) => (
-    <Modal show={show} onHide={onHide}>
-        <Modal.Header closeButton>
-            <Modal.Title>Cargar Configuración</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-            <ListGroup>
-                {configs.map((saved, index) => (
-                    <ListGroup.Item
-                        key={index}
-                        className="d-flex justify-content-between align-items-center"
-                    >
-                        <span>{saved.name}</span>
-                        <div>
-                            <Button
-                                size="sm"
-                                variant="primary"
-                                className="me-2"
-                                onClick={() => onLoad(saved.config)}
+export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelete, loading = false }) {
+    return (
+        <Modal show={show} onHide={onHide} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Cargar Configuración</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {loading ? (
+                    <div className="text-center p-4">
+                        <Spinner animation="border" />
+                        <p className="mt-2">Cargando configuraciones...</p>
+                    </div>
+                ) : configs.length === 0 ? (
+                    <p className="text-center">No hay configuraciones guardadas</p>
+                ) : (
+                    <ListGroup>
+                        {configs.map((config, index) => (
+                            <ListGroup.Item
+                                key={index}
+                                className="d-flex justify-content-between align-items-center"
                             >
-                                Cargar
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="danger"
-                                onClick={() => onDelete(index)}
-                            >
-                                Eliminar
-                            </Button>
-                        </div>
-                    </ListGroup.Item>
-                ))}
-            </ListGroup>
-            {configs.length === 0 && (
-                <p className="text-center text-muted my-3">No hay configuraciones guardadas</p>
-            )}
-        </Modal.Body>
-    </Modal>
-);
-
-export default LoadConfigModal;
+                                <div 
+                                    className="flex-grow-1 cursor-pointer"
+                                    onClick={() => onLoad(config.config)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <div>{config.name}</div>
+                                    <small className="text-muted">
+                                        {/* {new Date(config.savedAt).toLocaleString()} */}
+                                    </small>
+                                </div>
+                                <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(config.id || index);
+                                    }}
+                                    disabled={loading}
+                                >
+                                    <FaTrash />
+                                </Button>
+                            </ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                )}
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onHide}>
+                    Cerrar
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}

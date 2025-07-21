@@ -3,6 +3,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import multer from 'multer';
 import { openDb } from './db.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const app = express();
 const port = 3001;
@@ -186,19 +188,19 @@ router.delete('/projects/:id', async (req, res) => {
 router.get('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
     const reviews = await db.all(`
-        SELECT *
+        SELECT id, project_id, applied_at, note
         FROM project_reviews
         WHERE project_id = ?
         ORDER BY applied_at DESC
     `,
-        [req.params.id]);
+    [req.params.id]);
 
     for (const review of reviews) {
         const results = await db.all(`
-                SELECT rpr.point_id, COALESCE(NULLIF(rpr.status, ''), 'No aplica') AS status, rpr.observation
-                FROM review_point_results rpr
-                WHERE rpr.review_id = ?
-            `, [review.id]);
+            SELECT rpr.point_id, COALESCE(NULLIF(rpr.status, ''), 'No aplica') AS status, rpr.observation
+            FROM review_point_results rpr
+            WHERE rpr.review_id = ?
+        `, [review.id]);
 
         review.results = results;
     }
@@ -209,24 +211,29 @@ router.get('/projects/:id/reviews', async (req, res) => {
 // POST /projects/:id/reviews - crea review de un proyecto
 router.post('/projects/:id/reviews', async (req, res) => {
     const db = await openDb();
-    const { applied_at, results } = req.body;
+    const { applied_at, results, general_notes } = req.body;
 
-    const result = await db.run(
-        `INSERT INTO project_reviews (project_id, applied_at) VALUES (?, ?)`,
-        [req.params.id, applied_at]
-    );
-
-    const reviewId = result.lastID;
-
-    for (const r of results) {
-        await db.run(
-            `INSERT INTO review_point_results (review_id, point_id, status, observation)
-                VALUES (?, ?, ?, ?)`,
-            [reviewId, r.point_id, r.status, r.observation]
+    try {
+        const result = await db.run(
+            `INSERT INTO project_reviews (project_id, applied_at, note) VALUES (?, ?, ?)`,
+            [req.params.id, applied_at, general_notes || null]
         );
-    }
 
-    res.status(201).json({ success: true });
+        const reviewId = result.lastID;
+
+        for (const r of results) {
+            await db.run(
+                `INSERT INTO review_point_results (review_id, point_id, status, observation)
+                VALUES (?, ?, ?, ?)`,
+                [reviewId, r.point_id, r.status, r.observation]
+            );
+        }
+
+        res.status(201).json({ success: true });
+    } catch (error) {
+        console.error('Error al crear revisión:', error);
+        res.status(500).json({ error: 'Error al crear la revisión' });
+    }
 });
 
 // DELETE /projects/:id/reviews - elimina review de un proyecto
@@ -426,6 +433,93 @@ router.delete('/projects/:id/files/:fileId', async (req, res) => {
     } catch (err) {
         console.error('Error al eliminar archivo:', err);
         res.status(500).json({ error: 'Error al eliminar el archivo', err });
+    }
+});
+
+// Utility function to manage config files
+const getConfigPath = (projectId) => {
+    const configDir = path.join(process.cwd(), 'data', 'configs');
+    return path.join(configDir, `${projectId}.json`);
+};
+
+const ensureConfigFile = async (projectId) => {
+    const configPath = getConfigPath(projectId);
+    try {
+        await fs.mkdir(path.dirname(configPath), { recursive: true });
+        try {
+            await fs.access(configPath);
+        } catch {
+            await fs.writeFile(configPath, JSON.stringify({ configs: [] }));
+        }
+    } catch (err) {
+        console.error('Error ensuring config file:', err);
+        throw err;
+    }
+};
+
+// GET /projects/:id/configs - Obtener configuraciones
+router.get('/projects/:id/configs', async (req, res) => {
+    try {
+        const projectId = req.params.id;
+        await ensureConfigFile(projectId);
+        const configPath = getConfigPath(projectId);
+        const configData = await fs.readFile(configPath, 'utf8');
+        res.json(JSON.parse(configData).configs);
+    } catch (err) {
+        console.error('Error reading configs:', err);
+        res.status(500).json({ error: 'Error al leer las configuraciones', err });
+    }
+});
+
+// POST /projects/:id/configs - Crear/Actualizar configuración
+router.post('/projects/:id/configs', async (req, res) => {
+    try {
+        const projectId = req.params.id;
+        const { name, config } = req.body;
+
+        if (!name || !config) {
+            return res.status(400).json({ error: 'Nombre y configuración son requeridos' });
+        }
+
+        await ensureConfigFile(projectId);
+        const configPath = getConfigPath(projectId);
+        const configData = JSON.parse(await fs.readFile(configPath, 'utf8'));
+        
+        const configIndex = configData.configs.findIndex(c => c.name === name);
+        if (configIndex >= 0) {
+            configData.configs[configIndex] = { name, config };
+        } else {
+            configData.configs.push({ name, config });
+        }
+
+        await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
+        res.json(configData);
+    } catch (err) {
+        console.error('Error saving config:', err);
+        res.status(500).json({ error: 'Error al guardar la configuración' });
+    }
+});
+
+// DELETE /projects/:id/configs - Eliminar configuración
+router.delete('/projects/:id/configs', async (req, res) => {
+    try {
+        const projectId = req.params.id;
+        const { name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Nombre de configuración requerido' });
+        }
+
+        const configPath = getConfigPath(projectId);
+        const configData = JSON.parse(await fs.readFile(configPath, 'utf8'));
+        
+        configData.configs = configData.configs.filter(c => c.name !== name);
+        
+        await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
+        res.json(configData);
+    } catch (err) {
+        console.error('Error deleting config:', err);
+        res.status(500).json({ error: 'Error al eliminar la configuración' });
     }
 });
 

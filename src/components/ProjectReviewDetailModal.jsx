@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Button, Accordion, Row, Col } from 'react-bootstrap';
-import { FaBan } from 'react-icons/fa';
+import { Modal, Button, Accordion, Row, Col, Card } from 'react-bootstrap';
+import { FaBan, FaStickyNote } from 'react-icons/fa';
 import StatusBadge from './StatusBadge';
 
 export default function ProjectReviewDetailModal({ visible, checklist, review, onClose }) {
@@ -12,6 +12,21 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
                 <Modal.Title>Detalle de Revisión - {review.applied_at}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
+                {review.note && (
+                    <Card className="mb-3">
+                        <Card.Header className="d-flex align-items-center">
+                            <FaStickyNote className="me-2 text-primary" />
+                            <strong>Notas Generales</strong>
+                        </Card.Header>
+                        <Card.Body>
+                            <div
+                                dangerouslySetInnerHTML={{
+                                    __html: review.note
+                                }}
+                            />
+                        </Card.Body>
+                    </Card>
+                )}
                 <Accordion defaultActiveKey="0" alwaysOpen>
                     {checklist.map((aspect, index) => (
                         <Accordion.Item key={aspect.id} eventKey={index.toString()}>

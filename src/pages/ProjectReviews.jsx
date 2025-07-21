@@ -83,7 +83,7 @@ export default function ProjectReviews() {
     };
 
     const startNewReview = () => {
-        const lastReview = reviews[reviews.length - 1];
+        const lastReview = reviews[0];
         const lastResults = lastReview?.results || [];
 
         const results = checklist.flatMap(aspect =>
@@ -97,7 +97,11 @@ export default function ProjectReviews() {
             })
         );
 
-        setForm({ applied_at: new Date().toISOString().split('T')[0], results });
+        setForm({
+            applied_at: new Date().toISOString().split('T')[0],
+            results,
+            general_notes: '' // Add this line to initialize general_notes
+        });
         setNewReviewVisible(true);
     };
 
@@ -116,19 +120,19 @@ export default function ProjectReviews() {
         <Container fluid className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <Breadcrumb />
-                
+
                 <ButtonGroup>
-                    <Button 
-                        variant="success" 
-                        size="sm" 
+                    <Button
+                        variant="success"
+                        size="sm"
                         className="d-inline-flex align-items-center"
                         onClick={startNewReview}
                     >
                         <FaPlus className="me-2" />Revisión
                     </Button>
-                    <Button 
-                        variant="outline-success" 
-                        size="sm" 
+                    <Button
+                        variant="outline-success"
+                        size="sm"
                         className="d-inline-flex align-items-center"
                         onClick={() => exportGroupedReviewsToExcel(checklist, reviews)}
                     >

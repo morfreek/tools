@@ -1,21 +1,21 @@
 // src/pages/ProjectDetail.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaClipboardCheck, FaStickyNote, FaFile } from 'react-icons/fa';
+import { FaClipboardCheck, FaStickyNote, FaRocket } from 'react-icons/fa';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import ProjectInfoCard from '@/components/ProjectInfoCard';
 import ProjectNotesList from '@/components/ProjectNotesList';
 import Breadcrumb from '@/components/Breadcrumb';
 
-const ActionCard = ({ icon: Icon, title, description, onClick }) => (
+const ActionCard = ({ icon: Icon, title, description, onClick, color }) => (
     <Card 
-        className="h-100 shadow-sm border-success" 
+        className={`h-100 shadow-sm border-${color}`} 
         style={{ cursor: 'pointer', minHeight: '100px' }}
         onClick={onClick}
     >
         <Card.Body className="d-flex gap-3 align-items-center">
             <div
-                className="d-flex justify-content-center align-items-center bg-success text-white rounded-circle"
+                className={`d-flex justify-content-center align-items-center bg-${color} text-white rounded-circle`}
                 style={{ width: '48px', height: '48px', minWidth: '48px' }}
             >
                 <Icon size={26} />
@@ -37,19 +37,22 @@ export default function ProjectDetail() {
             icon: FaClipboardCheck,
             title: 'Revisión Técnica',
             description: 'Revisar y aplicar evaluación técnica al proyecto',
-            path: 'review'
+            path: 'review',
+            color: 'primary'
         },
         {
             icon: FaStickyNote,
             title: 'Notas',
             description: 'Anotaciones realicionadas al proyecto',
-            path: 'notes'
+            path: 'notes',
+            color: 'warning'
         },
         {
-            icon: FaFile,
-            title: 'Archivos',
-            description: 'Carga de documentos/archivos relevantes para el proyecto',
-            path: 'files'
+            icon: FaRocket,
+            title: 'Despliegue Continuo',
+            description: 'Generara pipelines para CD (continuous deployment)',
+            path: 'continuous-deployment',
+            color: 'danger'
         }
     ];
 

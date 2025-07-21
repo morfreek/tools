@@ -1,131 +1,60 @@
 import React from 'react';
 
-const generateVariables = (config, sshKeyBase64) => {
-    const vars = [
-        '# Configuración de despliegue',
-        `COMPOSER_HOME: "${config.general.composerHome}"`,
-        `PHP_VERSION: "${config.general.phpVersion}"`
-    ];
-
-    if (config.general.useNode) {
-        vars.push(`NODE_VERSION: "${config.general.nodeVersion}"`);
-    }
-
-    vars.push(
-        `DEPLOY_SERVER: "${config.deploy.server}"`,
-        `DEPLOY_USER: "${config.deploy.user}"`,
-        `DEPLOY_PATH: "${config.deploy.path}"`,
-        `DEPLOY_SSH_KEY: "${sshKeyBase64}"`,
-        '',
-        '# Variables de entorno para .env'
-    );
-
-    Object.entries(config.deploy.env).forEach(([key, value]) => {
-        vars.push(`${key}: "${value}"`);
-    });
-
-    return vars.join('\n  ');
-};
-
-const generateCacheConfig = (config) => `
-cache:
-  key: \${CI_COMMIT_REF_SLUG}
-  paths:
-    ${config.build.cache.paths.map(path => `- ${path}`).join('\n    ')}`;
-
-const generateBuildScript = (config) => {
-    const commands = [
-        'composer install --prefer-dist --no-ansi --no-interaction --no-progress',
-        'cp .env.example .env',
-        { comment: '# Incluir función de actualización' },
-        '*update_env_vars'
-    ];
-
-    if (config.general.useNode) {
-        commands.unshift('npm install -g npm@latest');
-        commands.push('npm install', 'npm run build');
-    }
-
-    return commands.map(cmd => {
-        if (typeof cmd === 'object' && cmd.comment) {
-            return `    ${cmd.comment}`;
-        }
-        return `    - ${cmd}`;
-    }).join('\n');
-};
-
-const generateBeforeScript = (config) => {
-    const basePackages = ['git', 'zip', 'unzip', 'libpng-dev'];
-    if (config.general.useNode) {
-        basePackages.push('nodejs', 'npm');
-    }
-
-    const commands = [
-        `apt-get update && apt-get install -y ${basePackages.join(' ')}`,
-        'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
-    ];
-
-    return commands.map(cmd => `    - ${cmd}`).join('\n');
-};
-
-const generateEnvUpdates = (config) => {
-    return Object.entries(config.deploy.env)
-        .map(([key, value]) => `    - update_env "${key}" "$${key}"`)
-        .join('\n');
-};
-
 export const generateYamlContent = (config) => {
-    const sshKeyBase64 = config.deploy.ssh_key ?
-        btoa(config.deploy.ssh_key.trim()) : '';
+  // Format environment variables for the YAML
+  const envVariables = Object.entries(config.deploy.env)
+    .map(([key, value]) => `  ${key}: "${value}"`)
+    .join('\n');
 
-    return `
+  // Create base64 encoded SSH key
+  const sshKeyBase64 = config.deploy.ssh_key ? 
+    btoa(config.deploy.ssh_key.trim()) : '';
+
+  return `variables:
+  # Configuración de despliegue
+  COMPOSER_HOME: "/composer"
+  PHP_VERSION: "${config.general.phpVersion}"
+  ${config.general.useNode ? `NODE_VERSION: "${config.general.nodeVersion}"` : '# NODE_VERSION: none'}
+  DEPLOY_SERVER: "${config.deploy.server}"
+  DEPLOY_USER: "${config.deploy.user}"
+  DEPLOY_PATH: "${config.deploy.path}"
+  DEPLOY_SSH_KEY: "${sshKeyBase64}"
+  DEPLOY_ENV: "${config.general.environment}"
+  DEPLOY_BRANCH: "${config.general.branch}"
+  
+  # Variables de entorno para .env
+${envVariables}
+
 stages:
-  - build
   - deploy
 
-variables:
-  ${generateVariables(config, sshKeyBase64)}
-  
-${generateCacheConfig(config)}
-
-.update_env_vars: &update_env_vars |
+.deploy_env_vars: &deploy_env_vars |
   function update_env() {
     local key="\${1}"
     local value="\${2}"
     sed -i "s|^\${key}=.*|\${key}=\${value}|" .env
   }
 
-build:
-  stage: build
-  image: php:\${PHP_VERSION}-fpm
-  before_script:
-${generateBeforeScript(config)}
-  script:
-${generateBuildScript(config)}
-    # Actualizar variables de entorno
-${generateEnvUpdates(config)}
-  artifacts:
-    paths:
-      ${config.build.artifacts
-        .filter(path => config.general.useNode || !path.includes('node_modules'))
-        .map(path => `- ${path}`)
-        .join('\n      ')}
-  only:
-    - $DEPLOY_BRANCH
-
 deploy:
   stage: deploy
-  image: alpine:latest
-  dependencies:
-    - build
+  image: php:\${PHP_VERSION}-fpm
   before_script:
-    - apk add --no-cache openssh-client rsync bash
+    - apt-get update && apt-get install -y git zip unzip libpng-dev ${config.general.useNode ? 'nodejs npm' : ''} openssh-client rsync bash
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     - eval $(ssh-agent -s)
     - echo "$DEPLOY_SSH_KEY" | base64 -d | tr -d '\\r' | ssh-add -
     - mkdir -p ~/.ssh
     - ssh-keyscan -H "$DEPLOY_SERVER" >> ~/.ssh/known_hosts
   script:
-    - rsync -avz --exclude '.git*' ${config.general.useNode ? '' : '--exclude "node_modules"'} ./ "$DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH"
+    ${config.general.useNode ? '- npm install -g npm@latest' : '# Node.js not required'}
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress
+    - cp .env.example .env
+    - *deploy_env_vars
+    ${config.general.useNode ? '- npm install\n    - npm run build' : '# Skip npm build'}
+${Object.entries(config.deploy.env)
+  .map(([key]) => `    - update_env "${key}" "$${key}"`)
+  .join('\n')}
+    - rsync -avz --exclude '.git*' ./ "$DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH"
     - ssh $DEPLOY_USER@$DEPLOY_SERVER "cd $DEPLOY_PATH && 
       composer install --no-dev --optimize-autoloader &&
       php artisan config:cache &&
@@ -134,14 +63,14 @@ deploy:
       php artisan migrate --force${config.general.useNode ? ' && npm install && npm run build' : ''}"
   environment:
     name: $DEPLOY_ENV
-    url: "https://$DEPLOY_SERVER$APP_URL"
+    url: "${config.deploy.env.APP_URL || 'https://$DEPLOY_SERVER'}"
   only:
     - $DEPLOY_BRANCH
 `;
 };
 
 export const YamlGenerator = {
-    generateYamlContent,
+  generateYamlContent,
 };
 
 export default YamlGenerator;

@@ -2,8 +2,16 @@ import React from 'react';
 import { Modal, Button, Form, Accordion, Row, Col } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
 import { STATUS_OPTIONS } from '@/utils/Constants';
+import Editor from 'react-simple-wysiwyg';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
+    const updateGeneralNotes = (value) => {
+        setForm(prev => ({
+            ...prev,
+            general_notes: value
+        }));
+    };
+
     const updateResult = (point_id, field, value) => {
         setForm(prev => ({
             ...prev,
@@ -26,6 +34,23 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                             type="date"
                             value={form.applied_at}
                             onChange={e => setForm({ ...form, applied_at: e.target.value })}
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Notas Generales:</Form.Label>
+                        <Editor
+                            containerProps={{
+                                style: {
+                                    resize: 'vertical',
+                                    minHeight: '200px',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem'
+                                }
+                            }}
+                            value={form.general_notes || ''}
+                            onChange={(e) => updateGeneralNotes(e.target.value)}
+                            placeholder="Agregue notas generales sobre la revisión..."
                         />
                     </Form.Group>
 
