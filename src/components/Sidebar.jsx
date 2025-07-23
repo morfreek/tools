@@ -7,7 +7,8 @@ import {
     FaHome,
     FaProjectDiagram,
     FaBolt,
-    FaSearch
+    FaSearch,
+    FaServer
 } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -29,6 +30,7 @@ const Sidebar = () => {
         { path: '/projects', label: 'Proyectos', icon: <FaProjectDiagram /> },
         { path: '/jmeter-test-generator', label: 'JMeter test generator', icon: <FaBolt /> },
         { path: '/phpstan', label: 'Visor PHPStan', icon: <FaSearch /> },
+        { path: '/word-generator', label: 'Solicitud de servidores', icon: <FaServer /> },
     ];
 
     const isActive = (path) => {

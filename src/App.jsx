@@ -5,6 +5,7 @@ import RequireAuth from '@/components/RequireAuth';
 import Home from '@/pages/Home';
 import JMeterTestGenerator from '@/pages/JMeterTestGenerator';
 import PhpStanViewer from '@/pages/PhpStanViewer';
+import WordGeneratorPage from '@/pages/WordGeneratorPage'; // Import WordGeneratorPage
 import NotFound from '@/pages/NotFound'; // Import the 404 page component
 
 import Projects from '@/pages/Projects';
@@ -43,7 +44,8 @@ const LocationWrapper = () => {
         { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> }, // Add ProjectFiles route
         { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
         { path: '/jmeter-test-generator', element: <JMeterTestGenerator /> },
-        { path: '/phpstan', element: <PhpStanViewer /> }
+        { path: '/phpstan', element: <PhpStanViewer /> },
+        { path: '/word-generator', element: <WordGeneratorPage /> } // Add WordGeneratorPage route
     ];
 
     // Check if the current path matches any valid route
