@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from 'react-router-dom'; // Import useLocation and matchPath
 import Sidebar from '@/components/Sidebar';
 import RequireAuth from '@/components/RequireAuth';
 import Home from '@/pages/Home';
 import JMeterTestGenerator from '@/pages/JMeterTestGenerator';
 import PhpStanViewer from '@/pages/PhpStanViewer';
-import WordGeneratorPage from '@/pages/WordGeneratorPage'; // Import WordGeneratorPage
+import ServersRequestPage from '@/pages/ServersRequestPage'; // Import ServersRequestPage
 import NotFound from '@/pages/NotFound'; // Import the 404 page component
 
 import Projects from '@/pages/Projects';
@@ -18,6 +18,22 @@ import { ToastProvider } from '@/components/ToastContext'; // Importa el ToastPr
 import { ConfirmProvider } from '@/components/ConfirmContext'; // Import ConfirmProvider
 
 const basename = import.meta.env.VITE_BASE_URL;
+
+// Hook personalizado para detectar el ancho de la ventana
+const useWindowWidth = () => {
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return windowWidth;
+};
 
 const App = () => {
     return (
@@ -32,7 +48,24 @@ const App = () => {
 };
 
 const LocationWrapper = () => {
-    const location = useLocation(); // Get the current location
+    const location = useLocation();
+    const windowWidth = useWindowWidth();
+    const [manualCollapsed, setManualCollapsed] = useState(() => {
+        return localStorage.getItem('sidebar-collapsed') === 'true';
+    });
+    
+    // Definir el breakpoint donde el sidebar se colapsa (768px para tablets)
+    const SIDEBAR_COLLAPSE_BREAKPOINT = 768;
+    const isAutoCollapsed = windowWidth < SIDEBAR_COLLAPSE_BREAKPOINT;
+    
+    // El sidebar está colapsado si es automático O manual
+    const isCollapsed = isAutoCollapsed || manualCollapsed;
+
+    // Callback para manejar el cambio de estado del sidebar
+    const handleSidebarToggle = (collapsed) => {
+        setManualCollapsed(collapsed);
+        localStorage.setItem('sidebar-collapsed', collapsed);
+    };
 
     // Define all valid routes and their components
     const validRoutes = [
@@ -45,7 +78,7 @@ const LocationWrapper = () => {
         { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
         { path: '/jmeter-test-generator', element: <JMeterTestGenerator /> },
         { path: '/phpstan', element: <PhpStanViewer /> },
-        { path: '/word-generator', element: <WordGeneratorPage /> } // Add WordGeneratorPage route
+        { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> } // Add ServersRequestPage route
     ];
 
     // Check if the current path matches any valid route
@@ -53,8 +86,30 @@ const LocationWrapper = () => {
 
     return (
         <div className="d-flex" style={{ height: '100vh', overflow: 'hidden' }}>
-            {!isNotFound && <Sidebar />} {/* Conditionally render Sidebar */}
-            <div className="flex-grow-1 overflow-auto" style={{ maxHeight: '100vh' }}>
+            {!isNotFound && (
+                <div 
+                    style={{ 
+                        width: isCollapsed ? '60px' : '250px', 
+                        minWidth: isCollapsed ? '60px' : '250px',
+                        flexShrink: 0,
+                        transition: 'width 0.3s ease'
+                    }}
+                >
+                    <Sidebar 
+                        collapsed={isCollapsed} 
+                        autoCollapsed={isAutoCollapsed}
+                        onToggle={handleSidebarToggle}
+                    />
+                </div>
+            )}
+            <div 
+                className="flex-grow-1 overflow-auto" 
+                style={{ 
+                    height: '100vh',
+                    minWidth: 0, // Importante: permite que el contenido se encoja
+                    transition: 'all 0.3s ease'
+                }}
+            >
                 <Routes>
                     {validRoutes.map(({ path, element }) => (
                         <Route key={path} path={path} element={element} />

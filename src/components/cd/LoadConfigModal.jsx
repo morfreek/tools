@@ -38,7 +38,7 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                                     size="sm"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        onDelete(config.id || index);
+                                        onDelete(config.name);
                                     }}
                                     disabled={loading}
                                 >

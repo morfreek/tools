@@ -11,18 +11,14 @@ import {
     FaServer
 } from 'react-icons/fa';
 
-const Sidebar = () => {
+const Sidebar = ({ collapsed, autoCollapsed, onToggle }) => {
     const location = useLocation();
-    const [collapsed, setCollapsed] = useState(() => {
-        return localStorage.getItem('sidebar-collapsed') === 'true';
-    });
-
-    useEffect(() => {
-        localStorage.setItem('sidebar-collapsed', collapsed);
-    }, [collapsed]);
 
     const toggleSidebar = () => {
-        setCollapsed(prev => !prev);
+        // Solo permitir toggle si no está auto-colapsado
+        if (!autoCollapsed && onToggle) {
+            onToggle(!collapsed);
+        }
     };
 
     const menuItems = [
@@ -30,7 +26,7 @@ const Sidebar = () => {
         { path: '/projects', label: 'Proyectos', icon: <FaProjectDiagram /> },
         { path: '/jmeter-test-generator', label: 'JMeter test generator', icon: <FaBolt /> },
         { path: '/phpstan', label: 'Visor PHPStan', icon: <FaSearch /> },
-        { path: '/word-generator', label: 'Solicitud de servidores', icon: <FaServer /> },
+        { path: '/solicitud-maquina-virtual-upt', label: 'Solicitud de servidores', icon: <FaServer /> },
     ];
 
     const isActive = (path) => {
@@ -42,10 +38,7 @@ const Sidebar = () => {
         <div
             className="bg-dark text-white p-3 d-flex flex-column"
             style={{
-                width: collapsed ? '60px' : '250px',
-                transition: 'width 0.3s',
-                position: 'sticky',
-                top: 0,
+                width: '100%',
                 height: '100vh',
                 overflow: 'hidden',
                 zIndex: 1000
@@ -57,7 +50,11 @@ const Sidebar = () => {
                     onClick={toggleSidebar}
                     variant="outline-light"
                     size="sm"
-                    className="mb-3 d-flex align-items-center justify-content-center"
+                    className={`mb-3 d-flex align-items-center justify-content-center ${
+                        autoCollapsed ? 'opacity-50' : ''
+                    }`}
+                    disabled={autoCollapsed}
+                    title={autoCollapsed ? 'Colapsado automáticamente por tamaño de pantalla' : 'Colapsar/Expandir sidebar'}
                 >
                     {collapsed ? <FaBars /> : <FaChevronLeft />}
                 </Button>

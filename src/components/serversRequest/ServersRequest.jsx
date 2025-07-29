@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import { Container, Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
 
-const WordGenerator = () => {
-    const [templateFile, setTemplateFile] = useState(null);
+const ServersRequest = () => {
+    const [templateLoaded, setTemplateLoaded] = useState(false);
+    const [templateError, setTemplateError] = useState('');
+    const [templateBuffer, setTemplateBuffer] = useState(null);
+    const [templateSource, setTemplateSource] = useState('default'); // 'default', 'uploaded'
+    const [uploadedFileName, setUploadedFileName] = useState('');
     const [formData, setFormData] = useState({
         'solicitante': 'Ariel Mora',
         'fecha': new Date().toLocaleDateString('es-ES', {
@@ -37,34 +41,163 @@ const WordGenerator = () => {
     const [customFields, setCustomFields] = useState([]);
     const [newFieldName, setNewFieldName] = useState('');
 
+    // Cargar template al montar el componente
+    useEffect(() => {
+        loadDefaultTemplate();
+    }, []);
+
+    // Función para cargar template desde public
+    const loadDefaultTemplate = async () => {
+        try {
+            setTemplateError('');
+            setTemplateSource('default');
+            
+            const baseUrl = import.meta.env.VITE_BASE_URL || '/tools';
+            const templatePath = `${baseUrl}/data/docs/template/formulariosolicitudmaquina.docx`;
+            
+            const response = await fetch(templatePath);
+            
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar la plantilla: ${response.status} - ${response.statusText}`);
+            }
+            
+            const arrayBuffer = await response.arrayBuffer();
+            
+            await processTemplateBuffer(arrayBuffer);
+            
+        } catch (err) {
+            setTemplateError(`No se pudo cargar la plantilla por defecto. 
+                Error: ${err.message}
+                
+                Soluciones:
+                1. Asegúrate de que el archivo existe en: /var/www/html/private/apps/tools/public/data/docs/template/formulariosolicitudmaquina.docx
+                2. Sube tu propia plantilla usando el botón "Subir Plantilla"`);
+            setTemplateLoaded(false);
+        }
+    };
+
+    // Función para cargar template desde archivo local subido por el usuario
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            setTemplateError('');
+            setTemplateSource('uploaded');
+            setUploadedFileName(file.name);
+            
+            // Verificar que sea un archivo .docx
+            if (!file.name.toLowerCase().endsWith('.docx')) {
+                throw new Error('El archivo debe ser un documento Word (.docx)');
+            }
+            
+            // Leer el archivo como ArrayBuffer
+            const arrayBuffer = await file.arrayBuffer();
+            
+            await processTemplateBuffer(arrayBuffer);
+            
+        } catch (err) {
+            setTemplateError(`Error al cargar el archivo: ${err.message}`);
+            setTemplateLoaded(false);
+        }
+        
+        // Limpiar el input
+        event.target.value = '';
+    };
+
+    // Función para recargar template (usa la fuente actual)
+    const reloadTemplate = async () => {
+        if (templateSource === 'uploaded') {
+            setTemplateError('Para recargar un archivo subido, selecciona el archivo nuevamente.');
+            return;
+        }
+        await loadDefaultTemplate();
+    };
+
+    // Función auxiliar para procesar el buffer de la plantilla
+    const processTemplateBuffer = async (arrayBuffer) => {
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+            throw new Error('La plantilla está vacía o corrupta');
+        }
+
+        // Verificar la firma del archivo (magic bytes)
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const firstBytes = Array.from(uint8Array.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+
+        // Verificar si es un archivo ZIP (los .docx son archivos ZIP)
+        // ZIP files start with 'PK' (0x50 0x4B)
+        if (uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4B) {
+            // Convertir los primeros bytes a texto para ver si es HTML o texto plano
+            const textDecoder = new TextDecoder();
+            const firstChars = textDecoder.decode(uint8Array.slice(0, 100));
+
+            throw new Error(`El archivo no es un documento Word válido. 
+                Los archivos .docx deben comenzar con la firma ZIP (PK).
+                Firma encontrada: ${firstBytes}
+                Posibles causas:
+                - El archivo es HTML en lugar de un .docx
+                - El archivo está corrupto
+                - El servidor está devolviendo una página de error
+                - El archivo no es realmente un documento Word
+                
+                Contenido detectado: ${firstChars.substring(0, 50)}...`);
+        }
+
+        // Verificar que es un archivo ZIP válido (los .docx son archivos ZIP)
+        let zip;
+        try {
+            zip = new PizZip(arrayBuffer);
+        } catch (zipError) {
+            // Información adicional de debugging
+            const textSample = new TextDecoder().decode(uint8Array.slice(0, 200));
+            
+            throw new Error(`El archivo no es un ZIP válido (los .docx son archivos ZIP). 
+                Error específico: ${zipError.message}
+                
+                Información del archivo:
+                - Tamaño: ${arrayBuffer.byteLength} bytes
+                - Firma: ${firstBytes}
+                - Muestra: ${textSample.substring(0, 100)}
+                
+                Soluciones posibles:
+                1. Verificar que el archivo .docx no esté corrupto
+                2. Recrear el archivo .docx desde Word
+                3. Verificar que el servidor no está devolviendo HTML en lugar del archivo
+                4. Comprobar los permisos del archivo en el servidor`);
+        }
+
+        // Verificar que contiene los archivos básicos de un documento Word
+        try {
+            const files = Object.keys(zip.files);
+            
+            const requiredFiles = ['word/document.xml', '[Content_Types].xml'];
+            const missingFiles = requiredFiles.filter(file => !files.includes(file));
+            
+            if (missingFiles.length > 0) {
+                throw new Error(`El archivo no contiene los archivos requeridos de Word: ${missingFiles.join(', ')}`);
+            }
+        } catch (fileCheckError) {
+            throw new Error(`Error verificando estructura del documento: ${fileCheckError.message}`);
+        }
+
+        // Intentar crear el documento con Docxtemplater
+        try {
+            const doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+                errorLogging: true
+            });
+        } catch (docError) {
+            throw new Error(`Error al procesar el documento con Docxtemplater: ${docError.message}`);
+        }
+
+        setTemplateBuffer(arrayBuffer);
+        setTemplateLoaded(true);
+    };
+
     // Función para generar identificador único
     const generateUniqueId = () => {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    };
-
-    const handleTemplateUpload = (event) => {
-        const file = event.target.files[0];
-
-        if (!file) {
-            setError('No se seleccionó ningún archivo');
-            return;
-        }
-
-        // Validar tipo de archivo
-        if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            setError('Por favor selecciona un archivo .docx válido');
-            return;
-        }
-
-        // Validar tamaño de archivo (máximo 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setError('El archivo es demasiado grande. Máximo 10MB permitido');
-            return;
-        }
-
-        // Limpiar errores previos
-        setError('');
-        setTemplateFile(file);
     };
 
     const handleInputChange = (key, value) => {
@@ -89,8 +222,8 @@ const WordGenerator = () => {
     };
 
     const generateDocument = async () => {
-        if (!templateFile) {
-            setError('Por favor selecciona una plantilla primero');
+        if (!templateLoaded || !templateBuffer) {
+            setError('La plantilla no está cargada. Intenta recargar la página.');
             return;
         }
 
@@ -98,28 +231,11 @@ const WordGenerator = () => {
         setError('');
 
         try {
-            // Verificar que el archivo sigue siendo accesible
-            if (!templateFile.size || templateFile.size === 0) {
-                throw new Error('El archivo seleccionado no es válido o está vacío');
-            }
-
-            // Leer el archivo con mejor manejo de errores
-            let arrayBuffer;
-            try {
-                arrayBuffer = await templateFile.arrayBuffer();
-            } catch (fileError) {
-                throw new Error('No se pudo leer el archivo. Intenta seleccionarlo nuevamente');
-            }
-
-            if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-                throw new Error('El archivo está vacío o corrupto');
-            }
-
             let zip;
             try {
-                zip = new PizZip(arrayBuffer);
+                zip = new PizZip(templateBuffer);
             } catch (zipError) {
-                throw new Error('El archivo no es un documento Word válido');
+                throw new Error('Error al procesar la plantilla');
             }
 
             let doc;
@@ -192,15 +308,12 @@ const WordGenerator = () => {
                 throw new Error('Error al crear el documento final');
             }
 
-            // Obtener el nombre base del archivo cargado (sin extensión)
-            const templateBaseName = templateFile.name.replace(/\.[^/.]+$/, "");
-
-            // Crear nombre del archivo con plantilla base y servidor o identificador único
+            // Crear nombre del archivo con servidor o identificador único
             const serverName = formData.server ?
                 formData.server.replace(/[^a-zA-Z0-9\-_]/g, '-') :
                 generateUniqueId();
 
-            const fileName = `${templateBaseName}-${serverName}.docx`;
+            const fileName = `Formulario Solicitud de Servidores Virtuales-${serverName}.docx`;
 
             // Descargar el archivo
             try {
@@ -226,7 +339,6 @@ const WordGenerator = () => {
             }
 
         } catch (err) {
-            console.error('Error detallado:', err);
             setError(err.message || 'Error desconocido al generar el documento');
         } finally {
             setIsGenerating(false);
@@ -316,53 +428,120 @@ const WordGenerator = () => {
         <Container fluid className="mt-4">
             <Row className="mb-3">
                 <Col>
-                    <h2 className="text-center mb-4">Crear solicitud máquinas UPS</h2>
+                    <h3>Crear solicitud máquinas UPT</h3>
 
-                    {/* Sección de carga de plantilla */}
+                    {/* Estado de la plantilla */}
                     <Card className="mb-4">
                         <Card.Body className="text-center">
-                            <Card.Title>Seleccionar plantilla (.docx):</Card.Title>
-                            <Form.Group>
-                                <Form.Control
-                                    type="file"
-                                    accept=".docx"
-                                    onChange={handleTemplateUpload}
-                                    className="mb-3"
-                                    key={templateFile ? templateFile.name : 'empty'} // Force re-render
-                                />
-                                <Form.Text className="text-muted">
-                                    Archivo máximo: 10MB. Solo archivos .docx
-                                </Form.Text>
-                                {templateFile && (
-                                    <Alert variant="success" className="mb-0 mt-2">
-                                        <strong>Plantilla cargada:</strong> {templateFile.name} ({(templateFile.size / 1024).toFixed(1)} KB)
-                                    </Alert>
-                                )}
-                            </Form.Group>
+                            <Card.Title>Estado de la plantilla</Card.Title>
+                            {templateLoaded ? (
+                                <Alert variant="success" className="mb-3">
+                                    <strong>✓ Plantilla cargada:</strong> 
+                                    {templateSource === 'uploaded' ? uploadedFileName : 'formulariosolicitudmaquina.docx'}
+                                    <br />
+                                    <small className="text-muted">
+                                        Tamaño: {templateBuffer ? `${(templateBuffer.byteLength / 1024).toFixed(1)} KB` : 'Desconocido'}
+                                        {templateSource === 'uploaded' && ' (archivo subido)'}
+                                        {templateSource === 'default' && ' (desde public)'}
+                                    </small>
+                                </Alert>
+                            ) : templateError ? (
+                                <Alert variant="danger" className="mb-3">
+                                    <strong>✗ Error al cargar plantilla:</strong>
+                                    <div className="mt-2 p-2 bg-light rounded">
+                                        <small className="text-danger">{templateError}</small>
+                                    </div>
+                                    <div className="mt-3">
+                                        <Button variant="outline-danger" size="sm" onClick={reloadTemplate} className="me-2">
+                                            Intentar recargar
+                                        </Button>
+                                        <Button 
+                                            variant="outline-info" 
+                                            size="sm" 
+                                            onClick={() => {
+                                                const debugInfo = {
+                                                    templateBuffer: templateBuffer ? `${templateBuffer.byteLength} bytes` : 'null',
+                                                    templateLoaded,
+                                                    templateError,
+                                                    templateSource,
+                                                    baseUrl: import.meta.env.VITE_BASE_URL,
+                                                    entorno: import.meta.env.MODE
+                                                };
+                                                
+                                                if (templateBuffer) {
+                                                    const uint8Array = new Uint8Array(templateBuffer);
+                                                    const firstBytes = Array.from(uint8Array.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                                                    const textSample = new TextDecoder().decode(uint8Array.slice(0, 100));
+                                                    debugInfo.bufferInfo = {
+                                                        tamaño: templateBuffer.byteLength,
+                                                        primeros8Bytes: firstBytes,
+                                                        muestraTexto: textSample
+                                                    };
+                                                }
+                                                
+                                                console.log('=== INFORMACIÓN DE DEBUGGING ===', debugInfo);
+                                                alert('Revisa la consola del navegador para ver la información de debugging');
+                                            }}
+                                        >
+                                            Debug Info
+                                        </Button>
+                                    </div>
+                                </Alert>
+                            ) : (
+                                <Alert variant="info" className="mb-0">
+                                    <strong>⏳ Cargando plantilla...</strong>
+                                </Alert>
+                            )}
+                            
+                            {/* Sección para subir plantilla personalizada */}
+                            <div className="mt-3">
+                                <hr />
+                                <h6>Plantilla personalizada</h6>
+                                <p className="text-muted small mb-3">
+                                    Si tienes problemas con la plantilla por defecto, puedes subir tu propia plantilla .docx
+                                </p>
+                                <Form.Group className="d-flex align-items-center justify-content-center">
+                                    <Form.Control
+                                        type="file"
+                                        accept=".docx"
+                                        onChange={handleFileUpload}
+                                        className="me-2"
+                                        style={{ maxWidth: '300px' }}
+                                    />
+                                    <Button 
+                                        variant="outline-secondary" 
+                                        size="sm"
+                                        onClick={loadDefaultTemplate}
+                                        disabled={templateSource === 'default'}
+                                    >
+                                        Usar plantilla por defecto
+                                    </Button>
+                                </Form.Group>
+                            </div>
                         </Card.Body>
                     </Card>
 
-                    {/* Instrucciones actualizadas */}
+                    {/* Instrucciones */}
                     <Card className="mb-4">
                         <Card.Header>
                             <h6 className="mb-0">Instrucciones:</h6>
                         </Card.Header>
                         <Card.Body>
                             <ol className="mb-0">
-                                <li>Crea una plantilla Word (.docx) con variables como {Object.keys(formData).slice(0, 3).map(key => `{${key}}`).join(', ')}</li>
-                                <li>Para checkboxes usa: <code>{'{backup_requerido}'}</code> (☑/☐)</li>
-                                <li>Para radio groups usa: <code>{'{tipo_ambiente_testing}'}</code>, <code>{'{tipo_ambiente_desarrollo}'}</code>, etc.</li>
-                                <li>O usa el valor seleccionado: <code>{'{tipo_ambiente}'}</code> → "testing", <code>{'{tipo_ambiente_text}'}</code> → "Testing"</li>
-                                <li>Sube la plantilla, completa los datos y genera el documento</li>
+                                <li>La plantilla <code>formulariosolicitudmaquina.docx</code> se carga desde la carpeta public</li>
+                                <li>Completa los campos del formulario según tus necesidades</li>
+                                <li>Para radio groups usa variables como: <code>{'{tipo_ambiente_testing}'}</code>, <code>{'{tipo_ambiente_desarrollo}'}</code></li>
+                                <li>También puedes usar el valor seleccionado: <code>{'{tipo_ambiente}'}</code> → "testing"</li>
+                                <li>Haz clic en "Generar Documento" para descargar el archivo</li>
                             </ol>
                         </Card.Body>
                     </Card>
 
-                    {/* Sección de formulario */}
-                    {templateFile && (
+                    {/* Sección de formulario - Solo mostrar si la plantilla está cargada */}
+                    {templateLoaded && (
                         <Card className="mb-4">
                             <Card.Header>
-                                <h5 className="mb-0">Datos para reemplazar en la plantilla</h5>
+                                <h5 className="mb-0">Datos para la solicitud</h5>
                             </Card.Header>
                             <Card.Body>
                                 <Alert variant="info" className="mb-4">
@@ -506,6 +685,7 @@ const WordGenerator = () => {
                                             <Col xs={12} md={4}>
                                                 <Button
                                                     variant="success"
+                                                    size="sm"
                                                     onClick={addCustomField}
                                                     disabled={!newFieldName.trim()}
                                                     className="w-100"
@@ -547,30 +727,21 @@ const WordGenerator = () => {
                         </Card>
                     )}
 
-                    {/* Mensaje de error mejorado */}
+                    {/* Mensaje de error */}
                     {error && (
                         <Alert variant="danger" className="mb-4">
                             <Alert.Heading>Error</Alert.Heading>
-                            <p className="mb-2">{error}</p>
-                            <hr />
-                            <p className="mb-0">
-                                <small>
-                                    Si el problema persiste:
-                                    <br />• Verifica que el archivo no esté abierto en otra aplicación
-                                    <br />• Intenta seleccionar el archivo nuevamente
-                                    <br />• Asegúrate de que el archivo no esté corrupto
-                                </small>
-                            </p>
+                            <p className="mb-0">{error}</p>
                         </Alert>
                     )}
 
-                    {/* Botón de generar */}
+                    {/* Botón de generar - Solo habilitado si la plantilla está cargada */}
                     <div className="d-grid mb-4">
                         <Button
                             variant="primary"
-                            size="lg"
+                            size="sm"
                             onClick={generateDocument}
-                            disabled={!templateFile || isGenerating}
+                            disabled={!templateLoaded || isGenerating}
                         >
                             {isGenerating ? 'Generando...' : 'Generar Documento'}
                         </Button>
@@ -581,4 +752,4 @@ const WordGenerator = () => {
     );
 };
 
-export default WordGenerator;
+export default ServersRequest;
