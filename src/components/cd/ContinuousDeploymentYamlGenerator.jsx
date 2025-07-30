@@ -113,8 +113,8 @@ deploy:
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" bash -c "'
         cd $DEPLOY_PATH &&
         chmod -R 755 . &&
-        setfacl -R -m u:apache:rwx storage/ &&
-        setfacl -R -m u:apache:rwx bootstrap/cache &&
+        setfacl -R -m u:apache:rwx storage/ || true &&
+        setfacl -R -m u:apache:rwx bootstrap/cache || true &&
         composer install --no-interaction --optimize-autoloader &&`;
 
         // Agregar comandos de Node.js en el servidor si está habilitado
@@ -130,11 +130,11 @@ deploy:
         php artisan migrate --force
       '"
   environment:
-    name: $${deploy.env.DEPLOY_ENV || 'DEPLOY_ENV'}
-    url: "$${deploy.env.APP_URL || 'APP_URL'}"
+    name: $${Object.keys(deploy.env).find(key => key.includes('APP_ENV')) || 'production'}
+    url: "$${Object.keys(deploy.env).find(key => key.includes('APP_URL')) || 'APP_URL'}"
   only:
     - ${general.branch}`;
-
+console.log(deploy.env)
         return `${variables}${stages}${deployEnvVars}${deployJob}`;
     },
 

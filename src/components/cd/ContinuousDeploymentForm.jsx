@@ -8,7 +8,7 @@ import SaveConfigModal from '@/components/cd/SaveConfigModal';
 import LoadConfigModal from '@/components/cd/LoadConfigModal';
 import EnvVariableRow from '@/components/cd/EnvVariableRow';
 import { defaultConfig } from '@/config/ContinuousDeploymentDefaults';
-import { generateYamlContent } from '@/utils/ContinuousDeploymentYamlGenerator';
+import { generateYamlContent } from '@/components/cd/ContinuousDeploymentYamlGenerator';
 import api from '@/api';
 
 export default function ContinuousDeploymentForm({ projectId }) {
