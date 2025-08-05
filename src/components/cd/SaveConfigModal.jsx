@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 
-export default function SaveConfigModal({ show, onHide, onSave, loading = false }) {
+export default function SaveConfigModal({ show, onHide, onSave, loading = false, defaultName = '' }) {
     const [configName, setConfigName] = useState('');
+
+    useEffect(() => {
+        if (show && defaultName) {
+            setConfigName(defaultName);
+        }
+    }, [show, defaultName]);
 
     const handleSave = () => {
         onSave(configName);
@@ -27,13 +33,14 @@ export default function SaveConfigModal({ show, onHide, onSave, loading = false 
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide} disabled={loading}>
+                <Button variant="secondary" onClick={onHide} disabled={loading} size="sm">
                     Cancelar
                 </Button>
                 <Button 
                     variant="primary" 
                     onClick={handleSave} 
                     disabled={!configName.trim() || loading}
+                    size="sm"
                 >
                     {loading ? 'Guardando...' : 'Guardar'}
                 </Button>

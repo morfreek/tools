@@ -13,7 +13,7 @@ export const CodePreview = ({ content }) => (
                 padding: '1rem',
                 borderRadius: '4px',
                 overflow: 'auto',
-                maxHeight: '600px'
+                maxHeight: '100%'
             }}
         >
             {content.split('\n').map((line, i) => (

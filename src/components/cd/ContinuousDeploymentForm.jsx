@@ -419,6 +419,7 @@ export default function ContinuousDeploymentForm({ projectId }) {
                 onHide={() => setShowSaveModal(false)}
                 onSave={handleSaveConfig}
                 loading={loading}
+                defaultName={config.deploy.env.APP_URL || ''}
             />
             <LoadConfigModal
                 show={showLoadModal}
