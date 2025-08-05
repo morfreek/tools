@@ -12,17 +12,14 @@ export const ContinuousDeploymentYamlGenerator = {
      */
     generateYamlContent(config) {
         const { general, deploy } = config;
+        const isNodeEnabled = general.useNode && general.nodeVersion;
 
         // Validar configuración
         const base64SSHkey = (input) => {
-            // Normaliza saltos de línea a \n
             let normalized = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            // Asegura salto de línea final si el archivo original lo tiene
             if (!normalized.endsWith('\n')) normalized += '\n';
-            // Codifica a bytes puros (UTF-8)
             const encoder = new TextEncoder();
             const bytes = encoder.encode(normalized);
-            // Codifica a base64
             let binary = '';
             for (let i = 0; i < bytes.length; i++) {
                 binary += String.fromCharCode(bytes[i]);
@@ -31,18 +28,11 @@ export const ContinuousDeploymentYamlGenerator = {
         }
 
         // Generar variables del deployment
-        let variables = `variables:
+        const variables = `variables:
   # Configuración de despliegue
   COMPOSER_HOME: "/composer"
-  PHP_VERSION: "${general.phpVersion}"`;
-
-        // Agregar NODE_VERSION solo si está habilitado
-        if (general.useNode && general.nodeVersion) {
-            variables += `\n  NODE_VERSION: "${general.nodeVersion}"`;
-        } else {
-            variables += `\n  # NODE_VERSION: none`;
-        }
-        variables += `
+  PHP_VERSION: "${general.phpVersion}"
+  ${isNodeEnabled ? `NODE_VERSION: "${general.nodeVersion}"` : '# NODE_VERSION: none'}
   DEPLOY_SERVER: "${deploy.server}"
   DEPLOY_USER: "${deploy.user}"
   DEPLOY_PATH: "${deploy.path}"
@@ -50,18 +40,13 @@ export const ContinuousDeploymentYamlGenerator = {
   DEPLOY_ENV: "${general.environment}"
   DEPLOY_BRANCH: "${general.branch}"
   
-  # Variables de entorno para .env`;
-
-        // Agregar variables de entorno
-        Object.entries(deploy.env).forEach(([key, value]) => {
-            variables += `\n  ${key}: "${value}"`;
-        });
+  # Variables de entorno para .env${Object.entries(deploy.env).map(([key, value]) => `\n  ${key}: "${value}"`).join('')}`;
 
         // Generar stages
         const stages = `
 
-stages:
-  - deploy`;
+stages:${isNodeEnabled ? '\n  - build_frontend' : ''}
+  - deploy_backend`;
 
         // Generar función para actualizar variables de entorno
         const deployEnvVars = `
@@ -70,72 +55,80 @@ stages:
   function update_env() {
     local key="\${1}"
     local value="\${2}"
-    sed -i "s|^\${key}=.*|\${key}=\${value}|" .env
+    if grep -q "^\${key}=" .env; then
+        sed -i "s|^\${key}=.*|\${key}=\${value}|" .env
+    else
+        echo "\${key}=\${value}" >> .env
+    fi
   }`;
 
-        // Generar job de deploy
-        let deployJob = `
+        // Generar job de build frontend
+        const buildFrontendJob = isNodeEnabled ? `
 
-deploy:
-  stage: deploy
+# Job para el build del frontend
+build_frontend:
+  stage: build_frontend
+  image: node:\${NODE_VERSION}
+  script:
+    - touch .env
+    - *deploy_env_vars${Object.keys(deploy.env).map(key => `\n    - update_env "VITE_${key}" "$${key}"`).join('')}
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - public/build/
+    expire_in: 1 hour` : '';
+
+        // Generar job de deploy backend
+        const deployJob = `
+
+# Job para el deploy del backend
+deploy_backend:
+  stage: deploy_backend
   image: php:\${PHP_VERSION}-fpm
   before_script:
-    - apt-get update && apt-get install -y openssh-client bash rsync`;
-
-        // Agregar configuración de Node.js si está habilitado
-        if (general.useNode && general.nodeVersion) {
-            deployJob += `
-    - node --version && npm --version`;
-        }
-
-        deployJob += `
+    - apt-get update && apt-get install -y openssh-client bash rsync
     - mkdir -p ~/.ssh
     - echo -e "$DEPLOY_SSH_KEY" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H "$DEPLOY_SERVER" >> ~/.ssh/known_hosts
   script:
     - cp .env.example .env
-    - *deploy_env_vars`;
-
-        // Agregar actualizaciones de variables de entorno
-        Object.keys(deploy.env).forEach(key => {
-            deployJob += `\n    - update_env "${key}" "$${key}"`;
-        });
-
-        // Agregar comandos de Node.js si está habilitado
-        if (general.useNode && general.nodeVersion) {
-            deployJob += `
-    - npm install --production`;
-        }
-
-        deployJob += `
-    - rsync -avz --exclude 'storage/' ./ "$DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH"
+    - *deploy_env_vars${Object.keys(deploy.env).map(key => `\n    - update_env "${key}" "$${key}"`).join('')}
+    - |
+      # Verifica si storage/ existe en el servidor remoto
+      if ssh "$DEPLOY_USER@$DEPLOY_SERVER" "[ -d '$DEPLOY_PATH/storage' ]"; then
+        echo "La carpeta storage/ ya existe en el servidor. Excluyéndola del rsync."
+        rsync -avz --exclude 'storage/' ./ "$DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH"
+      else
+        echo "La carpeta storage/ NO existe en el servidor. Copiando todo el proyecto."
+        rsync -avz ./ "$DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH"
+      fi
+      ssh "$DEPLOY_USER@$DEPLOY_SERVER" bash -c "'
+        cd $DEPLOY_PATH &&
+        if [ -d storage ]; then
+            chmod -R 775 storage
+            setfacl -R -m u:apache:rwx storage/ || true
+        fi &&
+        if [ -d bootstrap/cache ]; then
+            chmod -R 775 bootstrap/cache
+            setfacl -R -m u:apache:rwx bootstrap/cache || true
+        fi
+        '"
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" bash -c "'
         cd $DEPLOY_PATH &&
-        chmod -R 755 . &&
-        setfacl -R -m u:apache:rwx storage/ || true &&
-        setfacl -R -m u:apache:rwx bootstrap/cache || true &&
-        composer install --no-interaction --optimize-autoloader &&`;
-
-        // Agregar comandos de Node.js en el servidor si está habilitado
-        if (general.useNode && general.nodeVersion) {
-            deployJob += `
-        npm install --production &&
-        npm run build &&`;
-        }
-
-        deployJob += `
+        composer install --no-interaction --optimize-autoloader &&
         php artisan key:generate &&
         php artisan optimize &&
         php artisan migrate --force
-      '"
+      '"${isNodeEnabled ? '\n  dependencies:\n    - build_frontend' : ''}
   environment:
     name: $${Object.keys(deploy.env).find(key => key.includes('APP_ENV')) || 'production'}
     url: "$${Object.keys(deploy.env).find(key => key.includes('APP_URL')) || 'APP_URL'}"
   only:
     - ${general.branch}`;
-console.log(deploy.env)
-        return `${variables}${stages}${deployEnvVars}${deployJob}`;
+
+        return `${variables}${stages}${deployEnvVars}${buildFrontendJob}${deployJob}`;
     },
 
     /**
