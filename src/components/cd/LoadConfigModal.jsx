@@ -28,7 +28,7 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
         <>
             <Modal show={show} onHide={onHide} centered size="lg">
                 <Modal.Header closeButton>
-                    <Modal.Title>Cargar Configuración</Modal.Title>s
+                    <Modal.Title>Cargar Configuración</Modal.Title>
                 </Modal.Header>
                 <Modal.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
                     {loading ? (
@@ -39,12 +39,11 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                     ) : configs.length === 0 ? (
                         <p className="text-center">No hay configuraciones guardadas</p>
                     ) : (
-                        <ListGroup action>
+                        <ListGroup>
                             {configs.map((config, index) => (
                                 <ListGroup.Item
                                     key={index}
-                                    action
-                                    className="d-flex justify-content-between align-items-center"
+                                    className="d-flex justify-content-between align-items-center list-group-item-action"
                                 >
                                     <div 
                                         className="flex-grow-1 cursor-pointer"
