@@ -40,7 +40,9 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                         <p className="text-center">No hay configuraciones guardadas</p>
                     ) : (
                         <ListGroup>
-                            {configs.map((config, index) => (
+                            {configs
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((config, index) => (
                                 <ListGroup.Item
                                     key={index}
                                     className="d-flex justify-content-between align-items-center list-group-item-action"

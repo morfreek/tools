@@ -27,7 +27,25 @@ export const ContinuousDeploymentYamlGenerator = {
             return btoa(binary);
         }
 
+        // Función para procesar variables de entorno con codificación base64
+        const processEnvVar = (key, value, shouldEncodeBase64 = false) => {
+            if (shouldEncodeBase64) {
+                return `  ${key}: "${base64SSHkey(value.toString())}"`;
+            }
+            return `  ${key}: "${value}"`;
+        }
+
         // Generar variables del deployment
+        const envVarsString = Object.entries(deploy.env).map(([key, varConfig]) => {
+            // Soporte para formato legacy (string directo) y nuevo formato (objeto con value y base64)
+            if (typeof varConfig === 'string') {
+                return processEnvVar(key, varConfig, false);
+            } else if (typeof varConfig === 'object' && varConfig.value !== undefined) {
+                return processEnvVar(key, varConfig.value, varConfig.base64 || false);
+            }
+            return processEnvVar(key, varConfig, false);
+        }).join('\n');
+
         const variables = `variables:
   # Configuración de despliegue
   COMPOSER_HOME: "/composer"
@@ -40,7 +58,8 @@ export const ContinuousDeploymentYamlGenerator = {
   DEPLOY_ENV: "${general.environment}"
   DEPLOY_BRANCH: "${general.branch}"
   
-  # Variables de entorno para .env${Object.entries(deploy.env).map(([key, value]) => `\n  ${key}: "${value}"`).join('')}`;
+  # Variables de entorno para .env
+${envVarsString}`;
 
         // Generar stages
         const stages = `
@@ -56,9 +75,9 @@ stages:${isNodeEnabled ? '\n  - build_frontend' : ''}
     local key="\${1}"
     local value="\${2}"
     if grep -q "^\${key}=" .env; then
-        sed -i "s|^\${key}=.*|\${key}=\${value}|" .env
+        sed -i "s|^\${key}=.*|\${key}=\\"\${value}\\"|" .env
     else
-        echo "\${key}=\${value}" >> .env
+        echo "\${key}=\\"\${value}\\"" >> .env
     fi
   }`;
 
@@ -71,7 +90,14 @@ build_frontend:
   image: node:\${NODE_VERSION}
   script:
     - touch .env
-    - *deploy_env_vars${Object.keys(deploy.env).map(key => `\n    - update_env "VITE_${key}" "$${key}"`).join('')}
+    - *deploy_env_vars${Object.entries(deploy.env).map(([key, varConfig]) => {
+            // Determinar si la variable necesita decodificación base64
+            const needsDecoding = typeof varConfig === 'object' && varConfig.base64;
+            if (needsDecoding) {
+                return `\n    - update_env "VITE_${key}" "$(echo "$${key}" | base64 -d)"`;
+            }
+            return `\n    - update_env "VITE_${key}" "$${key}"`;
+        }).join('')}
     - npm install
     - npm run build
   artifacts:
@@ -94,7 +120,14 @@ deploy_backend:
     - ssh-keyscan -H "$DEPLOY_SERVER" >> ~/.ssh/known_hosts
   script:
     - cp .env.example .env
-    - *deploy_env_vars${Object.keys(deploy.env).map(key => `\n    - update_env "${key}" "$${key}"`).join('')}
+    - *deploy_env_vars${Object.entries(deploy.env).map(([key, varConfig]) => {
+            // Determinar si la variable necesita decodificación base64
+            const needsDecoding = typeof varConfig === 'object' && varConfig.base64;
+            if (needsDecoding) {
+                return `\n    - update_env "${key}" "$(echo "$${key}" | base64 -d)"`;
+            }
+            return `\n    - update_env "${key}" "$${key}"`;
+        }).join('')}
     - |
       # Verifica si storage/ existe en el servidor remoto
       if ssh "$DEPLOY_USER@$DEPLOY_SERVER" "[ -d '$DEPLOY_PATH/storage' ]"; then
@@ -118,17 +151,33 @@ deploy_backend:
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" bash -c "'
         cd $DEPLOY_PATH &&
         composer install --no-interaction --optimize-autoloader &&
-        php artisan key:generate &&
-        php artisan optimize &&
-        php artisan migrate --force
+        php artisan key:generate${general.runOptimize !== false ? ' &&\n        php artisan optimize' : ''}${general.runMigrate !== false ? ' &&\n        php artisan migrate --force' : ''}
       '"${isNodeEnabled ? '\n  dependencies:\n    - build_frontend' : ''}
   environment:
-    name: $${Object.keys(deploy.env).find(key => key.includes('APP_ENV')) || 'production'}
-    url: "$${Object.keys(deploy.env).find(key => key.includes('APP_URL')) || 'APP_URL'}"
+    name: ${ContinuousDeploymentYamlGenerator.findEnvValue(deploy.env, 'APP_ENV') || 'production'}
+    url: "${ContinuousDeploymentYamlGenerator.findEnvValue(deploy.env, 'APP_URL') || 'APP_URL'}"
   only:
     - ${general.branch}`;
 
         return `${variables}${stages}${deployEnvVars}${buildFrontendJob}${deployJob}`;
+    },
+
+    /**
+     * Función auxiliar para encontrar valores en variables de entorno
+     * @param {Object} env - Variables de entorno
+     * @param {string} keyToFind - Clave a buscar
+     * @returns {string} - Valor encontrado o null
+     */
+    findEnvValue(env, keyToFind) {
+        const entry = Object.entries(env).find(([key]) => key.includes(keyToFind));
+        if (!entry) return null;
+        
+        const [, varConfig] = entry;
+        if (typeof varConfig === 'string') return varConfig;
+        if (typeof varConfig === 'object' && varConfig.value !== undefined) {
+            return varConfig.value;
+        }
+        return varConfig;
     },
 
     /**

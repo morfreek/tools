@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col, Accordion, Modal } from 'react-bootstrap';
-import { FaPlus, FaQuestionCircle, FaCopy } from 'react-icons/fa';
+import { Card, Form, Button, Row, Col, Accordion, Modal, Badge } from 'react-bootstrap';
+import { FaPlus, FaQuestionCircle, FaCopy, FaExternalLinkAlt, FaKey } from 'react-icons/fa';
 import { CodePreview } from '@/utils/CodePreview';
 import { useToast } from '@/components/ToastContext';
 import SshInstructionsModal from '@/components/cd/SshInstructionsModal';
 import SaveConfigModal from '@/components/cd/SaveConfigModal';
 import LoadConfigModal from '@/components/cd/LoadConfigModal';
+import LoadEnvModal from '@/components/cd/LoadEnvModal';
 import EnvVariableRow from '@/components/cd/EnvVariableRow';
-import { defaultConfig } from '@/config/ContinuousDeploymentDefaults';
+import { defaultConfig } from '@/config/ContinuousDeploymentDefaults.jsx';
 import { generateYamlContent } from '@/components/cd/ContinuousDeploymentYamlGenerator';
 import api from '@/api';
 
@@ -17,11 +18,16 @@ export default function ContinuousDeploymentForm({ projectId }) {
     const [showPreview, setShowPreview] = useState(false);
     const [yamlContent, setYamlContent] = useState('');
     const [newEnvKey, setNewEnvKey] = useState('');
+    const [newEnvValue, setNewEnvValue] = useState('');
+    const [newEnvBase64, setNewEnvBase64] = useState(false);
     const [invalidFields, setInvalidFields] = useState([]);
     const [showSshInstructions, setShowSshInstructions] = useState(false);
     const [savedConfigs, setSavedConfigs] = useState([]);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showLoadModal, setShowLoadModal] = useState(false);
+    const [showLoadEnvModal, setShowLoadEnvModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [variableToDelete, setVariableToDelete] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -101,8 +107,8 @@ export default function ContinuousDeploymentForm({ projectId }) {
         }));
     };
 
-    const handleEnvChange = (key, value) => {
-        const newValue = value;
+    const handleEnvChange = (key, value, base64 = false) => {
+        const newValue = base64 ? { value, base64 } : value;
         setConfig(prev => ({
             ...prev,
             deploy: {
@@ -121,10 +127,17 @@ export default function ContinuousDeploymentForm({ projectId }) {
             return;
         }
 
+        if (!newEnvValue.trim()) {
+            showToast('error', 'El valor de la variable no puede estar vacío');
+            return;
+        }
+
         if (config.deploy.env.hasOwnProperty(newEnvKey)) {
             showToast('error', 'La variable ya existe');
             return;
         }
+
+        const newValue = newEnvBase64 ? { value: newEnvValue, base64: true } : newEnvValue;
 
         setConfig(prev => ({
             ...prev,
@@ -132,27 +145,72 @@ export default function ContinuousDeploymentForm({ projectId }) {
                 ...prev.deploy,
                 env: {
                     ...prev.deploy.env,
-                    [newEnvKey]: ''
+                    [newEnvKey]: newValue
                 }
             }
         }));
         setNewEnvKey('');
+        setNewEnvValue('');
+        setNewEnvBase64(false);
         showToast('success', `Variable ${newEnvKey} agregada correctamente`);
     };
 
     const handleRemoveEnvVariable = (keyToRemove) => {
         if (keyToRemove === 'APP_ENV' || keyToRemove === 'APP_URL') return;
 
+        setVariableToDelete(keyToRemove);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDeleteEnvVariable = () => {
         setConfig(prev => ({
             ...prev,
             deploy: {
                 ...prev.deploy,
                 env: Object.fromEntries(
                     Object.entries(prev.deploy.env)
-                        .filter(([key]) => key !== keyToRemove)
+                        .filter(([key]) => key !== variableToDelete)
                 )
             }
         }));
+        
+        showToast('success', `Variable ${variableToDelete} eliminada correctamente`);
+        setShowDeleteConfirm(false);
+        setVariableToDelete('');
+    };
+
+    const cancelDeleteEnvVariable = () => {
+        setShowDeleteConfirm(false);
+        setVariableToDelete('');
+    };
+
+    const handleLoadEnvVariables = (variables, mode) => {
+        setConfig(prev => {
+            let newEnvVars;
+            
+            if (mode === 'replace') {
+                // Mantener solo APP_ENV y APP_URL, reemplazar el resto
+                const preservedVars = {
+                    APP_ENV: prev.deploy.env.APP_ENV || 'production',
+                    APP_URL: prev.deploy.env.APP_URL || ''
+                };
+                newEnvVars = { ...preservedVars, ...variables };
+            } else {
+                // Modo merge: combinar con las existentes
+                newEnvVars = { ...prev.deploy.env, ...variables };
+            }
+
+            return {
+                ...prev,
+                deploy: {
+                    ...prev.deploy,
+                    env: newEnvVars
+                }
+            };
+        });
+
+        const variableCount = Object.keys(variables).length;
+        showToast('success', `${variableCount} variables de entorno cargadas correctamente`);
     };
 
     const validateConfig = () => {
@@ -161,20 +219,30 @@ export default function ContinuousDeploymentForm({ projectId }) {
         Object.entries(config.general).forEach(([key, value]) => {
             if (key === 'nodeVersion' && !config.general.useNode) return;
             if (key === 'useNode') return;
-            if (!value.trim()) {
+            if (typeof value === 'string' && !value.trim()) {
                 invalid.push(`general.${key}`);
             }
         });
 
         Object.entries(config.deploy).forEach(([key, value]) => {
             if (key === 'env') return;
+            if (key === 'ssh_key') {
+                // Validación específica para SSH key
+                if (!value.trim()) {
+                    invalid.push(`deploy.${key}`);
+                } else if (!value.includes('BEGIN') || !value.includes('END')) {
+                    showToast('warning', 'La clave SSH debe incluir los headers BEGIN y END');
+                }
+                return;
+            }
             if (!value.trim()) {
                 invalid.push(`deploy.${key}`);
             }
         });
 
-        Object.entries(config.deploy.env).forEach(([key, value]) => {
-            if (!value.trim()) {
+        Object.entries(config.deploy.env).forEach(([key, varConfig]) => {
+            const value = typeof varConfig === 'string' ? varConfig : varConfig.value;
+            if (!value || !value.trim()) {
                 invalid.push(`env.${key}`);
             }
         });
@@ -240,6 +308,13 @@ export default function ContinuousDeploymentForm({ projectId }) {
             });
     };
 
+    const openRepository = () => {
+        const repoUrl = config.general.repository;
+        if (repoUrl && repoUrl.trim()) {
+            window.open(repoUrl, '_blank');
+        }
+    };
+
     return (
         <>
             <Card className="my-3">
@@ -268,6 +343,41 @@ export default function ContinuousDeploymentForm({ projectId }) {
                     </div>
                 </Card.Header>
                 <Card.Body>
+                    <Row className="mb-4">
+                        <Col xs={12}>
+                            <Form.Group>
+                                <div className="d-flex justify-content-between align-items-center">
+                                    {renderFormLabel('Repositorio')}
+                                    {config.general.repository && config.general.repository.trim() && (
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            className="text-primary p-0"
+                                            onClick={openRepository}
+                                        >
+                                            <FaExternalLinkAlt className="me-1" />
+                                            Abrir repositorio
+                                        </Button>
+                                    )}
+                                </div>
+                                <Form.Control
+                                    size="sm"
+                                    type="url"
+                                    value={config.general.repository || ''}
+                                    onChange={e => {
+                                        handleConfigChange('general', 'repository', e.target.value);
+                                        setInvalidFields(prev => prev.filter(f => f !== 'general.repository'));
+                                    }}
+                                    isInvalid={isFieldInvalid('general', 'repository')}
+                                    placeholder="https://gitlab.com/usuario/proyecto.git"
+                                />
+                                <Form.Text className="text-muted">
+                                    URL del repositorio Git donde se encuentra el código fuente
+                                </Form.Text>
+                            </Form.Group>
+                        </Col>
+                    </Row>
+
                     <Accordion defaultActiveKey={['0', '1', '2']} alwaysOpen>
                         <Accordion.Item eventKey="0">
                             <Accordion.Header>Configuración General</Accordion.Header>
@@ -315,6 +425,34 @@ export default function ContinuousDeploymentForm({ projectId }) {
                                         </Form.Group>
                                     </Col>
                                 </Row>
+                                
+                                <Row>
+                                    <Col xs={12}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label className="fw-bold">Comandos Artisan en el Pipeline</Form.Label>
+                                            <div className="d-flex gap-4">
+                                                <Form.Check
+                                                    type="checkbox"
+                                                    id="run-optimize"
+                                                    label="Ejecutar php artisan optimize"
+                                                    checked={config.general.runOptimize !== false}
+                                                    onChange={e => handleConfigChange('general', 'runOptimize', e.target.checked)}
+                                                />
+                                                <Form.Check
+                                                    type="checkbox"
+                                                    id="run-migrate"
+                                                    label="Ejecutar php artisan migrate --force"
+                                                    checked={config.general.runMigrate !== false}
+                                                    onChange={e => handleConfigChange('general', 'runMigrate', e.target.checked)}
+                                                />
+                                            </div>
+                                            <Form.Text className="text-muted">
+                                                Seleccione qué comandos Artisan se ejecutarán durante el despliegue
+                                            </Form.Text>
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+
                             </Accordion.Body>
                         </Accordion.Item>
 
@@ -356,14 +494,18 @@ export default function ContinuousDeploymentForm({ projectId }) {
                                             <Form.Control
                                                 size="sm"
                                                 as="textarea"
-                                                rows={3}
+                                                rows={8}
                                                 value={config.deploy.ssh_key}
                                                 onChange={e => handleConfigChange('deploy', 'ssh_key', e.target.value)}
                                                 isInvalid={isFieldInvalid('deploy', 'ssh_key')}
-                                                placeholder="Ingrese la clave SSH privada"
+                                                placeholder="-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
+...
+-----END RSA PRIVATE KEY-----"
+                                                style={{ fontFamily: 'monospace', fontSize: '12px' }}
                                             />
                                             <Form.Text className="text-muted">
-                                                Ingrese la clave SSH privada en formato texto plano
+                                                Ingrese la clave SSH privada completa con headers BEGIN y END
                                             </Form.Text>
                                         </Form.Group>
                                     </Col>
@@ -377,25 +519,108 @@ export default function ContinuousDeploymentForm({ projectId }) {
                                 <div className="env-variables-container">
                                     <Row className="mb-3">
                                         <Col xs={12}>
-                                            <div className="d-flex gap-2">
-                                                <Form.Control
-                                                    size="sm"
-                                                    type="text"
-                                                    placeholder="Nueva variable de entorno"
-                                                    value={newEnvKey}
-                                                    onChange={e => setNewEnvKey(e.target.value.toUpperCase())}
-                                                />
+                                            <Row className="g-2 mb-2">
+                                                <Col md={4}>
+                                                    <Form.Control
+                                                        size="sm"
+                                                        type="text"
+                                                        placeholder="Nombre de la variable"
+                                                        value={newEnvKey}
+                                                        onChange={e => setNewEnvKey(e.target.value.toUpperCase())}
+                                                    />
+                                                </Col>
+                                                <Col md={8}>
+                                                    <div className="d-flex gap-2 align-items-start">
+                                                        {newEnvBase64 ? (
+                                                            <Form.Control
+                                                                size="sm"
+                                                                as="textarea"
+                                                                rows={3}
+                                                                placeholder="Ingrese el contenido que será codificado en Base64..."
+                                                                value={newEnvValue}
+                                                                onChange={e => setNewEnvValue(e.target.value)}
+                                                                style={{ 
+                                                                    fontFamily: 'monospace',
+                                                                    fontSize: '12px',
+                                                                    resize: 'vertical'
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Form.Control
+                                                                size="sm"
+                                                                type="text"
+                                                                placeholder="Valor de la variable"
+                                                                value={newEnvValue}
+                                                                onChange={e => setNewEnvValue(e.target.value)}
+                                                            />
+                                                        )}
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <Form.Check
+                                                                type="switch"
+                                                                id="new-env-base64"
+                                                                checked={newEnvBase64}
+                                                                onChange={e => setNewEnvBase64(e.target.checked)}
+                                                                className="mb-0"
+                                                            />
+                                                            {newEnvBase64 ? (
+                                                                <Badge bg="warning" text="dark" className="small">
+                                                                    <FaKey className="me-1" style={{ fontSize: '10px' }} />
+                                                                    Base64
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge bg="light" text="muted" className="small">
+                                                                    Texto
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            className="d-inline-flex align-items-center justify-content-center"
+                                                            variant="outline-success"
+                                                            onClick={handleAddEnvVariable}
+                                                            disabled={!newEnvKey.trim() || !newEnvValue.trim()}
+                                                            style={{ 
+                                                                width: '38px', 
+                                                                height: newEnvBase64 ? '38px' : '31px',
+                                                                alignSelf: 'flex-start'
+                                                            }}
+                                                        >
+                                                            <FaPlus />
+                                                        </Button>
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                            <div className="d-flex justify-content-end">
                                                 <Button
+                                                    variant="link"
                                                     size="sm"
-                                                    className="p-1 d-inline-flex align-items-center"
-                                                    variant="outline-success"
-                                                    onClick={handleAddEnvVariable}
+                                                    className="text-primary p-0"
+                                                    onClick={() => setShowLoadEnvModal(true)}
                                                 >
-                                                    <FaPlus />
+                                                    Cargar desde archivo .env
                                                 </Button>
                                             </div>
                                         </Col>
                                     </Row>
+                                    
+                                    {/* Encabezados de columnas para variables existentes */}
+                                    {Object.keys(config.deploy.env).length > 0 && (
+                                        <Row className="g-2 mb-2">
+                                            <Col md={3}>
+                                                <small className="text-muted fw-bold">Variable</small>
+                                            </Col>
+                                            <Col md={6}>
+                                                <small className="text-muted fw-bold">Valor</small>
+                                            </Col>
+                                            <Col md={2}>
+                                                <small className="text-muted fw-bold text-center">Codificación</small>
+                                            </Col>
+                                            <Col md={1}>
+                                                <small className="text-muted fw-bold text-center">Acción</small>
+                                            </Col>
+                                        </Row>
+                                    )}
+
                                     {Object.entries(config.deploy.env).map(([key, value]) => (
                                         <EnvVariableRow
                                             key={key}
@@ -429,10 +654,39 @@ export default function ContinuousDeploymentForm({ projectId }) {
                 onDelete={handleDeleteConfig}
                 loading={loading}
             />
+            <LoadEnvModal
+                show={showLoadEnvModal}
+                onHide={() => setShowLoadEnvModal(false)}
+                onLoadEnvVariables={handleLoadEnvVariables}
+            />
             <SshInstructionsModal
                 show={showSshInstructions}
                 onHide={() => setShowSshInstructions(false)}
             />
+
+            {/* Modal de confirmación para eliminar variable */}
+            <Modal show={showDeleteConfirm} onHide={cancelDeleteEnvVariable} size="sm" centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmar Eliminación</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p className="mb-0">
+                        ¿Está seguro de que desea eliminar la variable de entorno{' '}
+                        <strong>{variableToDelete}</strong>?
+                    </p>
+                    <p className="text-muted small mt-2 mb-0">
+                        Esta acción no se puede deshacer.
+                    </p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" size="sm" onClick={cancelDeleteEnvVariable}>
+                        Cancelar
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={confirmDeleteEnvVariable}>
+                        Eliminar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
 
             <Modal
                 show={showPreview}

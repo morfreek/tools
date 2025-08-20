@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { create } from 'xmlbuilder2';
-import { Container, Form, Button, Alert, Row, Col, ListGroup, Placeholder } from 'react-bootstrap';
+import { Container, Form, Button, Alert, Row, Col, ListGroup, Placeholder, Modal, Badge } from 'react-bootstrap';
+import { FaCopy } from 'react-icons/fa';
 import { CodePreview } from '@/utils/CodePreview';
+import { useToast } from '@/components/ToastContext';
 
 const JMeterTestGenerator = () => {
     const [jmxFileUrl, setJmxFileUrl] = useState(null);
@@ -21,6 +23,9 @@ const JMeterTestGenerator = () => {
         prefix: '',
     });
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const [showUrlsPreview, setShowUrlsPreview] = useState(false);
+    const { showToast } = useToast();
 
     const groupRoute = (uri) => {
         const parts = uri.split('/').filter(Boolean);
@@ -264,9 +269,68 @@ const JMeterTestGenerator = () => {
             const blob = new Blob([xml], { type: 'application/xml' });
             const url = URL.createObjectURL(blob);
             setJmxFileUrl(url);
+            setShowPreview(true);
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const handleDownload = () => {
+        if (jmxFileUrl) {
+            const a = document.createElement('a');
+            a.href = jmxFileUrl;
+            a.download = getDownloadFileName();
+            a.click();
+        }
+    };
+
+    const handleCopyToClipboard = () => {
+        navigator.clipboard.writeText(jmxXml)
+            .then(() => {
+                showToast('success', 'Contenido copiado al portapapeles');
+            })
+            .catch(() => {
+                showToast('error', 'Error al copiar el contenido');
+            });
+    };
+
+    const handleCopyUrlsForExcel = () => {
+        // Crear una sola columna con formato "METHOD PATH"
+        const urlList = generatedUrls.map(({method, path}) => `${method} ${path}`).join('\n');
+        
+        navigator.clipboard.writeText(urlList)
+            .then(() => {
+                showToast('success', 'URLs copiadas al portapapeles. Puedes pegar directamente en Excel');
+            })
+            .catch(() => {
+                showToast('error', 'Error al copiar las URLs');
+            });
+    };
+
+    const handleShowUrlsPreview = () => {
+        const selected = routes.filter((_, i) => selectedRoutes[i]);
+        if (!selected.length) {
+            showToast('warning', 'Selecciona al menos una ruta para ver la vista previa');
+            return;
+        }
+
+        const urls = selected.map(route => {
+            const method = route.method.toUpperCase();
+            let path = route.uri.startsWith('/') ? route.uri : '/' + route.uri;
+            path = path.replace(/\{[^}]+\}/g, '1');
+            
+            if (params.prefix) {
+                const cleanPrefix = params.prefix.startsWith('/') ? params.prefix : '/' + params.prefix;
+                path = cleanPrefix + path;
+            }
+            
+            const fullUrl = `${params.protocol}://${params.server}${params.port ? ':' + params.port : ''}${path}`;
+            
+            return { method, path, fullUrl, originalUri: route.uri };
+        });
+        
+        setGeneratedUrls(urls);
+        setShowUrlsPreview(true);
     };
 
     const groupedRoutes = routes.reduce((acc, route, index) => {
@@ -279,6 +343,13 @@ const JMeterTestGenerator = () => {
     return (
         <Container fluid className="mt-4">
             <h3>Laravel → JMeter Test Generator</h3>
+
+            <Alert variant="info" className="mb-3">
+                <Alert.Heading className="h6">¿Cómo obtener el archivo routes.json?</Alert.Heading>
+                <p className="mb-2">Para generar el listado de rutas de tu aplicación Laravel en formato JSON, ejecuta el siguiente comando en la raíz de tu proyecto:</p>
+                <code>php artisan route:list --json &gt; routes.json</code>
+                <p className="mb-0 mt-2 small">Esto creará un archivo <code>routes.json</code> que puedes cargar aquí.</p>
+            </Alert>
 
             <Form.Group className="mb-3">
                 <Form.Label className="small">Cargar archivo <code>routes.json</code>:</Form.Label>
@@ -341,66 +412,14 @@ const JMeterTestGenerator = () => {
                         </Col>
                     </Row>
                     <div className="d-flex gap-2 mt-4">
-                        <Button size="sm" variant="success" onClick={generateJMX} disabled={isGenerating}>
-                            Generar archivo JMeter (.jmx)
+                        <Button size="sm" variant="primary" onClick={handleShowUrlsPreview}>
+                            Ver URLs a Testear
                         </Button>
-                        {jmxFileUrl && (
-                            <Button 
-                                size="sm" 
-                                variant="primary" 
-                                href={jmxFileUrl} 
-                                download={() => getDownloadFileName()}
-                                onClick={(e) => {
-                                    e.currentTarget.setAttribute('download', getDownloadFileName());
-                                }}
-                            >
-                                Descargar
-                            </Button>
-                        )}
+                        <Button size="sm" variant="success" onClick={generateJMX} disabled={isGenerating}>
+                            {isGenerating ? 'Generando...' : 'Generar archivo JMeter (.jmx)'}
+                        </Button>
                     </div>
                 </div>
-            )}
-
-            {(isGenerating || jmxXml) && (
-                <>
-                    <div className="mt-4">
-                        <h5>Vista previa del archivo <code>.jmx</code>:</h5>
-                        {isGenerating ? (
-                            <div className="bg-dark">
-                                <div style={{ 
-                                    backgroundColor: '#1e1e1e',
-                                    padding: '1rem',
-                                    borderRadius: '4px' 
-                                }}>
-                                    <Placeholder as="p" animation="glow">
-                                        <Placeholder xs={12} />{' '}
-                                        <Placeholder xs={10} />{' '}
-                                        <Placeholder xs={8} />{' '}
-                                        <Placeholder xs={9} />{' '}
-                                        <Placeholder xs={11} />{' '}
-                                        <Placeholder xs={7} />{' '}
-                                        <Placeholder xs={12} />
-                                    </Placeholder>
-                                </div>
-                            </div>
-                        ) : (
-                            <CodePreview content={jmxXml} />
-                        )}
-                    </div>
-                    
-                    {generatedUrls.length > 0 && (
-                        <div className="mt-4">
-                            <h5>Rutas incluidas en el plan de pruebas:</h5>
-                            <ListGroup>
-                                {generatedUrls.map(({method, path}, index) => (
-                                    <ListGroup.Item key={index} className="small py-2">
-                                        <code>{method}</code> {path}
-                                    </ListGroup.Item>
-                                ))}
-                            </ListGroup>
-                        </div>
-                    )}
-                </>
             )}
 
             {routes.length > 0 && (
@@ -455,6 +474,131 @@ const JMeterTestGenerator = () => {
                         );
                     })}
                 </>
+            )}
+
+            {/* Modal de vista previa */}
+            <Modal
+                show={showPreview}
+                onHide={() => setShowPreview(false)}
+                size="lg"
+                dialogClassName="modal-90w"
+                fullscreen="lg-down"
+            >
+                <div style={{ height: '90vh', display: 'flex', flexDirection: 'column' }}>
+                    <Modal.Header closeButton className="bg-light">
+                        <Modal.Title>Vista Previa del Archivo JMX</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="p-0" style={{ flex: 1, overflow: 'auto' }}>
+                        <CodePreview content={jmxXml} />
+                    </Modal.Body>
+                    <Modal.Footer className="bg-light border-top">
+                        <div className="me-auto">
+                            <Button
+                                size="sm"
+                                variant="outline-secondary"
+                                onClick={handleCopyToClipboard}
+                                className="d-inline-flex align-items-center"
+                            >
+                                <FaCopy className="me-1" /> Copiar al Portapapeles
+                            </Button>
+                        </div>
+                        <Button size="sm" variant="primary" onClick={handleDownload}>
+                            Descargar
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setShowPreview(false)}>
+                            Cerrar
+                        </Button>
+                    </Modal.Footer>
+                </div>
+            </Modal>
+
+            {/* Modal de URLs a testear */}
+            <Modal
+                show={showUrlsPreview}
+                onHide={() => setShowUrlsPreview(false)}
+                size="lg"
+                scrollable
+            >
+                <Modal.Header closeButton className="bg-light">
+                    <Modal.Title>URLs que serán testeadas</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="mb-3 p-3 bg-light rounded">
+                        <h6 className="text-primary mb-2">Configuración del test:</h6>
+                        <small className="text-muted">
+                            • Usuarios concurrentes: <strong>{params.threads}</strong><br/>
+                            • Duración: <strong>{params.duration} segundos</strong><br/>
+                            • Throughput: <strong>{params.throughput} requests/minuto</strong><br/>
+                            • Servidor: <strong>{params.protocol}://{params.server}{params.port ? ':' + params.port : ''}</strong><br/>
+                            • Endpoints: <strong>{generatedUrls.length} requests HTTP</strong>
+                        </small>
+                    </div>
+                    
+                    <div className="mb-3">
+                        <small className="text-muted">
+                            Lista de endpoints que serán testeados:
+                        </small>
+                    </div>
+                    
+                    <ListGroup>
+                        {generatedUrls.map(({method, path, fullUrl, originalUri}, index) => (
+                            <ListGroup.Item key={index} className="py-2">
+                                <div className="d-flex align-items-center">
+                                    <Badge 
+                                        bg={
+                                            method === 'GET' ? 'success' : 
+                                            method === 'POST' ? 'primary' : 
+                                            method === 'PUT' ? 'warning' : 
+                                            method === 'DELETE' ? 'danger' : 'secondary'
+                                        }
+                                        className="me-2"
+                                        style={{ minWidth: '60px' }}
+                                    >
+                                        {method}
+                                    </Badge>
+                                    <div className="flex-grow-1">
+                                        <div className="fw-bold small">{method} {path}</div>
+                                        <div className="text-muted small">{fullUrl}</div>
+                                        {originalUri !== path.replace(params.prefix || '', '') && (
+                                            <div className="text-muted small">
+                                                Ruta original: {originalUri}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                </Modal.Body>
+                <Modal.Footer className="bg-light">
+                    <div className="me-auto">
+                        <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            onClick={handleCopyUrlsForExcel}
+                            className="d-inline-flex align-items-center"
+                        >
+                            <FaCopy className="me-1" /> Copiar para Excel
+                        </Button>
+                    </div>
+                    <Button size="sm" variant="secondary" onClick={() => setShowUrlsPreview(false)}>
+                        Cerrar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Mostrar rutas incluidas solo cuando hay vista previa */}
+            {showPreview && generatedUrls.length > 0 && (
+                <div className="mt-4">
+                    <h5>Rutas incluidas en el plan de pruebas:</h5>
+                    <ListGroup>
+                        {generatedUrls.map(({method, path}, index) => (
+                            <ListGroup.Item key={index} className="small py-2">
+                                <code>{method}</code> {path}
+                            </ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                </div>
             )}
         </Container>
     );

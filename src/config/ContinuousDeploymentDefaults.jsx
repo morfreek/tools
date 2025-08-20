@@ -2,11 +2,14 @@ import React from 'react';
 
 export const defaultConfig = {
     general: {
-        phpVersion: '8.3',
-        nodeVersion: '20',
-        environment: 'integration',
-        branch: 'integracion',
-        useNode: true,
+        phpVersion: '8.2',
+        nodeVersion: '18',
+        useNode: false,
+        environment: 'production',
+        branch: 'main',
+        repository: '',
+        runOptimize: true,
+        runMigrate: true,
         composerHome: '.composer'
     },
     build: {
