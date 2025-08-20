@@ -99,6 +99,17 @@ const JMeterTestGenerator = () => {
         setJmxFileUrl(null);
     };
 
+    const handleSelectAllToggle = () => {
+        const allSelected = routes.every((_, index) => selectedRoutes[index]);
+        const updated = {};
+        routes.forEach((_, index) => {
+            updated[index] = !allSelected;
+        });
+        setSelectedRoutes(updated);
+        setJmxXml('');
+        setJmxFileUrl(null);
+    };
+
     const cleanFileName = (str) => {
         return str
             .toLowerCase()
@@ -424,15 +435,26 @@ const JMeterTestGenerator = () => {
 
             {routes.length > 0 && (
                 <>
-                    <Form.Group className="mb-3">
-                        <Form.Control
-                            size="sm"
-                            type="text"
-                            placeholder="Buscar rutas..."
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value.toLowerCase())}
-                        />
-                    </Form.Group>
+                    <Row className="align-items-center mb-3">
+                        <Col>
+                            <Form.Control
+                                size="sm"
+                                type="text"
+                                placeholder="Buscar rutas..."
+                                value={filter}
+                                onChange={(e) => setFilter(e.target.value.toLowerCase())}
+                            />
+                        </Col>
+                        <Col xs="auto">
+                            <Form.Switch
+                                id="select-all-routes"
+                                label="Seleccionar todas"
+                                checked={routes.length > 0 && routes.every((_, index) => selectedRoutes[index])}
+                                onChange={handleSelectAllToggle}
+                                className="mb-0"
+                            />
+                        </Col>
+                    </Row>
 
                     {Object.entries(groupedRoutes).map(([group, groupRoutes]) => {
                         const filteredGroup = groupRoutes.filter((r) =>
