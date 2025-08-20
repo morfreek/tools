@@ -68,7 +68,7 @@ export default function ProjectFilesList({
         if (projectId) fetchFiles();
     }, [projectId, refreshKey]);
 
-    const handleDownload = async (fileId, fileName) => {
+    const handleDownload = async (fileId, filename) => {
         try {
             const response = await api.get(`/projects/${projectId}/files/${fileId}/download`, {
                 responseType: 'blob'
@@ -76,7 +76,7 @@ export default function ProjectFilesList({
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', fileName);
+            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -169,7 +169,7 @@ export default function ProjectFilesList({
                                                     variant="outline-primary"
                                                     size="sm"
                                                     className="p-1 d-inline-flex align-items-center"
-                                                    onClick={() => handleDownload(file.id, file.name)}
+                                                    onClick={() => handleDownload(file.id, file.filename)}
                                                     title="Descargar archivo"
                                                 >
                                                     <FaDownload />
