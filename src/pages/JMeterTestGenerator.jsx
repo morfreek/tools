@@ -211,7 +211,7 @@ const JMeterTestGenerator = () => {
         const urls = selected.map(route => {
             const method = route.method.toUpperCase();
             let path = route.uri.startsWith('/') ? route.uri : '/' + route.uri;
-            path = path.replace(/\{[^}]+\}/g, '1');
+            path = path.replace(/\{[^}]+\}/g, '2147483646');
             
             if (params.prefix) {
                 const cleanPrefix = params.prefix.startsWith('/') ? params.prefix : '/' + params.prefix;
