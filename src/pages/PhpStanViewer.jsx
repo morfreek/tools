@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 const styles = {
     table: {
@@ -92,28 +92,53 @@ const PhpStanViewer = () => {
         return acc;
     }, {});
 
-    const exportToExcel = () => {
-        const workbook = XLSX.utils.book_new();
+    const exportToExcel = async () => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Errores PHPStan');
 
-        // Preparamos datos planos con todas las filas y columnas
-        const sheetData = data
-            .filter(row =>
-                row.file.includes(filter) || row.message.toLowerCase().includes(filter.toLowerCase())
-            )
-            .map(({ file, line, message, tip }) => ({
-                Archivo: file,
-                Línea: line,
-                Mensaje: message,
-                Tip: tip,
-            }));
+        // Configurar columnas
+        worksheet.columns = [
+            { header: 'Archivo', key: 'file', width: 50 },
+            { header: 'Línea', key: 'line', width: 10 },
+            { header: 'Mensaje', key: 'message', width: 80 },
+            { header: 'Tip', key: 'tip', width: 50 }
+        ];
 
-        const worksheet = XLSX.utils.json_to_sheet(sheetData);
+        // Filtrar y agregar datos
+        const filteredData = data.filter(row =>
+            row.file.includes(filter) || row.message.toLowerCase().includes(filter.toLowerCase())
+        );
 
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Errores PHPStan');
+        filteredData.forEach(({ file, line, message, tip }) => {
+            worksheet.addRow({
+                file,
+                line,
+                message,
+                tip
+            });
+        });
 
-        XLSX.writeFile(workbook, 'errores_phpstan.xlsx');
+        // Aplicar estilos al encabezado
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE0E0E0' }
+        };
+
+        // Generar buffer y descargar
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'errores_phpstan.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
     };
-
 
     return (
         <div className="container-fluid mt-4">
