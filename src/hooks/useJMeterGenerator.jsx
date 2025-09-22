@@ -21,8 +21,8 @@ export function useJMeterGenerator() {
     const getTimestamp = () => {
         const now = new Date();
         return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_` +
-               `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}_` +
-               `${String(now.getMilliseconds()).padStart(3, '0')}`;
+            `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}_` +
+            `${String(now.getMilliseconds()).padStart(3, '0')}`;
     };
 
     const getDownloadFileName = (params) => {
@@ -86,7 +86,7 @@ export function useJMeterGenerator() {
                     }
 
                     const fullUrl = `${protocol}://${domain}${port ? ':' + port : ''}${path}`;
-                    
+
                     extractedUrls.push({
                         method,
                         path,
@@ -123,7 +123,7 @@ export function useJMeterGenerator() {
 
     const loadJMXFile = (xmlContent) => {
         const result = parseJMXFile(xmlContent);
-        
+
         if (result.success) {
             setGeneratedUrls(result.urls);
             showToast('success', `Archivo JMX cargado: ${result.routes.length} endpoints encontrados`);
@@ -147,12 +147,12 @@ export function useJMeterGenerator() {
                 const method = route.method.toUpperCase();
                 let path = route.uri.startsWith('/') ? route.uri : '/' + route.uri;
                 path = path.replace(/\{[^}]+\}/g, '2147483646');
-                
+
                 if (params.prefix) {
                     const cleanPrefix = params.prefix.startsWith('/') ? params.prefix : '/' + params.prefix;
                     path = cleanPrefix + path;
                 }
-                
+
                 return { method, path };
             });
             setGeneratedUrls(urls);
@@ -312,8 +312,8 @@ export function useJMeterGenerator() {
     };
 
     const handleCopyUrlsForExcel = () => {
-        const urlList = generatedUrls.map(({method, path}) => `${method} ${path}`).join('\n');
-        
+        const urlList = generatedUrls.map(({ method, path }) => `${method} ${path}`).join('\n');
+
         navigator.clipboard.writeText(urlList)
             .then(() => {
                 showToast('success', 'URLs copiadas al portapapeles. Puedes pegar directamente en Excel');

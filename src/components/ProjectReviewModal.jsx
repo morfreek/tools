@@ -1,10 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Accordion, Row, Col } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
 import { STATUS_OPTIONS } from '@/utils/Constants';
 import Editor from 'react-simple-wysiwyg';
+import { useConfirm } from '@/components/ConfirmContext';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
+    const [initialForm, setInitialForm] = useState(null);
+    const [hasChanges, setHasChanges] = useState(false);
+    const { showConfirm } = useConfirm();
+
+    // Guardar estado inicial cuando se abre el modal
+    useEffect(() => {
+        if (visible && form) {
+            // Asegurar que guardamos una copia profunda del estado inicial
+            setInitialForm(JSON.parse(JSON.stringify(form)));
+            setHasChanges(false);
+        }
+    }, [visible]);
+
+    // Detectar cambios en el formulario
+    useEffect(() => {
+        if (initialForm && form && visible) {
+            // Comparar cada campo específicamente
+            const hasDateChanged = form.applied_at !== initialForm.applied_at;
+            const hasNotesChanged = (form.general_notes || '') !== (initialForm.general_notes || '');
+
+            // Comparar resultados
+            const hasResultsChanged = form.results.length !== initialForm.results.length ||
+                form.results.some(result => {
+                    const initialResult = initialForm.results.find(r => r.point_id === result.point_id);
+                    if (!initialResult) return true;
+                    return result.status !== initialResult.status ||
+                        result.observation !== initialResult.observation;
+                });
+
+            setHasChanges(hasDateChanged || hasNotesChanged || hasResultsChanged);
+        }
+    }, [form, initialForm, visible]);
+
+    const handleClose = () => {
+        if (hasChanges) {
+            showConfirm({
+                title: 'Cambios sin guardar',
+                message: '¿Estás seguro de que quieres cerrar? Se perderán los cambios no guardados.',
+                confirmText: 'Sí, cerrar',
+                cancelText: 'Cancelar',
+                confirmButtonClass: 'btn-danger',
+                onConfirm: () => {
+                    setHasChanges(false);
+                    onClose();
+                }
+            });
+        } else {
+            onClose();
+        }
+    };
+
     const updateGeneralNotes = (value) => {
         setForm(prev => ({
             ...prev,
@@ -22,9 +74,12 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
     };
 
     return (
-        <Modal show={visible} onHide={onClose} size="lg" scrollable>
+        <Modal show={visible} onHide={handleClose} size="xl" scrollable>
             <Modal.Header closeButton>
-                <Modal.Title>Nueva Revisión Técnica</Modal.Title>
+                <Modal.Title>
+                    Nueva Revisión Técnica
+                    {hasChanges && <span className="text-warning ms-2">*</span>}
+                </Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form>
@@ -98,20 +153,25 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button 
-                    variant="success" 
-                    size="sm" 
+                {hasChanges && (
+                    <small className="text-warning me-auto">
+                        * Hay cambios sin guardar
+                    </small>
+                )}
+                <Button
+                    variant="success"
+                    size="sm"
                     className="d-inline-flex align-items-center"
                     onClick={onSave}
                 >
                     <FaSave className="me-2" />
                     Guardar Revisión
                 </Button>
-                <Button 
-                    variant="danger" 
-                    size="sm" 
+                <Button
+                    variant="danger"
+                    size="sm"
                     className="d-inline-flex align-items-center"
-                    onClick={onClose}
+                    onClick={handleClose}
                 >
                     <FaBan className="me-2" />
                     Cancelar
