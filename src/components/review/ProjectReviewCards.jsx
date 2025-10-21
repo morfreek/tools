@@ -1,6 +1,6 @@
-import { Row, Col, Card, Badge, Button } from 'react-bootstrap';
-import { FaEye } from 'react-icons/fa';
-import StatusBadge from './StatusBadge';
+import { Row, Col, Card, Badge, Button, ButtonGroup } from 'react-bootstrap';
+import { FaEye, FaTrash } from 'react-icons/fa';
+import StatusBadge from '@c/StatusBadge';
 
 const getStatusMetrics = (results) => {
     const counts = {};
@@ -10,14 +10,7 @@ const getStatusMetrics = (results) => {
     return counts;
 };
 
-const statusColors = {
-    bien: 'success',
-    regular: 'warning',
-    incompleto: 'danger',
-    noaplica: 'info',
-};
-
-export default function ReviewCards({ reviews, startReview }) {
+export default function ReviewCards({ reviews, startReview, deleteReview }) {
     return (
         <Row>
             {reviews.map(review => {
@@ -25,7 +18,25 @@ export default function ReviewCards({ reviews, startReview }) {
                 const total = review.results.length;
                 return (
                     <Col key={review.id} md={4} className="mb-4">
-                        <Card className="h-100 shadow-sm">
+                        <Card className="h-100 shadow-sm position-relative">
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="position-absolute p-1 text-danger"
+                                style={{ 
+                                    top: '8px', 
+                                    right: '8px', 
+                                    zIndex: 1,
+                                    border: 'none',
+                                    fontSize: '0.75rem',
+                                    opacity: 0.7
+                                }}
+                                onClick={() => deleteReview(review.id)}
+                                onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+                            >
+                                <FaTrash />
+                            </Button>
                             <Card.Body>
                                 <Card.Title>Revisión: {review.applied_at}</Card.Title>
                                 <div className="mb-3">

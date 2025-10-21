@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaExchangeAlt } from 'react-icons/fa';
 import { Breadcrumb as BSBreadcrumb, Modal, ListGroup, Form } from 'react-bootstrap';
-import { useBreadcrumb } from '@/hooks/useBreadcrumb';
+import { useBreadcrumb } from '@hk/useBreadcrumb';
 import api from '@/api';
 
 export default function Breadcrumb() {
@@ -108,7 +108,13 @@ export default function Breadcrumb() {
                 ))}
             </BSBreadcrumb>
             <>
-                <Modal show={showProjectsModal} onHide={() => setShowProjectsModal(false)} centered size="lg" scrollable>
+                <Modal 
+                    show={showProjectsModal} 
+                    onHide={() => setShowProjectsModal(false)} 
+                    size="xl" 
+                    scrollable
+                    fullscreen="xl-down"
+                >
                     <Modal.Header closeButton>
                         <Modal.Title>Proyectos</Modal.Title>
                     </Modal.Header>
@@ -128,7 +134,7 @@ export default function Breadcrumb() {
                             <div className="text-center py-3">Cargando...</div>
                         ) : (
                             // Contenedor scrollable para el listado
-                            <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
+                            <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                                 <ListGroup>
                                     {visibleProjects.map(p => {
                                         const devs = Array.isArray(p?.developer_names) ? p.developer_names.filter(Boolean) : [];

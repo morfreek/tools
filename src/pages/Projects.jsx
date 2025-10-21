@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaTasks } from 'react-icons/fa';
+import { FaPlus, FaTasks, FaStop } from 'react-icons/fa';
 import { Container, Row, Col, Button, Form, Table, ButtonGroup, Spinner } from 'react-bootstrap';
 import api from '@/api';
-import UserModal from '@/components/UserModal';
-import ProjectModal from '@/components/ProjectModal';
+import UserModal from '@c/user/UserModal';
+import ProjectModal from '@c/modal/ProjectModal';
+import { useConfirm } from '@c/ConfirmContext';
+import Toast from '@c/Toast';
 
 const SortableHeader = ({ title, sortKey, currentSort, onSort }) => (
     <th onClick={() => onSort(sortKey)} style={{ cursor: 'pointer' }}>
@@ -40,22 +42,32 @@ const EmptyRow = () => (
     </tr>
 );
 
-const ProjectRow = ({ project, getUserName }) => (
+const ProjectRow = ({ project, getUserName, onTerminate }) => (
     <tr>
         <td>{project.name}</td>
         <td>{project.code}</td>
         <td>{getUserName(project.coordinator_id)}</td>
         <td>{(project.developer_ids || []).map(getUserName).join(', ')}</td>
         <td className="text-center">
-            <Button
-                as={Link}
-                to={`/projects/${project.id}/detail`}
-                variant="primary"
-                size="sm"
-                className="d-inline-flex align-items-center"
-            >
-                <FaTasks />
-            </Button>
+            <ButtonGroup size="sm">
+                <Button
+                    as={Link}
+                    to={`/projects/${project.id}/detail`}
+                    variant="primary"
+                    className="d-inline-flex align-items-center"
+                >
+                    <FaTasks className="me-1" />
+                    {/* Detalles */}
+                </Button>
+                <Button
+                    variant="outline-secondary"
+                    className="d-inline-flex align-items-center"
+                    onClick={() => onTerminate(project)}
+                >
+                    <FaStop className="me-1" />
+                    Finalizar
+                </Button>
+            </ButtonGroup>
         </td>
     </tr>
 );
@@ -84,6 +96,22 @@ export default function Projects() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
+    const { showConfirm } = useConfirm();
+
+    const [toast, setToast] = useState({
+        show: false,
+        type: 'success',
+        message: ''
+    });
+
+    const showToast = (type, message) => {
+        setToast({ show: true, type, message });
+    };
+
+    const closeToast = () => {
+        setToast(prev => ({ ...prev, show: false }));
+    };
+
     useEffect(() => {
         fetchProjects();
         fetchUsers();
@@ -96,7 +124,7 @@ export default function Projects() {
             setProjects(res.data);
         } catch (err) {
             console.error(err);
-            alert('Error cargando proyectos');
+            showToast('error', 'Error cargando proyectos');
         }
         setLoading(false);
     };
@@ -107,7 +135,7 @@ export default function Projects() {
             setUsers(res.data);
         } catch (err) {
             console.error(err);
-            alert('Error cargando usuarios');
+            showToast('error', 'Error cargando usuarios');
         }
     };
 
@@ -148,16 +176,16 @@ export default function Projects() {
             };
             if (editing) {
                 await api.put(`/projects/${formData.id}`, payload);
-                alert('Proyecto actualizado');
+                showToast('success', 'Proyecto actualizado');
             } else {
                 await api.post(`/projects`, payload);
-                alert('Proyecto creado');
+                showToast('success', 'Proyecto creado');
             }
             fetchProjects();
             closeProjectModal();
         } catch (err) {
             console.error(err);
-            alert('Error guardando proyecto');
+            showToast('error', 'Error guardando proyecto');
         }
     };
 
@@ -180,16 +208,16 @@ export default function Projects() {
         try {
             if (userEditing) {
                 await api.put(`/users/${userData.id}`, userData);
-                alert('Usuario actualizado');
+                showToast('success', 'Usuario actualizado');
             } else {
                 await api.post(`/users`, userData);
-                alert('Usuario creado');
+                showToast('success', 'Usuario creado');
             }
             fetchUsers();
             closeUserModal();
         } catch (err) {
             console.error(err);
-            alert('Error guardando usuario');
+            showToast('error', 'Error guardando usuario');
         }
     };
 
@@ -237,6 +265,39 @@ export default function Projects() {
         currentPage * itemsPerPage
     );
 
+    const confirm = (title, message) => {
+        return new Promise((resolve) => {
+            showConfirm({
+                title,
+                message,
+                onConfirm: () => resolve(true),
+                onClose: () => resolve(false),
+                confirmText: 'Confirmar',
+                cancelText: 'Cancelar',
+                confirmButtonClass: 'btn-warning'
+            });
+        });
+    };
+
+    const handleTerminateProject = async (project) => {
+        const confirmed = await confirm(
+            'Finalizar Proyecto',
+            `¿Está seguro que desea finalizar el proyecto "${project.name}"?\n\nEsta acción no se puede deshacer.`
+        );
+        
+        if (!confirmed) return;
+
+        try {
+            await api.patch(`/projects/${project.id}/terminate`);
+            showToast('success', 'Proyecto finalizado correctamente');
+            fetchProjects();
+        } catch (err) {
+            console.error(err);
+            const errorMessage = err.response?.data?.error || 'Error finalizando proyecto';
+            showToast('error', errorMessage);
+        }
+    };
+
     return (
         <Container fluid className="mt-4">
             <Row className="mb-3">
@@ -275,6 +336,7 @@ export default function Projects() {
                                 key={project.id}
                                 project={project}
                                 getUserName={getUserName}
+                                onTerminate={handleTerminateProject}
                             />
                         ))
                     ) : (
@@ -326,6 +388,15 @@ export default function Projects() {
                 userData={userData}
                 setUserData={setUserData}
                 editing={userEditing}
+            />
+
+            <Toast
+                show={toast.show}
+                type={toast.type}
+                message={toast.message}
+                onClose={closeToast}
+                position="top-right"
+                duration={3000}
             />
         </Container>
     );

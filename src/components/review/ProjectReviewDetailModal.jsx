@@ -1,13 +1,13 @@
 import React from 'react';
 import { Modal, Button, Accordion, Row, Col, Card } from 'react-bootstrap';
 import { FaBan, FaStickyNote } from 'react-icons/fa';
-import StatusBadge from './StatusBadge';
+import StatusBadge from '@c/StatusBadge';
 
 export default function ProjectReviewDetailModal({ visible, checklist, review, onClose }) {
     if (!visible) return null;
     
     return (
-        <Modal show={visible} onHide={onClose} size="lg" scrollable>
+        <Modal show={visible} onHide={onClose} size="xl" scrollable fullscreen="xl-down">
             <Modal.Header closeButton>
                 <Modal.Title>Detalle de Revisión - {review.applied_at}</Modal.Title>
             </Modal.Header>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
 const SshInstructionsModal = ({ show, onHide }) => (
-    <Modal show={show} onHide={onHide} size="lg">
+    <Modal show={show} onHide={onHide} size="xl" fullscreen="xl-down">
         <Modal.Header closeButton>
             <Modal.Title>Instrucciones para generar SSH Key</Modal.Title>
         </Modal.Header>

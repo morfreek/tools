@@ -26,7 +26,7 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
 
     return (
         <>
-            <Modal show={show} onHide={onHide} centered size="lg">
+            <Modal show={show} onHide={onHide} centered size="xl" fullscreen="xl-down">
                 <Modal.Header closeButton>
                     <Modal.Title>Cargar Configuración</Modal.Title>
                 </Modal.Header>

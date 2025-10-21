@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col, Accordion, Modal, Badge } from 'react-bootstrap';
 import { FaPlus, FaQuestionCircle, FaCopy, FaExternalLinkAlt, FaKey } from 'react-icons/fa';
-import { CodePreview } from '@/utils/CodePreview';
-import { useToast } from '@/components/ToastContext';
-import SshInstructionsModal from '@/components/cd/SshInstructionsModal';
-import SaveConfigModal from '@/components/cd/SaveConfigModal';
-import LoadConfigModal from '@/components/cd/LoadConfigModal';
-import LoadEnvModal from '@/components/cd/LoadEnvModal';
-import EnvVariableRow from '@/components/cd/EnvVariableRow';
+import { CodePreview } from '@u/CodePreview';
+import { useToast } from '@c/ToastContext';
+import SshInstructionsModal from '@c/cd/SshInstructionsModal';
+import SaveConfigModal from '@c/cd/SaveConfigModal';
+import LoadConfigModal from '@c/cd/LoadConfigModal';
+import LoadEnvModal from '@c/cd/LoadEnvModal';
+import EnvVariableRow from '@c/cd/EnvVariableRow';
 import { defaultConfig } from '@/config/ContinuousDeploymentDefaults.jsx';
-import { generateYamlContent } from '@/components/cd/ContinuousDeploymentYamlGenerator';
+import { generateYamlContent } from '@c/cd/ContinuousDeploymentYamlGenerator';
 import api from '@/api';
 
 export default function ContinuousDeploymentForm({ projectId }) {

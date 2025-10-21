@@ -10,12 +10,12 @@ import {
     Card,
     CloseButton
 } from 'react-bootstrap';
-import { useToast } from '@/components/ToastContext';
-import { useConfirm } from '@/components/ConfirmContext';
+import { useToast } from '@c/ToastContext';
+import { useConfirm } from '@c/ConfirmContext';
 import api from '@/api';
 import ProjectNoteModal from './ProjectNoteModal';
 
-export default function ProjectNotesList({
+export default function ProjectNoteList({
     projectId,
     show,
     onClose,

@@ -3,16 +3,18 @@ import { useParams } from 'react-router-dom';
 import { FaPlus, FaFileExcel } from 'react-icons/fa';
 import ExcelJS from 'exceljs';
 import { Container, ButtonGroup, Button } from 'react-bootstrap';
-import { STATUS_OPTIONS } from '@/utils/Constants';
+import { STATUS_OPTIONS } from '@u/Constants';
 import api from '@/api';
-import ProjectInfoCard from '@/components/ProjectInfoCard';
-import ProjectReviewModal from '@/components/ProjectReviewModal';
-import ProjectReviewDetailModal from '@/components/ProjectReviewDetailModal';
-import ProjectReviewCards from '@/components/ProjectReviewCards';
-import Breadcrumb from '@/components/Breadcrumb';
+import { useConfirm } from '@c/ConfirmContext';
+import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import ProjectReviewModal from '@c/review/ProjectReviewModal';
+import ProjectReviewDetailModal from '@c/review/ProjectReviewDetailModal';
+import ProjectReviewCards from '@c/review/ProjectReviewCards';
+import Breadcrumb from '@c/Breadcrumb';
 
 export default function ProjectReviews() {
     const { id } = useParams();
+    const { showConfirm } = useConfirm();
     const [reviews, setReviews] = useState([]);
     const [checklist, setChecklist] = useState([]);
     const [reviewVisible, setReviewVisible] = useState(false);
@@ -323,6 +325,20 @@ export default function ProjectReviews() {
         fetchReviews();
     };
 
+    const deleteReview = async (reviewId) => {
+        showConfirm({
+            title: 'Eliminar Revisión',
+            message: '¿Estás seguro de que deseas eliminar esta revisión? Esta acción no se puede deshacer.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            confirmButtonClass: 'btn-danger',
+            onConfirm: async () => {
+                await api.delete(`/projects/${id}/reviews`, { data: { reviewId } });
+                fetchReviews();
+            }
+        });
+    };
+
     const handleViewDetail = (review) => {
         setReview(review);
         setReviewVisible(true);
@@ -358,7 +374,11 @@ export default function ProjectReviews() {
             {reviews.length === 0 ? (
                 <p>No hay revisiones</p>
             ) : (
-                <ProjectReviewCards reviews={reviews} startReview={handleViewDetail} />
+                <ProjectReviewCards 
+                    reviews={reviews} 
+                    startReview={handleViewDetail}
+                    deleteReview={deleteReview}
+                />
             )}
 
             <ProjectReviewDetailModal

@@ -1,22 +1,22 @@
-// src/components/NoteModal.jsx
+// src/components/note/NoteModal.jsx
 import React, { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import Editor from 'react-simple-wysiwyg';
 import { FaSave, FaBan } from 'react-icons/fa';
-import { useToast } from './ToastContext'; // Importa el contexto de Toast
-import { useConfirm } from './ConfirmContext'; // Importa el contexto de Confirm
+import { useToast } from '@c/ToastContext';
+import { useConfirm } from '@c/ConfirmContext';
 import api from '@/api';
 
 export default function ProjectNoteModal({ show, onClose, onSaved, projectId, note }) {
     const [content, setContent] = useState(note?.detail || '');
-    const [loading, setLoading] = useState(false); // Nuevo estado
-    const [initialContent] = useState(note?.detail || ''); // Estado inicial del contenido
-    const { showToast } = useToast(); // Usa el contexto de Toast
-    const { showConfirm } = useConfirm(); // Usa el contexto de Confirm
+    const [loading, setLoading] = useState(false);
+    const [initialContent] = useState(note?.detail || '');
+    const { showToast } = useToast();
+    const { showConfirm } = useConfirm();
 
     useEffect(() => {
         setContent(note?.detail || '');
-        setLoading(false); // Reset al abrir/cambiar nota
+        setLoading(false);
     }, [show, note]);
 
     const handleSave = async () => {
@@ -38,8 +38,8 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
                 });
             }
             showToast('success', 'Nota guardada correctamente.');
-            await onSaved(); // Esperamos a que se complete la actualización
-            onClose(); // Cerramos el modal después de que todo esté listo
+            await onSaved();
+            onClose();
         } catch (err) {
             console.error('Error al guardar nota', err);
             showToast('error', 'Error al guardar nota.');
@@ -66,7 +66,7 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
     };
 
     return (
-        <Modal show={show} onHide={handleClose} size="xl" centered>
+        <Modal show={show} onHide={handleClose} size="xl" centered fullscreen="xl-down">
             <Modal.Header closeButton>
                 <Modal.Title>{note ? 'Editar Nota' : 'Nueva Nota'}</Modal.Title>
             </Modal.Header>

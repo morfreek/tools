@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Modal, Button, Form, ListGroup } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
 import api from '@/api';
-import { useToast } from './ToastContext';
+import { useToast } from '@c/ToastContext';
 
 const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => {
     const fileInput = useRef(null);
@@ -51,7 +51,7 @@ const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => 
     };
 
     return (
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={show} onHide={handleClose} fullscreen="xl-down">
             <Modal.Header closeButton>
                 <Modal.Title>Subir archivos</Modal.Title>
             </Modal.Header>

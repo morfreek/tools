@@ -3,9 +3,9 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaClipboardCheck, FaStickyNote, FaRocket } from 'react-icons/fa';
 import { Container, Row, Col, Card } from 'react-bootstrap';
-import ProjectInfoCard from '@/components/ProjectInfoCard';
-import ProjectNotesList from '@/components/ProjectNotesList';
-import Breadcrumb from '@/components/Breadcrumb';
+import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import ProjectNoteList from '@c/note/ProjectNoteList';
+import Breadcrumb from '@c/Breadcrumb';
 
 const ActionCard = ({ icon: Icon, title, description, onClick, color }) => (
     <Card 
@@ -60,7 +60,7 @@ export default function ProjectDetail() {
         <Container fluid className="mt-4">
             <Breadcrumb />
             <ProjectInfoCard id={id} />
-            <ProjectNotesList projectId={id} />
+            <ProjectNoteList projectId={id} />
 
             <h5>Acciones</h5>
             <Row className="g-3 mb-4">
