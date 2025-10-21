@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
-import ProjectInfoCard from '@/components/ProjectInfoCard';
-import Breadcrumb from '@/components/Breadcrumb';
-import ProjectFilesList from '@/components/ProjectFilesList';
+import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import Breadcrumb from '@c/Breadcrumb';
+import ProjectFileList from '@c/file/ProjectFileList';
 
 const ProjectFiles = () => {
     const { id } = useParams();
@@ -14,7 +14,7 @@ const ProjectFiles = () => {
             <ProjectInfoCard id={id} />
             <Row>
                 <Col xs={12}>
-                    <ProjectFilesList projectId={id} />
+                    <ProjectFileList projectId={id} />
                 </Col>
             </Row>
         </Container>

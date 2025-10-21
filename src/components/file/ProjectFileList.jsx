@@ -3,9 +3,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaDownload, FaTrash, FaPlus, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
 import { ListGroup, Button, Placeholder, ButtonGroup, Image, Offcanvas } from 'react-bootstrap';
-import { useToast } from '@/components/ToastContext';
-import { useConfirm } from '@/components/ConfirmContext';
-import ProjectFileUploader from '@/components/ProjectFileUploader';
+import { useToast } from '@c/ToastContext';
+import { useConfirm } from '@c/ConfirmContext';
+import ProjectFileUploader from './ProjectFileUploader';
 import api from '@/api';
 
 // Función auxiliar para formatear el tamaño del archivo
@@ -26,7 +26,7 @@ const getFileIcon = (mimeType) => {
     return FaFile;
 };
 
-export default function ProjectFilesList({
+export default function ProjectFileList({
     projectId,
     show,
     onClose,

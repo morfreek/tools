@@ -20,6 +20,7 @@ export async function openDb() {
                 name TEXT NOT NULL,
                 code TEXT NOT NULL,
                 coordinator_id INTEGER NOT NULL,
+                termination_date DATE DEFAULT NULL,
                 FOREIGN KEY (coordinator_id) REFERENCES users(id)
             );
 
@@ -88,6 +89,14 @@ export async function openDb() {
 
         if (!noteColumnExists) {
             await db.exec(`ALTER TABLE project_reviews ADD COLUMN note TEXT;`);
+        }
+
+        // Verificar si la columna termination_date existe en projects
+        const projectColumns = await db.all(`PRAGMA table_info(projects)`);
+        const terminationDateExists = projectColumns.some(col => col.name === 'termination_date');
+
+        if (!terminationDateExists) {
+            await db.exec(`ALTER TABLE projects ADD COLUMN termination_date DATE DEFAULT NULL;`);
         }
 
         // Insertar aspectos y puntos solo si no existen

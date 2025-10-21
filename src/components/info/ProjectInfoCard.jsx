@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Dropdown, Button, Card, Placeholder } from 'react-bootstrap';
-import { FaEdit, FaStickyNote, FaEye, FaEllipsisV, FaUpload, FaFile } from 'react-icons/fa'; // Import FaUpload and FaFile
-import { useToast } from './ToastContext'; // Importa el contexto de Toast
+import { FaEdit, FaStickyNote, FaEye, FaEllipsisV, FaUpload, FaFile } from 'react-icons/fa';
 import api from '@/api';
-import ProjectModal from './ProjectModal';
-import ProjectNoteModal from './ProjectNoteModal';
-import ProjectNotesList from './ProjectNotesList';
-import ProjectFileUploader from './ProjectFileUploader';
-import ProjectFilesList from './ProjectFilesList'; // Importa ProjectFilesList
+import { useToast } from '@c/ToastContext';
+import ProjectModal from '@c/modal/ProjectModal';
+import ProjectNoteModal from '@c/note/ProjectNoteModal';
+import ProjectNoteList from '@c/note/ProjectNoteList';
+import ProjectFileUploader from '@c/file/ProjectFileUploader';
+import ProjectFileList from '@c/file/ProjectFileList';
 
 // Componente privado para el dropdown
 const OptionsDropdown = ({ options }) => (
@@ -46,7 +46,7 @@ const OptionsDropdown = ({ options }) => (
 );
 
 export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
-    const { showToast } = useToast(); // Usa el contexto de Toast
+    const { showToast } = useToast();
     const [project, setProject] = useState({});
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -172,7 +172,7 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
                 note={null}
             />
 
-            <ProjectNotesList
+            <ProjectNoteList
                 projectId={id}
                 show={showNotesList}
                 onClose={() => setShowNotesList(false)}
@@ -185,7 +185,7 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
                 onUploadComplete={fetchAll}
             />
 
-            <ProjectFilesList
+            <ProjectFileList
                 projectId={id}
                 show={showFilesList}
                 onClose={() => setShowFilesList(false)}

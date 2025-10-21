@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Button, Form, Dropdown } from 'react-bootstrap';
 import { FaSave, FaBan, FaChevronDown } from 'react-icons/fa';
-import { useToast } from './ToastContext';
+import { useToast } from '@c/ToastContext';
 import api from '@/api';
 
 export default function ProjectModal({ show, onClose, formData: initialData }) {
@@ -68,7 +68,7 @@ export default function ProjectModal({ show, onClose, formData: initialData }) {
     };
 
     return (
-        <Modal show={show} onHide={onClose} backdrop="static">
+        <Modal show={show} onHide={onClose} backdrop="static" fullscreen="xl-down">
             <Form onSubmit={handleSubmit}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editing ? 'Editar Proyecto' : 'Crear Proyecto'}</Modal.Title>

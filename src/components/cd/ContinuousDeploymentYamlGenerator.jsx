@@ -72,13 +72,16 @@ stages:${isNodeEnabled ? '\n  - build_frontend' : ''}
 
 .deploy_env_vars: &deploy_env_vars |
   function update_env() {
-    local key="\${1}"
-    local value="\${2}"
-    if grep -q "^\${key}=" .env; then
-        sed -i "s|^\${key}=.*|\${key}=\\"\${value}\\"|" .env
-    else
-        echo "\${key}=\\"\${value}\\"" >> .env
-    fi
+    local key="\$1"
+    local value="\$2"
+    awk -v k="\$key" -v v="\$value" '
+      BEGIN{updated=0}
+      $0 ~ "^"k"=" {
+        print k"=\\\""v"\\\""; updated=1; next
+      }
+      {print}
+      END{ if(!updated) print k"=\\\""v"\\\"" }
+    ' .env > .env.tmp && mv .env.tmp .env
   }`;
 
         // Generar job de build frontend

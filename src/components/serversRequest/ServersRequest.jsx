@@ -20,7 +20,8 @@ const ServersRequest = () => {
         'descripcion-proyecto': '',
         'instalacion': '',
         'server-relacion': '',
-        'vpns': ''
+        'vpns': '',
+        'clonar_desde': ''
     });
 
     // Estado separado para checkboxes individuales
@@ -33,13 +34,73 @@ const ServersRequest = () => {
     // Estado para grupos de radio buttons
     const [radioGroups, setRadioGroups] = useState({
         'tipo_ambiente': '', // testing, desarrollo, produccion, integracion
-        'ip_publica': '', // testing, desarrollo, produccion, integracion
+        'ip_publica': '', // si, no
+        // NUEVO: configuración de recursos y sistema operativo
+        'configuracion_recursos': '', // baja, media, alta
+        'sistema_operativo': '' // windows, linux
     });
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
     const [customFields, setCustomFields] = useState([]);
     const [newFieldName, setNewFieldName] = useState('');
+
+    // NUEVO: opciones de instalación y selección múltiple
+    const INSTALL_OPTIONS = [
+        {
+            group: 'PHP',
+            options: [
+                { value: 'php_lts', label: 'PHP LTS' },
+                { value: 'php_8_0', label: 'PHP 8.0' },
+                { value: 'php_8_1', label: 'PHP 8.1' },
+                { value: 'php_8_2', label: 'PHP 8.2' },
+                { value: 'php_8_3', label: 'PHP 8.3' }
+            ]
+        },
+        {
+            group: 'Node.js',
+            options: [
+                { value: 'node_lts', label: 'Node.js LTS' },
+                { value: 'node_16', label: 'Node.js 16' },
+                { value: 'node_18', label: 'Node.js 18' },
+                { value: 'node_20', label: 'Node.js 20' },
+                { value: 'node_22', label: 'Node.js 22' }
+            ]
+        },
+        {
+            group: 'Sistema',
+            options: [
+                { value: 'git_linux', label: 'Módulo de Git para Linux' },
+                { value: 'estructura_base_devel', label: 'Estructura base devel (https://sandbox.ucsc.cl/desarrollo/common/environment-config/base-devel)' }
+            ]
+        },
+        // NUEVO: Base de datos
+        {
+            group: 'Base de datos',
+            options: [
+                { value: 'mysql_lts', label: 'MySQL LTS (8.4)' },
+                { value: 'mysql_8_4', label: 'MySQL 8.4 LTS' },
+                { value: 'mysql_8_0', label: 'MySQL 8.0' },
+                { value: 'mariadb_lts', label: 'MariaDB LTS (10.11)' },
+                { value: 'mariadb_10_11', label: 'MariaDB 10.11 LTS' },
+                { value: 'mariadb_10_6', label: 'MariaDB 10.6 LTS' }
+            ]
+        }
+    ];
+    const [selectedInstalaciones, setSelectedInstalaciones] = useState([]);
+
+    const getInstalacionLabel = (value) => {
+        for (const group of INSTALL_OPTIONS) {
+            const found = group.options.find(o => o.value === value);
+            if (found) return found.label;
+        }
+        return value;
+    };
+
+    const handleInstalacionesChange = (e) => {
+        const values = Array.from(e.target.selectedOptions).map(o => o.value);
+        setSelectedInstalaciones(values);
+    };
 
     // Cargar template al montar el componente
     useEffect(() => {
@@ -185,7 +246,9 @@ const ServersRequest = () => {
             const doc = new Docxtemplater(zip, {
                 paragraphLoop: true,
                 linebreaks: true,
-                errorLogging: true
+                errorLogging: true,
+                // Evitar romper si faltan variables: retornar vacío
+                nullGetter: () => ''
             });
         } catch (docError) {
             throw new Error(`Error al procesar el documento con Docxtemplater: ${docError.message}`);
@@ -243,41 +306,63 @@ const ServersRequest = () => {
                 doc = new Docxtemplater(zip, {
                     paragraphLoop: true,
                     linebreaks: true,
-                    errorLogging: false
+                    errorLogging: false,
+                    // Si la plantilla tiene variables no presentes, devolver ''
+                    nullGetter: () => ''
                 });
             } catch (docError) {
                 throw new Error('Error al procesar la plantilla Word: ' + docError.message);
             }
 
+            // Derivar variables de "instalación" (selector múltiple)
+            const instalacionLabels = selectedInstalaciones.map(getInstalacionLabel);
+            const instalacionLista = instalacionLabels.join(', ');
+            const instalacionBullets = instalacionLabels.map(l => `- ${l}`).join('\n');
+            const instalacionChecks = {};
+            INSTALL_OPTIONS.forEach(group => {
+                group.options.forEach(opt => {
+                    const sel = selectedInstalaciones.includes(opt.value);
+                    instalacionChecks[`instalacion_${opt.value}`] = sel ? '☑' : '☐';
+                    instalacionChecks[`instalacion_${opt.value}_checked`] = sel ? 'X' : '';
+                });
+            });
+            // NUEVO: fusionar texto libre + selecciones al campo "instalacion"
+            const mergedInstalacion = [String(formData.instalacion || '').trim(), instalacionBullets]
+                .filter(Boolean)
+                .join('\n');
+
             // Combinar formData con checkboxes y radio groups procesados
             const templateData = {
                 ...formData,
-                // Procesar checkboxes individuales
+                // Checkboxes individuales
                 ...Object.keys(checkboxFields).reduce((acc, key) => {
                     acc[key] = checkboxFields[key] ? '☑' : '☐';
                     acc[`${key}_checked`] = checkboxFields[key] ? 'X' : '';
                     acc[`${key}_text`] = checkboxFields[key] ? 'SÍ' : 'NO';
                     return acc;
                 }, {}),
-                // Procesar radio groups
+                // Radio groups
                 ...Object.keys(radioGroups).reduce((acc, groupName) => {
                     const selectedValue = radioGroups[groupName];
-
-                    // Para cada grupo, crear variables para cada opción
                     const groupOptions = getRadioOptions(groupName);
                     groupOptions.forEach(option => {
                         const isSelected = selectedValue === option.value;
                         acc[`${groupName}_${option.value}`] = isSelected ? '☑' : '☐';
                         acc[`${groupName}_${option.value}_checked`] = isSelected ? 'X' : '';
                     });
-
-                    // También crear una variable con el valor seleccionado
                     acc[groupName] = selectedValue;
                     acc[`${groupName}_text`] = groupOptions.find(opt => opt.value === selectedValue)?.label || '';
-
                     return acc;
-                }, {})
+                }, {}),
+                // Instalación multi-selección
+                instalacion_lista: instalacionLista,
+                instalacion_bullets: instalacionBullets,
+                instalacion_count: selectedInstalaciones.length,
+                ...instalacionChecks,
+                // NUEVO: sobrescribir "instalacion" con el merge
+                instalacion: mergedInstalacion
             };
+            console.log(templateData)
 
             try {
                 doc.render(templateData);
@@ -303,41 +388,33 @@ const ServersRequest = () => {
                 type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             });
 
-            // Verificar que el blob se creó correctamente
             if (!blob || blob.size === 0) {
                 throw new Error('Error al crear el documento final');
             }
 
-            // Crear nombre del archivo con servidor o identificador único
-            const serverName = formData.server ?
-                formData.server.replace(/[^a-zA-Z0-9\-_]/g, '-') :
-                generateUniqueId();
+            const serverName = formData.server
+                ? formData.server.replace(/[^a-zA-Z0-9\-_]/g, '-')
+                : generateUniqueId();
 
             const fileName = `Formulario Solicitud de Servidores Virtuales-${serverName}.docx`;
 
-            // Descargar el archivo
             try {
                 const url = URL.createObjectURL(blob);
                 const enlace = document.createElement('a');
                 enlace.href = url;
                 enlace.download = fileName;
                 enlace.style.display = 'none';
-
                 document.body.appendChild(enlace);
                 enlace.click();
-
-                // Limpiar recursos después de un breve delay
                 setTimeout(() => {
                     if (document.body.contains(enlace)) {
                         document.body.removeChild(enlace);
                     }
                     URL.revokeObjectURL(url);
                 }, 1000);
-
             } catch (downloadError) {
                 throw new Error('Error al descargar el documento');
             }
-
         } catch (err) {
             setError(err.message || 'Error desconocido al generar el documento');
         } finally {
@@ -378,7 +455,8 @@ const ServersRequest = () => {
             'descripcion-proyecto': 'Descripción proyecto',
             'instalacion': 'Instalación',
             'server-relacion': 'Server relación',
-            'vpns': 'Vpns'
+            'vpns': 'Vpns',
+            'clonar_desde': 'Clonar desde'
         };
         return labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1).replace('-', ' ');
     };
@@ -407,6 +485,16 @@ const ServersRequest = () => {
             'ip_publica': [
                 { value: 'si', label: 'Si' },
                 { value: 'no', label: 'No' }
+            ],
+            // NUEVO
+            'configuracion_recursos': [
+                { value: 'baja', label: 'Baja' },
+                { value: 'media', label: 'Media' },
+                { value: 'alta', label: 'Alta' }
+            ],
+            'sistema_operativo': [
+                { value: 'windows', label: 'Windows' },
+                { value: 'linux', label: 'Linux' }
             ]
         };
         return radioOptionsMap[groupName] || [];
@@ -416,7 +504,10 @@ const ServersRequest = () => {
     const getRadioGroupLabel = (groupName) => {
         const groupLabelMap = {
             'tipo_ambiente': 'Tipo de ambiente',
-            'ip_publica': 'IP Pública'
+            'ip_publica': 'IP Pública',
+            // NUEVO
+            'configuracion_recursos': 'Configuración de recursos',
+            'sistema_operativo': 'Sistema operativo a utilizar'
         };
         return groupLabelMap[groupName] || groupName;
     };
@@ -533,6 +624,8 @@ const ServersRequest = () => {
                                 <li>Para radio groups usa variables como: <code>{'{tipo_ambiente_testing}'}</code>, <code>{'{tipo_ambiente_desarrollo}'}</code></li>
                                 <li>También puedes usar el valor seleccionado: <code>{'{tipo_ambiente}'}</code> → "testing"</li>
                                 <li>Haz clic en "Generar Documento" para descargar el archivo</li>
+                                <li>Puedes usar variables nuevas: <code>{'{clonar_desde}'}</code>, <code>{'{instalacion_lista}'}</code>, <code>{'{instalacion_bullets}'}</code></li>
+                                <li>Para checks de instalaciones usa: <code>{'{instalacion_php_lts}'}</code>, <code>{'{instalacion_node_20}'}</code> o su versión <code>{'{..._checked}'}</code></li>
                             </ol>
                         </Card.Body>
                     </Card>
@@ -618,13 +711,42 @@ const ServersRequest = () => {
                                             <Form.Group>
                                                 <Form.Label>{getFieldLabel(key)}:</Form.Label>
                                                 {key === 'instalacion' ? (
-                                                    <Form.Control
-                                                        as="textarea"
-                                                        rows={1}
-                                                        value={formData[key] || ''}
-                                                        onChange={(e) => handleInputChange(key, e.target.value)}
-                                                        placeholder={`Ingresa ${getFieldLabel(key).toLowerCase()}`}
-                                                    />
+                                                    <>
+                                                        <Form.Control
+                                                            as="textarea"
+                                                            rows={2}
+                                                            value={formData[key] || ''}
+                                                            onChange={(e) => handleInputChange(key, e.target.value)}
+                                                            placeholder={`Ingresa ${getFieldLabel(key).toLowerCase()}`}
+                                                        />
+                                                        {/* NUEVO: selector múltiple de tecnologías */}
+                                                        <Form.Label className="mt-2">Seleccionar tecnologías:</Form.Label>
+                                                        <Form.Select
+                                                            multiple
+                                                            value={selectedInstalaciones}
+                                                            onChange={handleInstalacionesChange}
+                                                        >
+                                                            {INSTALL_OPTIONS.map(group => (
+                                                                <optgroup key={group.group} label={group.group}>
+                                                                    {group.options.map(opt => (
+                                                                        <option key={opt.value} value={opt.value}>
+                                                                            {opt.label}
+                                                                        </option>
+                                                                    ))}
+                                                                </optgroup>
+                                                            ))}
+                                                        </Form.Select>
+                                                        <Form.Text className="text-muted">
+                                                            Variables: <code>{'{instalacion_lista}'}</code>, <code>{'{instalacion_bullets}'}</code>, checks como <code>{'{instalacion_php_lts}'}</code>
+                                                        </Form.Text>
+                                                        <div className="mt-2">
+                                                            {selectedInstalaciones.map(val => (
+                                                                <Badge key={val} bg="secondary" className="me-1">
+                                                                    {getInstalacionLabel(val)}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    </>
                                                 ) : (
                                                     <Form.Control
                                                         type="text"

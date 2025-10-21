@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Card } from 'react-bootstrap';
-import ProjectInfoCard from '@/components/ProjectInfoCard';
-import ProjectNotesList from '@/components/ProjectNotesList';
-import Breadcrumb from '@/components/Breadcrumb';
+import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import ProjectNoteList from '@c/note/ProjectNoteList';
+import Breadcrumb from '@c/Breadcrumb';
 
 export default function ProjectNotes() {
     const { id } = useParams();
@@ -27,7 +27,7 @@ export default function ProjectNotes() {
                     height: 'calc(100vh - 245px)'
                 }}
             >
-                <ProjectNotesList
+                <ProjectNoteList
                     projectId={id}
                     show={true}
                     className="position-relative w-100 h-100"

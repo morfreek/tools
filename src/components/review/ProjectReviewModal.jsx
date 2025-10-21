@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Accordion, Row, Col } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
-import { STATUS_OPTIONS } from '@/utils/Constants';
 import Editor from 'react-simple-wysiwyg';
-import { useConfirm } from '@/components/ConfirmContext';
+import { STATUS_OPTIONS } from '@u/Constants';
+import { useConfirm } from '@c/ConfirmContext';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
     const [initialForm, setInitialForm] = useState(null);
@@ -74,7 +74,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
     };
 
     return (
-        <Modal show={visible} onHide={handleClose} size="xl" scrollable>
+        <Modal show={visible} onHide={handleClose} size="xl" scrollable fullscreen="xl-down">
             <Modal.Header closeButton>
                 <Modal.Title>
                     Nueva Revisión Técnica

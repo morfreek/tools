@@ -21,7 +21,7 @@ export default function UserModal({
     };
 
     return (
-        <Modal show={show} onHide={onClose} backdrop="static">
+        <Modal show={show} onHide={onClose} backdrop="static" fullscreen="xl-down">
             <Form onSubmit={handleSubmit}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editing ? 'Editar Usuario' : 'Crear Usuario'}</Modal.Title>

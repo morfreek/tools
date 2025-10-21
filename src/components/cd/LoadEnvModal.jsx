@@ -77,7 +77,7 @@ export default function LoadEnvModal({ show, onHide, onLoadEnvVariables }) {
     };
 
     return (
-        <Modal show={show} onHide={handleClose} size="lg" className="h-100">
+        <Modal show={show} onHide={handleClose} size="xl" fullscreen="xl-down" className="h-100">
             <Modal.Header closeButton>
                 <Modal.Title>
                     <FaFileUpload className="me-2" />
