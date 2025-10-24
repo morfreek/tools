@@ -25,6 +25,7 @@ const Sidebar = ({ collapsed, autoCollapsed, onToggle }) => {
         { path: '/', label: 'Inicio', icon: <FaHome /> },
         { path: '/projects', label: 'Proyectos', icon: <FaProjectDiagram /> },
         { path: '/jmeter-test-generator', label: 'JMeter test generator', icon: <FaBolt /> },
+        { path: '/jmeter-test-creator', label: 'JMeter test creator', icon: <FaBolt /> },
         { path: '/phpstan', label: 'Visor PHPStan', icon: <FaSearch /> },
         { path: '/solicitud-maquina-virtual-upt', label: 'Solicitud de servidores', icon: <FaServer /> },
     ];

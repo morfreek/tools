@@ -16,6 +16,7 @@ import ProjectFiles from '@/pages/ProjectFiles'; // Import ProjectFiles
 import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment'; // Import ProjectContinuousDeployment
 import { ToastProvider } from '@/components/ToastContext'; // Importa el ToastProvider
 import { ConfirmProvider } from '@/components/ConfirmContext'; // Import ConfirmProvider
+import JMeterTestCreator from '@/pages/JMeterTestCreator'; // NUEVO: import de la nueva página
 
 const basename = import.meta.env.VITE_BASE_URL;
 
@@ -77,6 +78,7 @@ const LocationWrapper = () => {
         { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> }, // Add ProjectFiles route
         { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
         { path: '/jmeter-test-generator', element: <JMeterTestGenerator /> },
+        { path: '/jmeter-test-creator', element: <JMeterTestCreator /> }, // NUEVO: ruta para la nueva página
         { path: '/phpstan', element: <PhpStanViewer /> },
         { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> } // Add ServersRequestPage route
     ];
