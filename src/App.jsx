@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from '
 import Sidebar from '@/components/Sidebar';
 import RequireAuth from '@/components/RequireAuth';
 import Home from '@/pages/Home';
-import JMeterTestGenerator from '@/pages/JMeterTestGenerator';
 import PhpStanViewer from '@/pages/PhpStanViewer';
 import ServersRequestPage from '@/pages/ServersRequestPage'; // Import ServersRequestPage
 import NotFound from '@/pages/NotFound'; // Import the 404 page component
@@ -77,7 +76,6 @@ const LocationWrapper = () => {
         { path: '/projects/:id/notes', element: <RequireAuth><ProjectNotes /></RequireAuth> },
         { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> }, // Add ProjectFiles route
         { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
-        { path: '/jmeter-test-generator', element: <JMeterTestGenerator /> },
         { path: '/jmeter-test-creator', element: <JMeterTestCreator /> }, // NUEVO: ruta para la nueva página
         { path: '/phpstan', element: <PhpStanViewer /> },
         { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> } // Add ServersRequestPage route

@@ -16,7 +16,9 @@ const TabNavigation = ({
     onRequestDelete, 
     onRequestDuplicate, 
     onRequestChange,
-    onOpenPreview 
+    onRequestClearAll,
+    onOpenPreview,
+    onLoadJmx
 }) => {
     const [activeKey, setActiveKey] = useState('general');
 
@@ -34,9 +36,31 @@ const TabNavigation = ({
                 }}
             >
                 <h5 className="mb-0">Configuración Completa del Plan JMeter</h5>
-                <Button size="sm" variant="primary" onClick={onOpenPreview}>
-                    Previsualizar .jmx
-                </Button>
+                <div className="d-flex gap-2">
+                    <Button 
+                        size="sm" 
+                        variant="outline-secondary" 
+                        onClick={() => document.getElementById('jmx-file-input').click()}
+                    >
+                        Cargar .jmx
+                    </Button>
+                    <input
+                        id="jmx-file-input"
+                        type="file"
+                        accept=".jmx"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file && onLoadJmx) {
+                                onLoadJmx(file);
+                            }
+                            e.target.value = ''; // Reset input
+                        }}
+                    />
+                    <Button size="sm" variant="primary" onClick={onOpenPreview}>
+                        Previsualizar .jmx
+                    </Button>
+                </div>
             </Card.Header>
             
             <div 
@@ -257,6 +281,7 @@ const TabNavigation = ({
                             onDelete={onRequestDelete}
                             onDuplicate={onRequestDuplicate}
                             onChange={onRequestChange}
+                            onClearAll={onRequestClearAll}
                         />
                     )}
                     

@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Container, Alert } from 'react-bootstrap';
+import { Container, Alert, Toast, ToastContainer } from 'react-bootstrap';
 import { FaInfoCircle, FaLightbulb } from 'react-icons/fa';
 import TabNavigation from '@c/jmeterCreator/TabNavigation';
 import Preview from '@c/jmeterCreator/Preview';
-import { buildJmx, createDefaultRequest } from '@c/jmeterCreator/jmxUtils';
+import { buildJmx, createDefaultRequest, parseJmxFile } from '@c/jmeterCreator/jmxUtils';
 
 const JMeterTestCreator = () => {
     const [plan, setPlan] = useState({
@@ -40,6 +40,7 @@ const JMeterTestCreator = () => {
     });
     const [requests, setRequests] = useState([]);
     const [showPreview, setShowPreview] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
     // Sanea cada request removiendo o vaciando secciones con switch desactivado.
     const sanitizeRequest = (req) => {
@@ -77,7 +78,13 @@ const JMeterTestCreator = () => {
         const blob = new Blob([jmx], { type: 'application/xml' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `${plan.planName.replace(/\s+/g, '_')}.jmx`;
+        
+        // Crear timestamp unix
+        const unixTimestamp = Math.floor(Date.now() / 1000);
+
+        const planName = plan.planName.replace(/\s+/g, '_') || 'jmeter_test';
+        
+        a.download = `${planName}_${unixTimestamp}.jmx`;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(a.href);
@@ -91,6 +98,7 @@ const JMeterTestCreator = () => {
     };
     const addReq = () => setRequests((prev) => [...prev, createDefaultRequest(prev.length + 1)]);
     const delReq = (idx) => setRequests((prev) => prev.filter((_, i) => i !== idx));
+    const clearAllReq = () => setRequests([]);
     const dupReq = (idx) =>
         setRequests((prev) => {
             const copy = { 
@@ -100,6 +108,33 @@ const JMeterTestCreator = () => {
             };
             return [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)];
         });
+
+    const handleLoadJmx = async (file) => {
+        try {
+            setToast({ show: true, message: 'Cargando archivo JMX...', variant: 'info' });
+            
+            const config = await parseJmxFile(file);
+            
+            // Actualizar configuración del plan
+            setPlan(config.plan);
+            
+            // Actualizar requests
+            setRequests(config.requests);
+            
+            setToast({ 
+                show: true, 
+                message: `Archivo JMX cargado exitosamente. Se encontraron ${config.requests.length} peticiones HTTP.`, 
+                variant: 'success' 
+            });
+        } catch (error) {
+            console.error('Error al cargar JMX:', error);
+            setToast({ 
+                show: true, 
+                message: `Error al cargar el archivo: ${error.message}`, 
+                variant: 'danger' 
+            });
+        }
+    };
 
     return (
         <Container fluid className="mt-4">
@@ -133,7 +168,9 @@ const JMeterTestCreator = () => {
                 onRequestDelete={delReq}
                 onRequestDuplicate={dupReq}
                 onRequestChange={updateReq}
+                onRequestClearAll={clearAllReq}
                 onOpenPreview={() => setShowPreview(true)}
+                onLoadJmx={handleLoadJmx}
             />
 
             <Preview
@@ -143,6 +180,23 @@ const JMeterTestCreator = () => {
                 onDownload={downloadJmx}
                 onCopyXml={() => navigator.clipboard.writeText(jmx)}
             />
+
+            <ToastContainer position="top-end" className="p-3">
+                <Toast 
+                    show={toast.show} 
+                    onClose={() => setToast({ ...toast, show: false })}
+                    delay={5000}
+                    autohide
+                    bg={toast.variant}
+                >
+                    <Toast.Header>
+                        <strong className="me-auto">JMeter Test Creator</strong>
+                    </Toast.Header>
+                    <Toast.Body className="text-white">
+                        {toast.message}
+                    </Toast.Body>
+                </Toast>
+            </ToastContainer>
         </Container>
     );
 };

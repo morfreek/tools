@@ -1,14 +1,15 @@
 import React, { useRef, useState, useCallback, memo, useMemo } from 'react';
-import { Button, Alert, Card, Form, Row, Col, OverlayTrigger, Tooltip, Badge, Collapse, Modal } from 'react-bootstrap';
-import { FaPlus, FaGlobe, FaInfoCircle, FaTrash, FaCopy, FaUpload, FaCheckCircle, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { Button, Alert, Card, Form, Row, Col, OverlayTrigger, Tooltip, Badge, Collapse, Modal, ButtonGroup } from 'react-bootstrap';
+import { FaPlus, FaGlobe, FaInfoCircle, FaTrash, FaCopy, FaUpload, FaCheckCircle, FaTimes, FaChevronDown, FaChevronUp, FaExclamationTriangle } from 'react-icons/fa';
 import RoutesSelectorModal from '../modals/RoutesSelectorModal';
 import GlobalAssertionsModal from '../modals/GlobalAssertionsModal';
 import { useToast } from '@/components/ToastContext';
 
-const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
+const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClearAll }) => {
     const [showRoutesModal, setShowRoutesModal] = useState(false);
     const [showGlobalAssertions, setShowGlobalAssertions] = useState(false);
     const [laravelRoutes, setLaravelRoutes] = useState([]);
+    const [showClearModal, setShowClearModal] = useState(false);
     const fileInputRef = useRef(null);
     const { showToast } = useToast();
 
@@ -18,7 +19,6 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
         </Tooltip>
     );
 
-    // Config común para tooltips: evita flip y desborde; ancla en body; suaviza apertura/cierre
     const tooltipProps = useMemo(() => ({
         placement: 'left',
         container: typeof document !== 'undefined' ? document.body : undefined,
@@ -88,8 +88,8 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
                 name: route.name || `${route.method.toUpperCase()} ${route.uri}`,
                 method: route.method.toUpperCase(),
                 path: route.uri,
-                headersText: '', // route.method.toUpperCase() !== 'GET' ? 'Content-Type:application/json' : '',
-                bodyText: '', // route.method.toUpperCase() !== 'GET' ? '{}' : '',
+                headersText: '',
+                bodyText: '',
                 paramsText: '',
                 enabled: true,
                 responseAssertions: [],
@@ -97,7 +97,7 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
                 dataEnabled: false,
                 advancedEnabled: false,
                 assertionsEnabled: false,
-                id: Date.now() + routeIndex // Agregar ID único
+                id: Date.now() + routeIndex
             };
 
             onAdd();
@@ -114,45 +114,46 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
 
     const handleGlobalAssertionsApply = (assertions) => {
         const { responseAssertions, jsonAssertions } = assertions;
-        
-        // Aplicar a todas las peticiones existentes
+
         requests.forEach((_, index) => {
             const updatedRequest = { ...requests[index] };
-            
-            // Agregar response assertions si no existen ya
+
             if (responseAssertions.length > 0) {
                 const existingResponseAssertions = updatedRequest.responseAssertions || [];
-                const newResponseAssertions = responseAssertions.filter(newAssertion => 
-                    !existingResponseAssertions.some(existing => 
-                        existing.field === newAssertion.field && 
+                const newResponseAssertions = responseAssertions.filter(newAssertion =>
+                    !existingResponseAssertions.some(existing =>
+                        existing.field === newAssertion.field &&
                         existing.pattern === newAssertion.pattern
                     )
                 );
                 updatedRequest.responseAssertions = [...existingResponseAssertions, ...newResponseAssertions];
                 updatedRequest.assertionsEnabled = true;
             }
-            
-            // Agregar JSON assertions si no existen ya
+
             if (jsonAssertions.length > 0) {
                 const existingJsonAssertions = updatedRequest.jsonAssertions || [];
-                const newJsonAssertions = jsonAssertions.filter(newAssertion => 
-                    !existingJsonAssertions.some(existing => 
+                const newJsonAssertions = jsonAssertions.filter(newAssertion =>
+                    !existingJsonAssertions.some(existing =>
                         existing.jsonPath === newAssertion.jsonPath
                     )
                 );
                 updatedRequest.jsonAssertions = [...existingJsonAssertions, ...newJsonAssertions];
                 updatedRequest.assertionsEnabled = true;
             }
-            
+
             onChange(index, updatedRequest);
         });
-        
+
         const totalAdded = responseAssertions.length + jsonAssertions.length;
         showToast('success', `Se agregaron ${totalAdded} assertions globales a ${requests.length} peticiones`);
         setShowGlobalAssertions(false);
     };
 
-    // Crear funciones memoizadas para cada request
+    const handleClearAll = () => {
+        onClearAll();
+        setShowClearModal(false);
+    };
+
     const requestHandlers = useMemo(() => {
         return requests.map((_, index) => ({
             addResponseAssertion: () => {
@@ -259,6 +260,17 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
                         <FaPlus size={12} />
                         Añadir petición
                     </Button>
+                    {requests.length > 0 && (
+                        <Button
+                            size="sm"
+                            variant="outline-danger"
+                            onClick={() => setShowClearModal(true)}
+                            className="d-flex align-items-center gap-1"
+                        >
+                            <FaTrash size={12} />
+                            Limpiar Todo
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -308,13 +320,38 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange }) => {
                 onApply={handleGlobalAssertionsApply}
                 requestsCount={requests.length}
             />
+
+            <Modal show={showClearModal} onHide={() => setShowClearModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <FaExclamationTriangle className="text-warning me-2" />
+                        Confirmar eliminación
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>
+                        ¿Estás seguro de que deseas eliminar todas las peticiones HTTP?
+                    </p>
+                    <p className="mb-0">
+                        <strong>Se eliminarán {requests.length} peticiones.</strong> Esta acción no se puede deshacer.
+                    </p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowClearModal(false)}>
+                        Cancelar
+                    </Button>
+                    <Button variant="danger" onClick={handleClearAll}>
+                        <FaTrash className="me-1" />
+                        Eliminar Todo
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };
 
-// Mover RequestCard fuera del componente padre
 const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps }) => {
-    const [isOpen, setIsOpen] = useState(false); // colapsado por defecto
+    const [isOpen, setIsOpen] = useState(false);
     const [showJsonHelp, setShowJsonHelp] = useState(false);
 
     const methodVariant = (method = 'GET') => {
@@ -329,7 +366,6 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
 
     const totalAssertions = (req.responseAssertions?.length || 0) + (req.jsonAssertions?.length || 0);
 
-    // Flags de secciones (por defecto desactivadas)
     const dataEnabled = !!req.dataEnabled;
     const advancedEnabled = !!req.advancedEnabled;
     const assertionsEnabled = !!req.assertionsEnabled;
@@ -460,7 +496,6 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                 </Col>
                             </Row>
 
-                            {/* Switches para activar/desactivar secciones */}
                             <div className="d-flex flex-wrap align-items-center gap-3 mb-2">
                                 <small className="text-muted">Secciones:</small>
                                 <Form.Check
@@ -486,7 +521,6 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                 />
                             </div>
 
-                            {/* Datos */}
                             {dataEnabled && (
                                 <>
                                     <div className="border-top my-2" />
@@ -560,7 +594,6 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                 </>
                             )}
 
-                            {/* Avanzado */}
                             {advancedEnabled && (
                                 <>
                                     <div className="border-top my-2" />
@@ -609,7 +642,6 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                 </>
                             )}
 
-                            {/* Assertions */}
                             {assertionsEnabled && (
                                 <>
                                     <div className="border-top my-2" />
