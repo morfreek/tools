@@ -21,6 +21,7 @@ const TableHeader = ({ sortConfig, handleSort }) => (
             <SortableHeader title="Código" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
             <SortableHeader title="Coordinador" sortKey="coordinator_id" currentSort={sortConfig} onSort={handleSort} />
             <th>Desarrolladores</th>
+            <th>Estado / finalización</th>
             <th className="text-center">Acciones</th>
         </tr>
     </thead>
@@ -28,7 +29,7 @@ const TableHeader = ({ sortConfig, handleSort }) => (
 
 const LoadingRow = () => (
     <tr>
-        <td colSpan="5" className="text-center">
+        <td colSpan="6" className="text-center">
             <Spinner animation="border" size="sm" /> Cargando...
         </td>
     </tr>
@@ -36,7 +37,7 @@ const LoadingRow = () => (
 
 const EmptyRow = () => (
     <tr>
-        <td colSpan="5" className="text-center text-muted">
+        <td colSpan="6" className="text-center text-muted">
             No existen datos
         </td>
     </tr>
@@ -48,6 +49,17 @@ const ProjectRow = ({ project, getUserName, onTerminate }) => (
         <td>{project.code}</td>
         <td>{getUserName(project.coordinator_id)}</td>
         <td>{(project.developer_ids || []).map(getUserName).join(', ')}</td>
+        <td>
+            {project.termination_date
+                ? new Date(project.termination_date).toLocaleString('es-CL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+                : 'Activo'}
+        </td>
         <td className="text-center">
             <ButtonGroup size="sm">
                 <Button
@@ -59,14 +71,16 @@ const ProjectRow = ({ project, getUserName, onTerminate }) => (
                     <FaTasks className="me-1" />
                     {/* Detalles */}
                 </Button>
-                <Button
-                    variant="outline-secondary"
-                    className="d-inline-flex align-items-center"
-                    onClick={() => onTerminate(project)}
-                >
-                    <FaStop className="me-1" />
-                    Finalizar
-                </Button>
+                {!project.termination_date && (
+                    <Button
+                        variant="outline-secondary"
+                        className="d-inline-flex align-items-center"
+                        onClick={() => onTerminate(project)}
+                    >
+                        <FaStop className="me-1" />
+                        Finalizar
+                    </Button>
+                )}
             </ButtonGroup>
         </td>
     </tr>
@@ -92,6 +106,7 @@ export default function Projects() {
     const [userEditing, setUserEditing] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [projectStatus, setProjectStatus] = useState('active');
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -113,14 +128,18 @@ export default function Projects() {
     };
 
     useEffect(() => {
-        fetchProjects();
         fetchUsers();
     }, []);
 
-    const fetchProjects = async () => {
+    useEffect(() => {
+        fetchProjects(projectStatus);
+        setCurrentPage(1);
+    }, [projectStatus]);
+
+    const fetchProjects = async (status = projectStatus) => {
         setLoading(true);
         try {
-            const res = await api.get(`/projects`);
+            const res = await api.get('/projects', { params: { status } });
             setProjects(res.data);
         } catch (err) {
             console.error(err);
@@ -314,16 +333,31 @@ export default function Projects() {
                 </Col>
             </Row>
 
-            <Form.Control
-                type="text"
-                className="mb-3"
-                placeholder="Buscar por nombre o código..."
-                value={searchTerm}
-                onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                }}
-            />
+            <Row className="align-items-center mb-3">
+                <Col>
+                    <Form.Control
+                        type="text"
+                        placeholder="Buscar por nombre o código..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </Col>
+                <Col xs="auto">
+                    <Form.Check
+                        type="switch"
+                        id="finished-projects-switch"
+                        label="Mostrar finalizados"
+                        checked={projectStatus === 'finished'}
+                        onChange={(e) => {
+                            setProjectStatus(e.target.checked ? 'finished' : 'active');
+                            setCurrentPage(1);
+                        }}
+                    />
+                </Col>
+            </Row>
 
             <Table striped bordered hover>
                 <TableHeader sortConfig={sortConfig} handleSort={handleSort} />
@@ -345,11 +379,12 @@ export default function Projects() {
                 </tbody>
             </Table>
 
-            <Row className="align-items-center mt-1">
-                <Col>
-                    <span>Página {currentPage} de {totalPages}</span>
-                </Col>
-                <Col xs="auto">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-3">
+                <span>Página {currentPage} de {totalPages}</span>
+                <div className="d-flex flex-wrap align-items-center gap-3">
+                    <span className="fw-semibold text-muted">
+                        Total de registros: {filteredProjects.length}
+                    </span>
                     <ButtonGroup>
                         <Button
                             variant="outline-secondary"
@@ -368,8 +403,8 @@ export default function Projects() {
                             Siguiente
                         </Button>
                     </ButtonGroup>
-                </Col>
-            </Row>
+                </div>
+            </div>
 
             <ProjectModal
                 show={projectModalVisible}

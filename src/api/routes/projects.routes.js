@@ -6,13 +6,25 @@ const router = express.Router();
 
 // GET /projects - listar proyectos con coordinador y desarrolladores
 router.get('/projects', async (req, res) => {
+    const { status = 'active' } = req.query;
+
+    const statusConditions = {
+        active: 'p.termination_date IS NULL',
+        finished: 'p.termination_date IS NOT NULL'
+    };
+
+    if (!statusConditions[status]) {
+        return res.status(400).json({ error: 'Estado de proyecto inválido' });
+    }
+
     const db = await openDb();
+
     // Obtener proyectos con coordinador
     const projects = await db.all(`
         SELECT p.id, p.name, p.code, p.coordinator_id, p.termination_date
         FROM projects p
         JOIN users u ON p.coordinator_id = u.id
-        WHERE p.termination_date IS NULL
+        WHERE ${statusConditions[status]}
         ORDER BY p.name
     `);
 
