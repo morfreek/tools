@@ -26,6 +26,30 @@ describe('Projects Endpoints', () => {
       expect(response.data[0]).toHaveProperty('developer_ids');
       expect(response.data[0]).toHaveProperty('developer_names');
     });
+
+    it('debe solicitar proyectos finalizados cuando se indica el estado', async () => {
+      const finishedProject = {
+        ...mockProjects[0],
+        termination_date: '2026-07-01T12:00:00.000Z'
+      };
+
+      mockDb.all
+        .mockResolvedValueOnce([finishedProject])
+        .mockResolvedValueOnce([{ id: 2, name: 'Ana García' }]);
+
+      const response = await httpClient.get('/tools/api/projects?status=finished');
+
+      expect(response.status).toBe(200);
+      expect(response.data[0].termination_date).toBe(finishedProject.termination_date);
+      expect(mockDb.all.mock.calls[0][0]).toContain('p.termination_date IS NOT NULL');
+    });
+
+    it('debe rechazar un estado de proyecto inválido', async () => {
+      const response = await httpClient.get('/tools/api/projects?status=invalid');
+
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: 'Estado de proyecto inválido' });
+    });
   });
 
   describe('GET /tools/api/projects/:id', () => {

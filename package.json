@@ -1,5 +1,5 @@
 {
-  "name": "Tools administración LT - UDS",
+  "name": "tools-administracion-lt-uds",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "api": "node src/api/server.js",
     "test": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest",
     "test:watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --watch",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --coverage",
