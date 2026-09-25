@@ -186,5 +186,21 @@ a.tarjeta:hover, .tarjeta[role="button"]:hover, a.tarjeta:focus-visible {
 .nota-contenido { border-left: 3px solid var(--acento); padding-left: 14px; }
 .nota-contenido > :last-child { margin-bottom: 0; }
 
-/* Vista previa de la última nota en el resumen: máximo 3 líneas */
+/* Extracto de la observación general en las tarjetas de revisión: máximo 3 líneas */
 .resumen-nota { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Pestaña Seguimiento: bitácora de revisiones */
+.bitacora { margin: 0; padding: 0; list-style: none; }
+.bitacora-item { padding: 14px 0 14px 16px; border-left: 2px solid var(--borde); position: relative; }
+.bitacora-item::before {
+  content: ""; position: absolute; left: -6px; top: 19px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--panel); border: 2px solid var(--acento);
+}
+.bitacora-item:first-child { padding-top: 0; }
+.bitacora-item:first-child::before { top: 5px; }
+.bitacora-item:last-child { padding-bottom: 0; }
+.bitacora .nota-contenido { border-left: 0; padding-left: 0; }
+
+/* Editor enriquecido con error de validación */
+.editor-invalido .rsw-editor { border-color: var(--rojo) !important; }

@@ -41,29 +41,64 @@ describe('Reviews Endpoints', () => {
   });
 
   describe('POST /tools/api/projects/:id/reviews', () => {
-    it('debe crear revisión correctamente', async () => {
-      const reviewData = {
-        applied_at: '2024-01-01',
-        general_notes: 'Revisión completa',
-        results: [
-          { point_id: 1, status: 'Cumple', observation: 'OK' }
-        ]
-      };
+    const insertedResults = () => mockDb.run.mock.calls.filter(([sql]) => sql.includes('review_point_results'));
 
+    it('debe crear revisión con checklist, guardando solo los puntos evaluados', async () => {
       mockDb.run.mockResolvedValue({ lastID: 2 });
 
-      const response = await httpClient.post('/tools/api/projects/1/reviews', reviewData);
+      const response = await httpClient.post('/tools/api/projects/1/reviews', {
+        applied_at: '2024-01-01',
+        general_notes: '<p>Revisión completa</p>',
+        results: [
+          { point_id: 1, status: 'bien', observation: ' OK ' },
+          { point_id: 2, status: '', observation: '' }
+        ]
+      });
 
       expect(response.status).toBe(201);
       expect(response.data).toEqual({ success: true });
+      expect(insertedResults().map(([, params]) => params)).toEqual([[2, 1, 'bien', 'OK']]);
+    });
+
+    it('debe crear revisión sin checklist (solo observación general)', async () => {
+      mockDb.run.mockResolvedValue({ lastID: 3 });
+
+      const response = await httpClient.post('/tools/api/projects/1/reviews', {
+        applied_at: '2024-01-01',
+        general_notes: '<p>Se revisó la migración de rutas.</p>'
+      });
+
+      expect(response.status).toBe(201);
+      expect(mockDb.run).toHaveBeenCalledTimes(1);
+      expect(insertedResults()).toHaveLength(0);
+    });
+
+    it.each([
+      ['sin observación general', undefined],
+      ['con observación vacía del editor', '<p><br></p>'],
+      ['con solo espacios duros', '<p>&nbsp; </p>']
+    ])('debe rechazar revisiones %s', async (_caso, general_notes) => {
+      const response = await httpClient.post('/tools/api/projects/1/reviews', {
+        applied_at: '2024-01-01', general_notes, results: []
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: 'La observación general es obligatoria' });
+      expect(mockDb.run).not.toHaveBeenCalled();
+    });
+
+    it('debe rechazar revisiones sin fecha', async () => {
+      const response = await httpClient.post('/tools/api/projects/1/reviews', { general_notes: 'Texto' });
+
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: 'La fecha de la revisión es obligatoria' });
     });
 
     it('debe manejar errores durante creación', async () => {
       mockDb.run.mockRejectedValue(new Error('DB Error'));
 
       const response = await httpClient.post('/tools/api/projects/1/reviews', {
-        applied_at: '2024-01-01', 
-        results: []
+        applied_at: '2024-01-01', general_notes: 'Texto'
       });
 
       expect(response.status).toBe(500);
@@ -78,18 +113,12 @@ describe('Reviews Endpoints', () => {
 
       const response = await httpClient.post('/tools/api/projects/1/reviews', {
         applied_at: '2024-01-01',
+        general_notes: 'Texto',
         results: [{ point_id: 1, status: 'invalido', observation: '' }]
       });
 
       expect(response.status).toBe(500);
       expect(mockDb.exec.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'ROLLBACK']);
-    });
-
-    it('debe rechazar revisiones sin resultados', async () => {
-      const response = await httpClient.post('/tools/api/projects/1/reviews', { applied_at: '2024-01-01' });
-
-      expect(response.status).toBe(400);
-      expect(mockDb.run).not.toHaveBeenCalled();
     });
   });
 

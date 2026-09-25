@@ -27,6 +27,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "docxtemplater": "^3.42.0",
+    "dompurify": "^3.4.16",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "multer": "^2.0.1",

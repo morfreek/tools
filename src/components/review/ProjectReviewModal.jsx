@@ -4,11 +4,14 @@ import Editor from 'react-simple-wysiwyg';
 import { STATUS_OPTIONS } from '@u/Constants';
 import { useDialog } from '@c/DialogProvider';
 import CancelButton from '@c/ui/CancelButton';
+import { hasText } from '@u/html';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
     const [initialForm, setInitialForm] = useState(null);
     const [hasChanges, setHasChanges] = useState(false);
+    const [triedSave, setTriedSave] = useState(false);
     const dialog = useDialog();
+    const missingNote = !hasText(form.general_notes);
 
     // Guardar estado inicial cuando se abre el modal
     useEffect(() => {
@@ -16,6 +19,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
             // Asegurar que guardamos una copia profunda del estado inicial
             setInitialForm(JSON.parse(JSON.stringify(form)));
             setHasChanges(false);
+            setTriedSave(false);
         }
     }, [visible]);
 
@@ -25,6 +29,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
             // Comparar cada campo específicamente
             const hasDateChanged = form.applied_at !== initialForm.applied_at;
             const hasNotesChanged = (form.general_notes || '') !== (initialForm.general_notes || '');
+            const hasChecklistToggled = Boolean(form.evaluateChecklist) !== Boolean(initialForm.evaluateChecklist);
 
             // Comparar resultados
             const hasResultsChanged = form.results.length !== initialForm.results.length ||
@@ -35,7 +40,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                         result.observation !== initialResult.observation;
                 });
 
-            setHasChanges(hasDateChanged || hasNotesChanged || hasResultsChanged);
+            setHasChanges(hasDateChanged || hasNotesChanged || hasChecklistToggled || (form.evaluateChecklist && hasResultsChanged));
         }
     }, [form, initialForm, visible]);
 
@@ -64,6 +69,13 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
         }));
     };
 
+    // La observación general es obligatoria; el checklist, opcional
+    const handleSave = () => {
+        setTriedSave(true);
+        if (missingNote) return;
+        onSave();
+    };
+
     const updateResult = (point_id, field, value) => {
         setForm(prev => ({
             ...prev,
@@ -77,15 +89,16 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
         <Modal show={visible} onHide={handleClose} size="xl" scrollable fullscreen="xl-down">
             <Modal.Header closeButton>
                 <Modal.Title>
-                    Nueva Revisión Técnica
+                    Nueva revisión técnica
                     {hasChanges && <span className="text-warning ms-2">*</span>}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form>
                     <Form.Group className="mb-3">
-                        <Form.Label>Fecha:</Form.Label>
+                        <Form.Label htmlFor="revision-fecha">Fecha</Form.Label>
                         <Form.Control
+                            id="revision-fecha"
                             type="date"
                             value={form.applied_at}
                             onChange={e => setForm({ ...form, applied_at: e.target.value })}
@@ -93,22 +106,40 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                     </Form.Group>
 
                     <Form.Group className="mb-3">
-                        <Form.Label>Notas Generales:</Form.Label>
-                        <Editor
-                            containerProps={{
-                                style: {
-                                    resize: 'vertical',
-                                    minHeight: '200px',
-                                    border: '1px solid var(--borde)',
-                                    borderRadius: '0.375rem'
-                                }
-                            }}
-                            value={form.general_notes || ''}
-                            onChange={(e) => updateGeneralNotes(e.target.value)}
-                            placeholder="Agregue notas generales sobre la revisión..."
-                        />
+                        <Form.Label>Observación general <span className="sub fw-normal">(obligatoria)</span></Form.Label>
+                        <div className={triedSave && missingNote ? 'editor-invalido' : undefined}>
+                            <Editor
+                                containerProps={{
+                                    style: {
+                                        resize: 'vertical',
+                                        minHeight: '200px',
+                                        border: '1px solid var(--borde)',
+                                        borderRadius: '0.375rem'
+                                    }
+                                }}
+                                value={form.general_notes || ''}
+                                onChange={(e) => updateGeneralNotes(e.target.value)}
+                                placeholder="Qué se revisó, hallazgos y acuerdos con el equipo"
+                            />
+                        </div>
+                        {triedSave && missingNote
+                            ? <div className="aviso aviso-rojo mx-0 mt-2" role="alert">Escribe la observación general: es el registro de la revisión.</div>
+                            : <Form.Text>Es lo que se muestra en Seguimiento.</Form.Text>}
                     </Form.Group>
 
+                    <Form.Check
+                        type="switch"
+                        id="revision-evaluar-checklist"
+                        className="mb-1"
+                        label="Evaluar checklist en esta revisión"
+                        checked={Boolean(form.evaluateChecklist)}
+                        onChange={(e) => setForm(prev => ({ ...prev, evaluateChecklist: e.target.checked }))}
+                    />
+                    <Form.Text className="d-block mb-3">
+                        Opcional. Se precarga con la última revisión que evaluó el checklist; solo se guardan los puntos con estado u observación.
+                    </Form.Text>
+
+                    {form.evaluateChecklist && (
                     <Accordion defaultActiveKey="0" className="mb-3">
                         {checklist.map((aspect, index) => (
                             <Accordion.Item key={aspect.id} eventKey={index.toString()}>
@@ -150,6 +181,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                             </Accordion.Item>
                         ))}
                     </Accordion>
+                    )}
                 </Form>
             </Modal.Body>
             <Modal.Footer>
@@ -159,7 +191,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                     </small>
                 )}
                 <CancelButton onClick={handleClose} />
-                <Button size="sm" onClick={onSave}>
+                <Button size="sm" onClick={handleSave}>
                     Guardar revisión
                 </Button>
             </Modal.Footer>

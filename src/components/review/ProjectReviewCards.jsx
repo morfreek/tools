@@ -1,14 +1,8 @@
-import { Card, Button } from 'react-bootstrap';
+import { Badge, Card, Button } from 'react-bootstrap';
 import { FaEye, FaTrash } from 'react-icons/fa';
 import StatusBadge from '@c/StatusBadge';
-
-const getStatusMetrics = (results) => {
-    const counts = {};
-    results.forEach(r => {
-        counts[r.status] = (counts[r.status] || 0) + 1;
-    });
-    return counts;
-};
+import { EVALUATED, countStatuses } from '@u/reviewTracking';
+import { htmlToText } from '@u/html';
 
 // applied_at es una fecha sin hora (YYYY-MM-DD); se interpreta en hora local
 const formatDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CL', {
@@ -19,8 +13,8 @@ export default function ReviewCards({ reviews, startReview, deleteReview }) {
     return (
         <div className="rejilla">
             {reviews.map(review => {
-                const metrics = getStatusMetrics(review.results);
-                const total = review.results.length;
+                const counts = countStatuses(review);
+                const note = htmlToText(review.note);
                 return (
                     <Card key={review.id} className="h-100">
                         <Card.Body className="d-flex flex-column">
@@ -36,14 +30,13 @@ export default function ReviewCards({ reviews, startReview, deleteReview }) {
                                     <FaTrash />
                                 </Button>
                             </div>
+                            <p className="resumen-nota sub mb-2">{note || 'Sin observación general.'}</p>
                             <div className="d-flex flex-wrap gap-1 mb-3">
-                                {Object.entries(metrics).map(([status, count]) => (
-                                    <StatusBadge
-                                        key={status}
-                                        status={status}
-                                        text={`: ${count} (${((count / total) * 100).toFixed(1)}%)`}
-                                    />
-                                ))}
+                                {counts.evaluados > 0
+                                    ? EVALUATED.filter((status) => counts[status] > 0).map((status) => (
+                                        <StatusBadge key={status} status={status} text={`: ${counts[status]}`} />
+                                    ))
+                                    : <Badge bg="secondary">Sin checklist</Badge>}
                             </div>
                             <div className="mt-auto">
                                 <Button

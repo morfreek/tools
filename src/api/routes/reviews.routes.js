@@ -31,25 +31,39 @@ router.get('/projects/:id/reviews', async (req, res) => {
     res.json(reviews);
 });
 
-// POST /projects/:id/reviews - crear revisión con sus resultados por punto
+// Texto visible de un HTML del editor (sin etiquetas ni espacios duros)
+const visibleText = (html) => (typeof html === 'string' ? html : '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .trim();
+
+// POST /projects/:id/reviews - crear revisión. La observación general es obligatoria;
+// el checklist es opcional y solo se guardan los puntos con estado u observación.
 router.post('/projects/:id/reviews', validateActiveProject, async (req, res) => {
-    const { applied_at, results, general_notes } = req.body ?? {};
-    if (!applied_at || !Array.isArray(results)) {
-        return res.status(400).json({ error: 'Fecha y resultados son requeridos' });
+    const { applied_at, results = [], general_notes } = req.body ?? {};
+    if (!applied_at) {
+        return res.status(400).json({ error: 'La fecha de la revisión es obligatoria' });
     }
+    if (!visibleText(general_notes)) {
+        return res.status(400).json({ error: 'La observación general es obligatoria' });
+    }
+    if (!Array.isArray(results)) {
+        return res.status(400).json({ error: 'Los resultados del checklist deben ser una lista' });
+    }
+    const evaluated = results.filter((r) => r?.point_id && ((r.status || '').trim() || (r.observation || '').trim()));
 
     try {
         const db = await openDb();
         await withTransaction(db, async () => {
             const result = await db.run(
                 'INSERT INTO project_reviews (project_id, applied_at, note) VALUES (?, ?, ?)',
-                [req.params.id, applied_at, general_notes || null]
+                [req.params.id, applied_at, general_notes]
             );
-            for (const r of results) {
+            for (const r of evaluated) {
                 await db.run(
                     `INSERT INTO review_point_results (review_id, point_id, status, observation)
                     VALUES (?, ?, ?, ?)`,
-                    [result.lastID, r.point_id, r.status, r.observation]
+                    [result.lastID, r.point_id, r.status || '', (r.observation || '').trim()]
                 );
             }
         });

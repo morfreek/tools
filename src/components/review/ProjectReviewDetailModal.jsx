@@ -3,31 +3,35 @@ import { Modal, Accordion, Row, Col, Card } from 'react-bootstrap';
 import { FaStickyNote } from 'react-icons/fa';
 import StatusBadge from '@c/StatusBadge';
 import CancelButton from '@c/ui/CancelButton';
+import { sanitizeHtml } from '@u/html';
+import { countStatuses } from '@u/reviewTracking';
+
+const formatDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export default function ProjectReviewDetailModal({ visible, checklist, review, onClose }) {
     if (!visible) return null;
-    
+    const checklistEvaluated = countStatuses(review).evaluados > 0 || review.results.some((r) => r.observation?.trim());
+
     return (
         <Modal show={visible} onHide={onClose} size="xl" scrollable fullscreen="xl-down">
             <Modal.Header closeButton>
-                <Modal.Title>Detalle de Revisión - {review.applied_at}</Modal.Title>
+                <Modal.Title>Revisión del {formatDate(review.applied_at)}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {review.note && (
                     <Card className="mb-3">
                         <Card.Header className="d-flex align-items-center">
                             <FaStickyNote className="me-2 text-primary" />
-                            <strong>Notas Generales</strong>
+                            <strong>Observación general</strong>
                         </Card.Header>
                         <Card.Body>
-                            <div
-                                dangerouslySetInnerHTML={{
-                                    __html: review.note
-                                }}
-                            />
+                            <div className="nota-contenido" dangerouslySetInnerHTML={{ __html: sanitizeHtml(review.note) }} />
                         </Card.Body>
                     </Card>
                 )}
+                {!checklistEvaluated ? (
+                    <div className="vacio">En esta revisión no se evaluó el checklist.</div>
+                ) : (
                 <Accordion defaultActiveKey="0" alwaysOpen>
                     {checklist.map((aspect, index) => (
                         <Accordion.Item key={aspect.id} eventKey={index.toString()}>
@@ -52,9 +56,8 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
                                                         <small className="text-muted fw-bold d-block">
                                                             Observación
                                                         </small>
-                                                        <div dangerouslySetInnerHTML={{ 
-                                                            __html: result.observation 
-                                                        }} />
+                                                        {/* Texto plano del textarea: "Php < 8" no debe leerse como HTML */}
+                                                        <div style={{ whiteSpace: 'pre-line' }}>{result.observation}</div>
                                                     </div>
                                                 </Col>
                                             )}
@@ -65,6 +68,7 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
                         </Accordion.Item>
                     ))}
                 </Accordion>
+                )}
             </Modal.Body>
             <Modal.Footer>
                 <CancelButton onClick={onClose}>Cerrar</CancelButton>

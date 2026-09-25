@@ -10,7 +10,7 @@ import { listUsers } from '@/services/users.service';
 
 // Secciones de /projects/:id/<path>; el orden es el de las pestañas
 export const PROJECT_SECTIONS = [
-    { path: 'detail', label: 'Resumen' },
+    { path: 'detail', label: 'Seguimiento' },
     { path: 'review', label: 'Revisiones' },
     { path: 'notes', label: 'Notas' },
     { path: 'files', label: 'Archivos' },

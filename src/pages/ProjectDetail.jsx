@@ -1,91 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Placeholder } from 'react-bootstrap';
-import { FaClipboardCheck, FaStickyNote, FaFile, FaRocket } from 'react-icons/fa';
+import { Badge, Card, Placeholder } from 'react-bootstrap';
 import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 import StatusBadge from '@c/StatusBadge';
 import { listReviews } from '@/services/reviews.service';
-import { listNotes } from '@/services/notes.service';
-import { listFiles } from '@/services/files.service';
-import { listConfigs } from '@/services/configs.service';
+import { EVALUATED, countStatuses, reviewCadence, sortReviews } from '@u/reviewTracking';
+import { sanitizeHtml, hasText } from '@u/html';
 
-const formatDate = (value, withTime = false) => new Date(withTime ? value : `${value}T00:00:00`)
-    .toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+const days = (n) => (n === 0 ? 'hoy' : n === 1 ? 'hace 1 día' : `hace ${n} días`);
 
-// Texto plano de una nota (HTML del editor), para la vista previa
-const plainText = (html) => new DOMParser().parseFromString(html || '', 'text/html').body.textContent.trim();
-
-const countByStatus = (results = []) => results.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] || 0) + 1 }), {});
-
-// Carga cada sección por separado: si una falla, las demás se muestran igual
-const useSummary = (projectId) => {
-    const [data, setData] = useState({});
-
-    useEffect(() => {
-        setData({});
-        const sources = { reviews: listReviews, notes: listNotes, files: listFiles, configs: listConfigs };
-        Object.entries(sources).forEach(([key, load]) => {
-            load(projectId)
-                .then((value) => setData((prev) => ({ ...prev, [key]: value })))
-                .catch(() => setData((prev) => ({ ...prev, [key]: null })));
-        });
-    }, [projectId]);
-
-    return data;
+const cadenceText = (total, cadence) => {
+    const parts = [`${total} ${total === 1 ? 'revisión' : 'revisiones'}`, `última ${days(cadence.daysSinceLast)}`];
+    if (cadence.averageDays !== null) parts.push(`una cada ${cadence.averageDays} días en promedio`);
+    return parts.join(' · ');
 };
 
-const SummaryCard = ({ to, icon: Icon, title, value, children }) => (
-    <Link to={to} className="tarjeta">
-        <Icon className="icono" size={18} aria-hidden="true" />
-        <h2>{title}</h2>
-        {value === undefined ? (
-            <Placeholder as="p" animation="glow"><Placeholder xs={8} /></Placeholder>
-        ) : value === null ? (
-            <p>No se pudo cargar.</p>
-        ) : children}
-    </Link>
-);
+const ChecklistSummary = ({ review }) => {
+    const counts = countStatuses(review);
+    if (counts.evaluados === 0) return <Badge bg="secondary">Sin checklist</Badge>;
+    return EVALUATED.filter((s) => counts[s] > 0).map((s) => <StatusBadge key={s} status={s} text={`: ${counts[s]}`} />);
+};
 
-// Pestaña "Resumen": estado de cada sección, con acceso directo a su pestaña
+// Pestaña "Seguimiento": bitácora de las observaciones generales de cada revisión,
+// de la más reciente a la más antigua. El checklist es opcional y solo se resume.
 export default function ProjectDetail() {
     const { id } = useParams();
-    const { reviews, notes, files, configs } = useSummary(id);
-    const lastReview = reviews?.[0];
-    const lastNote = notes?.length ? [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] : null;
+    const [reviews, setReviews] = useState(null);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        setReviews(null);
+        setError(false);
+        listReviews(id).then(setReviews).catch(() => setError(true));
+    }, [id]);
+
+    const ordered = useMemo(() => sortReviews(reviews || []), [reviews]);
+    const cadence = useMemo(() => reviewCadence(ordered), [ordered]);
+
+    let body;
+    if (error) {
+        body = <div className="aviso aviso-rojo m-0" role="alert">No se pudieron cargar las revisiones del proyecto. Recarga la página para reintentar.</div>;
+    } else if (!reviews) {
+        body = <Placeholder animation="glow"><Placeholder xs={12} /><Placeholder xs={8} /></Placeholder>;
+    } else if (!ordered.length) {
+        body = (
+            <div className="vacio">
+                Aún no hay revisiones. <Link to={`/projects/${id}/review`}>Registra la primera en Revisiones</Link>.
+            </div>
+        );
+    } else {
+        body = (
+            <ol className="bitacora">
+                {ordered.map((review) => (
+                    <li key={review.id} className="bitacora-item">
+                        <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <strong>{formatDate(review.applied_at)}</strong>
+                            <ChecklistSummary review={review} />
+                        </div>
+                        {hasText(review.note)
+                            ? <div className="nota-contenido" dangerouslySetInnerHTML={{ __html: sanitizeHtml(review.note) }} />
+                            : <p className="sub mb-0">Sin observación general.</p>}
+                    </li>
+                ))}
+            </ol>
+        );
+    }
 
     return (
         <ProjectPageLayout>
-            <div className="rejilla">
-                <SummaryCard to={`/projects/${id}/review`} icon={FaClipboardCheck} title="Revisiones" value={reviews}>
-                    {lastReview ? (
-                        <>
-                            <p className="mb-2">Última del {formatDate(lastReview.applied_at)} · {reviews.length} en total</p>
-                            <div className="d-flex flex-wrap gap-1">
-                                {Object.entries(countByStatus(lastReview.results)).map(([status, count]) => (
-                                    <StatusBadge key={status} status={status} text={`: ${count}`} />
-                                ))}
-                            </div>
-                        </>
-                    ) : <p>Sin revisiones todavía.</p>}
-                </SummaryCard>
-
-                <SummaryCard to={`/projects/${id}/notes`} icon={FaStickyNote} title="Notas" value={notes}>
-                    {lastNote ? (
-                        <>
-                            <p className="mb-1">{notes.length} {notes.length === 1 ? 'nota' : 'notas'} · última del {formatDate(lastNote.created_at, true)}</p>
-                            <p className="resumen-nota">{plainText(lastNote.detail)}</p>
-                        </>
-                    ) : <p>Sin notas todavía.</p>}
-                </SummaryCard>
-
-                <SummaryCard to={`/projects/${id}/files`} icon={FaFile} title="Archivos" value={files}>
-                    <p>{files?.length ? `${files.length} ${files.length === 1 ? 'archivo' : 'archivos'} · último del ${formatDate(files[0].created_at, true)}` : 'Sin archivos todavía.'}</p>
-                </SummaryCard>
-
-                <SummaryCard to={`/projects/${id}/continuous-deployment`} icon={FaRocket} title="Despliegue continuo" value={configs}>
-                    <p>{configs?.length ? `${configs.length} ${configs.length === 1 ? 'configuración guardada' : 'configuraciones guardadas'}: ${configs.map((c) => c.name).join(', ')}` : 'Sin configuraciones guardadas.'}</p>
-                </SummaryCard>
-            </div>
+            <Card>
+                <Card.Header>
+                    <h2 className="h6 fw-semibold mb-0">
+                        Bitácora de revisiones{' '}
+                        {cadence && <span className="sub fw-normal">{cadenceText(ordered.length, cadence)}</span>}
+                    </h2>
+                </Card.Header>
+                <Card.Body>{body}</Card.Body>
+            </Card>
         </ProjectPageLayout>
     );
 }

@@ -11,6 +11,7 @@ import {
 import { useToast } from '@c/ToastContext';
 import { useDialog } from '@c/DialogProvider';
 import { listNotes, deleteNote } from '@/services/notes.service';
+import { sanitizeHtml } from '@u/html';
 import ProjectNoteModal from './ProjectNoteModal';
 
 // Visor de notas del proyecto (una a la vez, con navegación), dentro de un panel
@@ -144,7 +145,7 @@ export default function ProjectNoteList({ projectId }) {
                                     <div
                                         className="note-content"
                                         dangerouslySetInnerHTML={{
-                                            __html: notes[currentNoteIndex].detail
+                                            __html: sanitizeHtml(notes[currentNoteIndex].detail)
                                         }}
                                     />
                                 </div>
