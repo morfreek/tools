@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
-import { Container, Row, Col, Button, Form, ButtonGroup } from 'react-bootstrap';
+import { Button, ButtonGroup, Card, Form } from 'react-bootstrap';
 import UserModal from '@c/user/UserModal';
 import ProjectModal from '@c/modal/ProjectModal';
 import ProjectsTable from '@c/project/ProjectsTable';
-import { useConfirm } from '@c/ConfirmContext';
+import { useDialog } from '@c/DialogProvider';
 import { useToast } from '@c/ToastContext';
 import { useProjects } from '@hk/useProjects';
 import { saveUser } from '@/services/users.service';
@@ -12,7 +12,7 @@ import { terminateProject } from '@/services/projects.service';
 
 export default function Projects() {
     const { showToast } = useToast();
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
     const {
         users, loading, getUserName,
         status, setStatus, search, setSearch, sort, toggleSort,
@@ -40,23 +40,14 @@ export default function Projects() {
         }
     };
 
-    const confirm = (title, message) => new Promise((resolve) => {
-        showConfirm({
-            title,
-            message,
-            onConfirm: () => resolve(true),
-            onClose: () => resolve(false),
-            confirmText: 'Confirmar',
-            cancelText: 'Cancelar',
-        });
-    });
-
     const handleTerminateProject = async (project) => {
-        const confirmed = await confirm(
-            'Finalizar Proyecto',
-            `¿Está seguro que desea finalizar el proyecto "${project.name}"?\n\nEsta acción no se puede deshacer.`
-        );
-        if (!confirmed) return;
+        const ok = await dialog.confirm({
+            title: 'Finalizar proyecto',
+            message: `¿Finalizar el proyecto "${project.name}"? Quedará en solo lectura y esta acción no se puede deshacer.`,
+            acceptText: 'Finalizar',
+            danger: true,
+        });
+        if (!ok) return;
 
         try {
             await terminateProject(project.id);
@@ -68,31 +59,32 @@ export default function Projects() {
     };
 
     return (
-        <Container fluid className="mt-4">
-            <Row className="mb-3">
-                <Col>
-                    <h3>Proyectos de Software</h3>
-                </Col>
-                <Col xs="auto">
-                    <Button variant="primary" size="sm" className="d-inline-flex align-items-center me-1" onClick={openUserModal}>
+        <>
+            <div className="titulo-seccion">
+                <h2>
+                    Proyectos de software{' '}
+                    <span className="sub">{total} {status === 'finished' ? 'finalizados' : 'activos'}</span>
+                </h2>
+                <div className="d-flex gap-2">
+                    <Button variant="outline-secondary" size="sm" className="d-inline-flex align-items-center" onClick={openUserModal}>
                         <FaPlus className="me-2" />Usuario
                     </Button>
-                    <Button variant="success" size="sm" className="d-inline-flex align-items-center" onClick={() => setProjectModalVisible(true)}>
+                    <Button size="sm" className="d-inline-flex align-items-center" onClick={() => setProjectModalVisible(true)}>
                         <FaPlus className="me-2" />Proyecto
                     </Button>
-                </Col>
-            </Row>
+                </div>
+            </div>
 
-            <Row className="align-items-center mb-3">
-                <Col>
+            <Card className="mb-3">
+                <Card.Body className="d-flex flex-wrap align-items-center gap-3">
                     <Form.Control
-                        type="text"
-                        placeholder="Buscar por nombre o código..."
+                        type="search"
+                        className="flex-grow-1 w-auto"
+                        placeholder="Buscar por nombre, código o integrante"
+                        aria-label="Buscar proyectos"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                </Col>
-                <Col xs="auto">
                     <Form.Check
                         type="switch"
                         id="finished-projects-switch"
@@ -100,8 +92,8 @@ export default function Projects() {
                         checked={status === 'finished'}
                         onChange={(e) => setStatus(e.target.checked ? 'finished' : 'active')}
                     />
-                </Col>
-            </Row>
+                </Card.Body>
+            </Card>
 
             <ProjectsTable
                 projects={pageItems}
@@ -112,19 +104,16 @@ export default function Projects() {
                 onTerminate={handleTerminateProject}
             />
 
-            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-3">
-                <span>Página {page} de {totalPages}</span>
-                <div className="d-flex flex-wrap align-items-center gap-3">
-                    <span className="fw-semibold text-muted">Total de registros: {total}</span>
-                    <ButtonGroup>
-                        <Button variant="outline-secondary" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>
-                            Anterior
-                        </Button>
-                        <Button variant="outline-secondary" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-                            Siguiente
-                        </Button>
-                    </ButtonGroup>
-                </div>
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <span className="sub">Página {page} de {totalPages}</span>
+                <ButtonGroup>
+                    <Button variant="outline-secondary" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                        Anterior
+                    </Button>
+                    <Button variant="outline-secondary" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                        Siguiente
+                    </Button>
+                </ButtonGroup>
             </div>
 
             <ProjectModal
@@ -142,6 +131,6 @@ export default function Projects() {
                 setUserData={setUserData}
                 editing={Boolean(userData.id)}
             />
-        </Container>
+        </>
     );
 }

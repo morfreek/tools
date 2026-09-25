@@ -1,0 +1,329 @@
+/* =====================================================================
+   estilo-personal · base.css
+   Sistema visual común de los proyectos personales (origen: catalogo-apps).
+
+   Sin dependencias. Para HTML/EJS o Blade se usa tal cual; con Bootstrap se
+   carga además bootstrap-bridge.css DESPUÉS de bootstrap.min.css.
+
+   Reglas del sistema:
+   - Todo color sale de un token. Nada de hex sueltos en componentes.
+   - Tres temas: automático (sigue al sistema), claro y oscuro, vía
+     data-theme en <html>. El valor se aplica en el <head> antes de pintar.
+   - El contenido vive en paneles (--panel) sobre el fondo (--fondo): nada
+     "flota" con el mismo color del fondo.
+   ===================================================================== */
+
+:root {
+  --fondo: #f4f5f7;
+  --panel: #ffffff;
+  --borde: #dfe3e8;
+  --texto: #1d2733;
+  --suave: #667085;
+  --acento: #1b4f9c;
+  --acento-texto: #ffffff;
+  --ok: #1a7f4b;
+  --ambar: #a8650a;
+  --rojo: #b4231f;
+  --violeta: #6f42c1;
+  --gris: #667085;
+  --radio: 10px;
+  --radio-control: 7px;
+  --cierre-filtro: none;
+
+  --json-clave: #0550ae;
+  --json-texto: #0a3069;
+  --json-numero: #953800;
+  --json-literal: #8250df;
+
+  /* Propios de tools: editor/previsualización de código (YAML, XML) */
+  --codigo-fondo: #f6f8fa;
+  --codigo-texto: #1f2328;
+  --codigo-linea: #8c959f;
+}
+
+/* Oscuro por preferencia del sistema, salvo que se haya elegido claro a mano. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #14181d;
+    --panel: #1c2128;
+    --borde: #2d333b;
+    --texto: #e6edf3;
+    --suave: #9aa4b2;
+    --acento: #6ea8fe;
+    --acento-texto: #0b1a2e;
+    --ok: #4ec98a;
+    --ambar: #e3b341;
+    --rojo: #ff7b72;
+    --violeta: #b392f0;
+    --gris: #9aa4b2;
+    --cierre-filtro: invert(1) grayscale(100%) brightness(200%);
+    --json-clave: #79c0ff;
+    --json-texto: #a5d6ff;
+    --json-numero: #ffa657;
+    --json-literal: #d2a8ff;
+    --codigo-fondo: #0d1117;
+    --codigo-texto: #e6edf3;
+    --codigo-linea: #6e7681;
+    color-scheme: dark;
+  }
+}
+
+/* Oscuro elegido explícitamente, con independencia del sistema. */
+:root[data-theme="dark"] {
+  --fondo: #14181d;
+  --panel: #1c2128;
+  --borde: #2d333b;
+  --texto: #e6edf3;
+  --suave: #9aa4b2;
+  --acento: #6ea8fe;
+  --acento-texto: #0b1a2e;
+  --ok: #4ec98a;
+  --ambar: #e3b341;
+  --rojo: #ff7b72;
+  --violeta: #b392f0;
+  --gris: #9aa4b2;
+  --cierre-filtro: invert(1) grayscale(100%) brightness(200%);
+  --json-clave: #79c0ff;
+  --json-texto: #a5d6ff;
+  --json-numero: #ffa657;
+  --json-literal: #d2a8ff;
+  --codigo-fondo: #0d1117;
+  --codigo-texto: #e6edf3;
+  --codigo-linea: #6e7681;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
+a { color: var(--acento); }
+.sub { color: var(--suave); font-size: 13px; }
+
+/* ---------------------------------------------------------------- login */
+.pantalla-login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 16px;
+}
+.tarjeta-login {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 32px;
+  width: min(100%, 380px);
+}
+.tarjeta-login h1 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+.tarjeta-login .sub { margin: 0 0 24px; }
+.tarjeta-login label { display: block; margin: 14px 0 5px; font-size: 13px; font-weight: 600; }
+.tarjeta-login input:not([type="checkbox"]) {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--borde); border-radius: var(--radio-control);
+  background: var(--fondo); color: var(--texto); font-size: 15px;
+}
+.tarjeta-login button[type="submit"] {
+  width: 100%; margin-top: 22px; padding: 11px;
+  background: var(--acento); color: var(--acento-texto); border: 0;
+  border-radius: var(--radio-control); font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* ------------------------------------------------------------- cabecera */
+.cabecera {
+  position: sticky; top: 0; z-index: 1020;
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+  padding: 12px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--borde);
+}
+.marca strong { display: block; font-size: 16px; }
+.marca .sub { font-size: 12px; }
+.selector { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.selector label { font-size: 12px; color: var(--suave); margin: 0; }
+.acciones { display: flex; align-items: center; gap: 10px; }
+.acciones form { display: inline; }
+.usuario { font-size: 13px; color: var(--suave); }
+
+/* ---------------------------------------------- controles (sin framework) */
+select, .boton, .acciones button, .acciones a {
+  padding: 7px 11px;
+  border: 1px solid var(--borde); border-radius: var(--radio-control);
+  background: var(--fondo); color: var(--texto);
+  font-size: 13px; cursor: pointer; text-decoration: none;
+}
+.boton-primario {
+  padding: 9px 18px; border: 0; border-radius: var(--radio-control);
+  background: var(--acento); color: var(--acento-texto);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+button.enlace, .enlace {
+  border: 0; background: none; padding: 0;
+  color: var(--acento); font-size: 13px; cursor: pointer;
+}
+.peligro { color: var(--rojo); }
+/* Acciones de fila con color distintivo (mismo significado que en bootstrap-bridge.css):
+   <button class="enlace accion accion-editar" title="Editar">…</button> */
+.accion { --accion-color: var(--suave); color: var(--accion-color); padding: 4px 7px; border-radius: 6px; }
+.accion:hover:not(:disabled), .accion:focus-visible { background: color-mix(in srgb, var(--accion-color) 12%, transparent); }
+.accion:disabled { color: var(--suave); opacity: .45; cursor: default; }
+.accion-probar { --accion-color: var(--ok); }
+.accion-consultar { --accion-color: var(--violeta); }
+.accion-editar { --accion-color: var(--acento); }
+.accion-eliminar { --accion-color: var(--rojo); }
+.js .solo-sin-js { display: none; }
+
+/* ------------------------------------------------------ badges y avisos */
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border: 1px solid var(--borde); border-radius: 999px;
+  font-size: 11px; color: var(--suave); white-space: nowrap;
+}
+.badge.acento { border-color: var(--acento); color: var(--acento); }
+.badge.ok { border-color: var(--ok); color: var(--ok); }
+.badge.ambar { border-color: var(--ambar); color: var(--ambar); }
+.badge.rojo { border-color: var(--rojo); color: var(--rojo); }
+
+.aviso {
+  margin: 10px 16px 0; padding: 9px 12px;
+  border-radius: var(--radio-control); font-size: 13px;
+  border: 1px solid var(--borde);
+}
+.aviso-ok { border-color: var(--ok); color: var(--ok); }
+.aviso-ambar { border-color: var(--ambar); color: var(--ambar); }
+.aviso-rojo, .aviso-error { border-color: var(--rojo); color: var(--rojo); }
+
+/* ------------------------------------------------- paneles y secciones */
+.contenido { padding: 16px 16px 34px; }
+
+.titulo-seccion {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 12px;
+}
+.titulo-seccion h2 { margin: 0; font-size: 16px; font-weight: 600; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 18px;
+}
+.panel h2 { margin: 0 0 4px; font-size: 16px; }
+.panel pre {
+  margin: 10px 0 0; padding: 12px;
+  background: var(--fondo); border: 1px solid var(--borde); border-radius: var(--radio-control);
+  overflow-x: auto; font-size: 12px;
+}
+
+.vacio {
+  padding: 28px;
+  text-align: center; color: var(--suave);
+  background: var(--panel);
+  border: 1px dashed var(--borde); border-radius: var(--radio);
+}
+
+/* ------------------------------------------------------------- tablas */
+.panel-tabla {
+  background: var(--panel);
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  overflow-x: auto;
+}
+.tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabla th, .tabla td {
+  padding: 9px 10px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--borde);
+}
+.tabla th { font-size: 12px; color: var(--suave); font-weight: 600; }
+.tabla tbody tr:last-child td { border-bottom: 0; }
+.tabla tbody tr:hover { background: color-mix(in srgb, var(--acento) 6%, transparent); }
+.tabla tr.inactivo { opacity: .55; }
+
+/* ----------------------------------------------- rejilla de tarjetas */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 14px;
+}
+.tarjeta {
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--ok);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+.tarjeta.ambar { border-left-color: var(--ambar); }
+.tarjeta.rojo { border-left-color: var(--rojo); }
+.tarjeta h2 { margin: 0 0 8px; font-size: 15px; word-break: break-word; }
+.tarjeta footer {
+  margin-top: auto; padding-top: 9px;
+  border-top: 1px solid var(--borde);
+  font-size: 11px; color: var(--suave);
+}
+
+/* --------------------------------------------------------- formularios */
+.rejilla-form {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.rejilla-form .ancho-total { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
+.rejilla-form label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; }
+.rejilla-form input, .rejilla-form textarea {
+  width: 100%; padding: 8px 11px;
+  border: 1px solid var(--borde); border-radius: var(--radio-control);
+  background: var(--fondo); color: var(--texto); font-size: 14px;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 22%, transparent);
+}
+
+.pie { padding: 18px 16px 34px; color: var(--suave); font-size: 12px; text-align: center; }
+
+@media (max-width: 720px) {
+  .cabecera { flex-direction: column; align-items: stretch; }
+  .selector { margin-left: 0; }
+  .rejilla { grid-template-columns: 1fr; }
+}
+
+/* ------------------------------------------- diálogos (dialogo.js) */
+/* Toda ventana emergente es un <dialog> propio: nunca alert/confirm/prompt nativos,
+   que ignoran el tema y no se pueden estilizar. */
+.dialogo {
+  width: min(92vw, 440px);
+  padding: 0;
+  background: var(--panel);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+}
+.dialogo::backdrop { background: rgba(15, 20, 25, .45); }
+.dialogo form { padding: 20px 20px 16px; }
+.dialogo h2 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+.dialogo p { margin: 0 0 14px; font-size: 14px; white-space: pre-line; }
+.dialogo label { display: block; margin-bottom: 14px; font-size: 12px; font-weight: 600; }
+.dialogo input {
+  display: block; width: 100%; margin-top: 5px; padding: 8px 11px;
+  border: 1px solid var(--borde); border-radius: var(--radio-control);
+  background: var(--fondo); color: var(--texto); font-size: 14px;
+}
+.dialogo-pie {
+  display: flex; justify-content: flex-end; align-items: center; gap: 14px;
+  margin: 4px -20px -16px; padding: 12px 20px;
+  border-top: 1px solid var(--borde);
+}
+.boton-peligro {
+  padding: 9px 18px; border: 0; border-radius: var(--radio-control);
+  background: var(--rojo); color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* Al final a propósito: una regla de autor con display (p. ej. .tarjeta con flex)
+   le gana a [hidden] de la hoja del navegador, y `el.hidden = true` no ocultaría. */
+[hidden] { display: none !important; }

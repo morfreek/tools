@@ -1,29 +1,147 @@
-.dropdown-toggle::after {
-  display: none !important;
+/* Estilos propios de tools. Los tokens y clases del sistema están en
+   styles/base.css y styles/bootstrap-bridge.css (skill estilo-personal). */
+
+/* Toast flotante (ToastContext): un .aviso sobre panel, arriba a la derecha */
+.toast-aviso {
+  position: fixed; top: 72px; right: 16px; z-index: 2000;
+  display: flex; align-items: center; gap: 12px;
+  min-width: 240px; max-width: min(420px, calc(100vw - 32px));
+  margin: 0;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+}
+.toast-aviso .btn-close { margin-left: auto; width: 8px; height: 8px; }
+.aviso-info { border-color: var(--acento); color: var(--acento); }
+
+/* Migas de pan sin margen propio: las ubica el layout */
+.breadcrumb { margin-bottom: 0 !important; }
+
+/* Los dropdowns con ícono propio (menú de opciones) no muestran el caret */
+.dropdown-toggle::after { display: none !important; }
+
+.modal-90w { max-width: 90% !important; }
+
+/* Previsualización de código (YAML, XML) */
+.codigo {
+  background: var(--codigo-fondo);
+  color: var(--codigo-texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-control);
 }
 
-/* SIDEBAR */
-.hover-bg:hover {
-  background-color: var(--bs-gray-600);
-  color: white;
+/* Tarjetas de acción clicables (Inicio, detalle de proyecto) */
+a.tarjeta, .tarjeta[role="button"] {
+  color: inherit; text-decoration: none; cursor: pointer;
+  border-left-color: var(--acento);
+  transition: border-color .15s, box-shadow .15s;
 }
-.nav-link {
-  text-decoration: none !important;
+a.tarjeta:hover, .tarjeta[role="button"]:hover, a.tarjeta:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 18%, transparent);
 }
-/* SIDEBAR */
+.tarjeta .icono { color: var(--acento); margin-bottom: 8px; }
+.tarjeta p { margin: 0; color: var(--suave); font-size: 13px; }
 
-/* BSBreadcrumb */
-.breadcrumb {
-  margin-bottom: 0 !important;
+/* Superficies neutras que siguen el tema (reemplazan bg-light / bg-white de Bootstrap) */
+.superficie { background: var(--fondo); }
+.fondo-panel { background: var(--panel); }
+
+/* Alert neutro: mismo tratamiento de borde que los avisos del sistema */
+.alert-secondary { --bs-alert-color: var(--suave); --bs-alert-border-color: var(--borde); }
+
+/* Pestañas del plan JMeter: íconos en --suave, activa en --acento (colores desde el puente) */
+.pestanas-plan .nav-link { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.pestanas-plan .tab-icon { opacity: .75; }
+.pestanas-plan .nav-link.active .tab-icon { opacity: 1; }
+
+.codigo-preview { padding: 1rem; font-size: 13px; line-height: 1.5; overflow: auto; max-height: 100%; border-radius: 0; border: 0; }
+.codigo-linea { display: flex; }
+.codigo-numero {
+  width: 40px; flex-shrink: 0; margin-right: 1rem; padding-right: 1rem;
+  text-align: right; color: var(--codigo-linea); user-select: none;
+  border-right: 1px solid var(--borde);
 }
 
-/* BSBreadcrumb */
+/* PHPStan: cada archivo con desplazamiento propio para listas largas */
+.phpstan-tabla { max-height: 420px; overflow-y: auto; }
+.phpstan-tabla thead th { position: sticky; top: 0; background: var(--panel); }
 
-.modal-90w {
-    max-width: 90% !important;
+/* ---------------------------------------------------------------------
+   Variantes de Bootstrap que el puente no cubre, teñidas con tokens para
+   que componentes grandes (JMeter, CD, solicitud de servidores) sigan el tema.
+   Preferir en código nuevo: primary / outline-secondary / link + accion-*.
+   --------------------------------------------------------------------- */
+.btn-outline-primary, .btn-outline-info, .btn-outline-success, .btn-outline-danger, .btn-outline-warning {
+  --btn-tono: var(--acento);
+  --bs-btn-color: var(--btn-tono);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--btn-tono);
+  --bs-btn-hover-color: var(--btn-tono);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--btn-tono) 12%, transparent);
+  --bs-btn-hover-border-color: var(--btn-tono);
+  --bs-btn-active-color: var(--btn-tono);
+  --bs-btn-active-bg: color-mix(in srgb, var(--btn-tono) 18%, transparent);
+  --bs-btn-active-border-color: var(--btn-tono);
+  --bs-btn-disabled-color: var(--suave);
+  --bs-btn-disabled-border-color: var(--borde);
 }
-.vscode-preview {
-    background-color: #1e1e1e;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+.btn-outline-success { --btn-tono: var(--ok); }
+.btn-outline-danger { --btn-tono: var(--rojo); }
+.btn-outline-warning { --btn-tono: var(--ambar); }
+
+/* Botones rellenos de estado: mismo trato que el primario, con su tono */
+.btn-success, .btn-info, .btn-warning {
+  --btn-tono: var(--ok);
+  --bs-btn-bg: var(--btn-tono);
+  --bs-btn-border-color: var(--btn-tono);
+  --bs-btn-color: var(--acento-texto);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--btn-tono) 88%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--btn-tono) 88%, #000);
+  --bs-btn-hover-color: var(--acento-texto);
+  --bs-btn-active-bg: color-mix(in srgb, var(--btn-tono) 80%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--btn-tono) 80%, #000);
+  --bs-btn-active-color: var(--acento-texto);
+  --bs-btn-disabled-bg: var(--btn-tono);
+  --bs-btn-disabled-border-color: var(--btn-tono);
+  --bs-btn-disabled-color: var(--acento-texto);
 }
+.btn-info { --btn-tono: var(--acento); }
+.btn-warning { --btn-tono: var(--ambar); }
+
+/* Utilidades de color de texto y borde */
+.text-primary, .text-info { color: var(--acento) !important; }
+.text-success { color: var(--ok) !important; }
+.text-warning { color: var(--ambar) !important; }
+.border-primary, .border-info { border-color: var(--acento) !important; }
+.border-success { border-color: var(--ok) !important; }
+.border-warning { border-color: var(--ambar) !important; }
+.border-danger { border-color: var(--rojo) !important; }
+.bg-secondary:not(.badge) { background-color: var(--fondo) !important; color: var(--texto) !important; }
+
+/* Grupos de lista (notas, configuraciones) */
+.list-group {
+  --bs-list-group-bg: var(--panel);
+  --bs-list-group-color: var(--texto);
+  --bs-list-group-border-color: var(--borde);
+  --bs-list-group-action-hover-bg: var(--fondo);
+  --bs-list-group-action-hover-color: var(--texto);
+  --bs-list-group-action-active-bg: var(--fondo);
+  --bs-list-group-active-bg: var(--acento);
+  --bs-list-group-active-border-color: var(--acento);
+}
+.accordion {
+  --bs-accordion-bg: var(--panel);
+  --bs-accordion-color: var(--texto);
+  --bs-accordion-border-color: var(--borde);
+  --bs-accordion-btn-color: var(--texto);
+  --bs-accordion-btn-bg: var(--panel);
+  --bs-accordion-active-bg: var(--fondo);
+  --bs-accordion-active-color: var(--acento);
+  --bs-accordion-btn-focus-box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 22%, transparent);
+}
+.accordion-button::after { filter: var(--cierre-filtro); }
+.popover, .tooltip { --bs-popover-bg: var(--panel); --bs-popover-border-color: var(--borde); --bs-popover-body-color: var(--texto); }
+.progress { --bs-progress-bg: var(--fondo); --bs-progress-bar-bg: var(--acento); }
+.placeholder { background-color: var(--borde); }
+
+/* Velo detrás de paneles laterales (notas), igual al backdrop de los diálogos */
+.velo { background: rgba(15, 20, 25, .45); z-index: 1039; }

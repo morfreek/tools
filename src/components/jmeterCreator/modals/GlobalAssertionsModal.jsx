@@ -248,7 +248,7 @@ const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
                                     ))}
                                     
                                     {responseAssertions.length === 0 && (
-                                        <Alert variant="light" className="text-center py-2 small">
+                                        <Alert variant="secondary" className="text-center py-2 small">
                                             Usa las plantillas o crea una assertion personalizada
                                         </Alert>
                                     )}
@@ -336,7 +336,7 @@ const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
                                     ))}
                                     
                                     {jsonAssertions.length === 0 && (
-                                        <Alert variant="light" className="text-center py-2 small">
+                                        <Alert variant="secondary" className="text-center py-2 small">
                                             Usa las plantillas o crea una assertion personalizada
                                         </Alert>
                                     )}

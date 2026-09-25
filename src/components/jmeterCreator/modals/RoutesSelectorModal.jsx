@@ -116,7 +116,7 @@ const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
             
             <Modal.Body className="p-0">
                 {/* Barra de filtros */}
-                <div className="p-3 border-bottom bg-light">
+                <div className="p-3 border-bottom superficie">
                     <div className="row g-3">
                         <div className="col-md-4">
                             <InputGroup size="sm">
@@ -197,7 +197,7 @@ const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
                 {/* Tabla de rutas */}
                 <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                     <Table striped hover size="sm" className="mb-0">
-                        <thead className="sticky-top bg-white">
+                        <thead className="sticky-top fondo-panel">
                             <tr>
                                 <th width="50px">
                                     <Form.Check
@@ -250,7 +250,7 @@ const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
                                             </span>
                                         </td>
                                         <td>
-                                            <Badge bg="light" text="dark" className="small">
+                                            <Badge bg="secondary" className="small">
                                                 {groupRoute(route.uri)}
                                             </Badge>
                                         </td>

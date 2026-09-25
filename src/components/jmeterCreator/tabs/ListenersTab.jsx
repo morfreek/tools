@@ -170,7 +170,7 @@ const ListenersTab = ({ value, onChange }) => {
                     </Row>
                 )}
 
-                <div className="mt-3 p-3 bg-light rounded">
+                <div className="mt-3 p-3 superficie rounded">
                     <p className="text-muted small mb-1">
                         <strong>Recomendación:</strong> Para pruebas de carga intensivas, desactiva View Results Tree y Graph Results 
                         para mejorar el rendimiento. Usa solo Summary y Aggregate Reports.

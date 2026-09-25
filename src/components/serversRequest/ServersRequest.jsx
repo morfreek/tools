@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
-import { Container, Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
+import { Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
 
 const ServersRequest = () => {
     const [templateLoaded, setTemplateLoaded] = useState(false);
@@ -514,10 +514,12 @@ const ServersRequest = () => {
     const predefinedFields = Object.keys(formData).filter(key => !customFields.includes(key));
 
     return (
-        <Container fluid className="mt-4">
+        <>
+            <div className="titulo-seccion">
+                <h2>Solicitud de servidores <span className="sub">Máquinas virtuales UPT</span></h2>
+            </div>
             <Row className="mb-3">
                 <Col>
-                    <h3>Crear solicitud máquinas UPT</h3>
 
                     {/* Estado de la plantilla */}
                     <Card className="mb-4">
@@ -537,7 +539,7 @@ const ServersRequest = () => {
                             ) : templateError ? (
                                 <Alert variant="danger" className="mb-3">
                                     <strong>✗ Error al cargar plantilla:</strong>
-                                    <div className="mt-2 p-2 bg-light rounded">
+                                    <div className="mt-2 p-2 superficie rounded">
                                         <small className="text-danger">{templateError}</small>
                                     </div>
                                     <div className="mt-3">
@@ -803,7 +805,7 @@ const ServersRequest = () => {
                                         <h6 className="mb-0">Ejemplo de variables para "Tipo de ambiente"</h6>
                                     </Card.Header>
                                     <Card.Body>
-                                        <Alert variant="light" className="mb-0">
+                                        <Alert variant="secondary" className="mb-0">
                                             <small>
                                                 <strong>En tu plantilla Word puedes usar:</strong><br/>
                                                 Tipo de ambiente: Testing {'{tipo_ambiente_testing}'} Desarrollo {'{tipo_ambiente_desarrollo}'} Producción {'{tipo_ambiente_produccion}'} Integración {'{tipo_ambiente_integracion}'}<br/>
@@ -833,12 +835,12 @@ const ServersRequest = () => {
                             onClick={generateDocument}
                             disabled={!templateLoaded || isGenerating}
                         >
-                            {isGenerating ? 'Generando...' : 'Generar Documento'}
+                            {isGenerating ? 'Generando…' : 'Generar documento'}
                         </Button>
                     </div>
                 </Col>
             </Row>
-        </Container>
+        </>
     );
 };
 

@@ -3,6 +3,7 @@ import { Card, Form, Button, Row, Col, Accordion, Modal, Badge } from 'react-boo
 import { FaPlus, FaQuestionCircle, FaCopy, FaExternalLinkAlt, FaKey } from 'react-icons/fa';
 import { CodePreview } from '@u/CodePreview';
 import { useToast } from '@c/ToastContext';
+import { useDialog } from '@c/DialogProvider';
 import SshInstructionsModal from '@c/cd/SshInstructionsModal';
 import SaveConfigModal from '@c/cd/SaveConfigModal';
 import LoadConfigModal from '@c/cd/LoadConfigModal';
@@ -14,6 +15,7 @@ import { listConfigs, saveConfig, deleteConfig } from '@/services/configs.servic
 
 export default function ContinuousDeploymentForm({ projectId }) {
     const { showToast } = useToast();
+    const dialog = useDialog();
     const [config, setConfig] = useState(defaultConfig);
     const [showPreview, setShowPreview] = useState(false);
     const [yamlContent, setYamlContent] = useState('');
@@ -26,8 +28,6 @@ export default function ContinuousDeploymentForm({ projectId }) {
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showLoadModal, setShowLoadModal] = useState(false);
     const [showLoadEnvModal, setShowLoadEnvModal] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [variableToDelete, setVariableToDelete] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -147,33 +147,28 @@ export default function ContinuousDeploymentForm({ projectId }) {
         showToast('success', `Variable ${newEnvKey} agregada correctamente`);
     };
 
-    const handleRemoveEnvVariable = (keyToRemove) => {
+    const handleRemoveEnvVariable = async (keyToRemove) => {
         if (keyToRemove === 'APP_ENV' || keyToRemove === 'APP_URL') return;
 
-        setVariableToDelete(keyToRemove);
-        setShowDeleteConfirm(true);
-    };
+        const ok = await dialog.confirm({
+            title: 'Eliminar variable',
+            message: `¿Eliminar la variable de entorno "${keyToRemove}"?`,
+            acceptText: 'Eliminar',
+            danger: true,
+        });
+        if (!ok) return;
 
-    const confirmDeleteEnvVariable = () => {
         setConfig(prev => ({
             ...prev,
             deploy: {
                 ...prev.deploy,
                 env: Object.fromEntries(
                     Object.entries(prev.deploy.env)
-                        .filter(([key]) => key !== variableToDelete)
+                        .filter(([key]) => key !== keyToRemove)
                 )
             }
         }));
-        
-        showToast('success', `Variable ${variableToDelete} eliminada correctamente`);
-        setShowDeleteConfirm(false);
-        setVariableToDelete('');
-    };
-
-    const cancelDeleteEnvVariable = () => {
-        setShowDeleteConfirm(false);
-        setVariableToDelete('');
+        showToast('success', `Variable ${keyToRemove} eliminada`);
     };
 
     const handleLoadEnvVariables = (variables, mode) => {
@@ -560,7 +555,7 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                                                                     Base64
                                                                 </Badge>
                                                             ) : (
-                                                                <Badge bg="light" text="muted" className="small">
+                                                                <Badge bg="secondary" className="small">
                                                                     Texto
                                                                 </Badge>
                                                             )}
@@ -656,30 +651,6 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                 onHide={() => setShowSshInstructions(false)}
             />
 
-            {/* Modal de confirmación para eliminar variable */}
-            <Modal show={showDeleteConfirm} onHide={cancelDeleteEnvVariable} size="sm" centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Eliminación</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <p className="mb-0">
-                        ¿Está seguro de que desea eliminar la variable de entorno{' '}
-                        <strong>{variableToDelete}</strong>?
-                    </p>
-                    <p className="text-muted small mt-2 mb-0">
-                        Esta acción no se puede deshacer.
-                    </p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" size="sm" onClick={cancelDeleteEnvVariable}>
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={confirmDeleteEnvVariable}>
-                        Eliminar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-
             <Modal
                 show={showPreview}
                 onHide={() => setShowPreview(false)}
@@ -688,13 +659,13 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                 fullscreen="lg-down"
             >
                 <div style={{ height: '90vh', display: 'flex', flexDirection: 'column' }}>
-                    <Modal.Header closeButton className="bg-light">
+                    <Modal.Header closeButton>
                         <Modal.Title>Vista Previa del Archivo YAML</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="p-0" style={{ flex: 1, overflow: 'auto' }}>
                         <CodePreview content={yamlContent} />
                     </Modal.Body>
-                    <Modal.Footer className="bg-light border-top">
+                    <Modal.Footer>
                         <div className="me-auto">
                             <Button
                                 size="sm"

@@ -3,12 +3,12 @@ import { Modal, Button, Form, Accordion, Row, Col } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
 import Editor from 'react-simple-wysiwyg';
 import { STATUS_OPTIONS } from '@u/Constants';
-import { useConfirm } from '@c/ConfirmContext';
+import { useDialog } from '@c/DialogProvider';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
     const [initialForm, setInitialForm] = useState(null);
     const [hasChanges, setHasChanges] = useState(false);
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
 
     // Guardar estado inicial cuando se abre el modal
     useEffect(() => {
@@ -41,16 +41,16 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
 
     const handleClose = () => {
         if (hasChanges) {
-            showConfirm({
-                title: 'Cambios sin guardar',
-                message: '¿Estás seguro de que quieres cerrar? Se perderán los cambios no guardados.',
-                confirmText: 'Sí, cerrar',
-                cancelText: 'Cancelar',
-                confirmButtonClass: 'btn-danger',
-                onConfirm: () => {
-                    setHasChanges(false);
-                    onClose();
-                }
+            dialog.confirm({
+                title: 'Descartar cambios',
+                message: 'La revisión tiene cambios sin guardar. ¿Cerrar y descartarlos?',
+                acceptText: 'Descartar',
+                cancelText: 'Seguir editando',
+                danger: true,
+            }).then((ok) => {
+                if (!ok) return;
+                setHasChanges(false);
+                onClose();
             });
         } else {
             onClose();
@@ -99,7 +99,7 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
                                 style: {
                                     resize: 'vertical',
                                     minHeight: '200px',
-                                    border: '1px solid #ced4da',
+                                    border: '1px solid var(--borde)',
                                     borderRadius: '0.375rem'
                                 }
                             }}

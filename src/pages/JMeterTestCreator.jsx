@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Container, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
-import { FaInfoCircle, FaLightbulb } from 'react-icons/fa';
+import { FaLightbulb } from 'react-icons/fa';
 import TabNavigation from '@c/jmeterCreator/TabNavigation';
 import Preview from '@c/jmeterCreator/Preview';
 import { buildJmx, createDefaultRequest, parseJmxFile } from '@c/jmeterCreator/jmxUtils';
@@ -129,10 +129,9 @@ const JMeterTestCreator = () => {
     };
 
     return (
-        <Container fluid className="mt-4">
-            <div className="d-flex align-items-center gap-2 mb-3">
-                <h3 className="mb-0">JMeter Test Creator</h3>
-                <FaInfoCircle className="text-muted" style={{ fontSize: '1.25rem' }} />
+        <>
+            <div className="titulo-seccion">
+                <h2>Pruebas de carga JMeter <span className="sub">{requests.length} peticiones HTTP</span></h2>
             </div>
             
             <Alert variant="info" className="mb-4">
@@ -145,7 +144,7 @@ const JMeterTestCreator = () => {
                 </p>
                 <ol className="mb-0 small">
                     <li>Configura <strong>General</strong>: nombre del plan y URL base</li>
-                    <li>Ajusta <strong>Threads</strong>: usuarios concurrentes y duración</li>
+                    <li>Ajusta <strong>Hilos</strong>: usuarios concurrentes y duración</li>
                     <li>Añade <strong>Peticiones HTTP</strong> con headers y parámetros</li>
                     <li>Opcional: configura <strong>CSV</strong>, <strong>Temporizadores</strong> y <strong>Listeners</strong></li>
                     <li>Genera y descarga el archivo <strong>.jmx</strong> completo</li>
@@ -170,10 +169,11 @@ const JMeterTestCreator = () => {
                 onClose={() => setShowPreview(false)}
                 jmx={jmx}
                 onDownload={downloadJmx}
-                onCopyXml={() => navigator.clipboard.writeText(jmx)}
+                onCopyXml={() => navigator.clipboard.writeText(jmx)
+                    .then(() => showToast('success', 'XML copiado al portapapeles'))
+                    .catch(() => showToast('error', 'No se pudo copiar el XML'))}
             />
-
-        </Container>
+        </>
     );
 };
 

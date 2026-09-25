@@ -24,18 +24,8 @@ const TabNavigation = ({
 
     return (
         <Card className="mb-4">
-            <Card.Header 
-                className="py-3 d-flex justify-content-between align-items-center"
-                style={{ 
-                    position: 'sticky', 
-                    top: 0, 
-                    zIndex: 1020,
-                    backgroundColor: '#f8f9fa',
-                    borderBottom: '1px solid #dee2e6',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-            >
-                <h5 className="mb-0">Configuración Completa del Plan JMeter</h5>
+            <Card.Header className="py-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                <h2 className="h6 mb-0 fw-semibold">Configuración del plan JMeter</h2>
                 <div className="d-flex gap-2">
                     <Button 
                         size="sm" 
@@ -63,21 +53,11 @@ const TabNavigation = ({
                 </div>
             </Card.Header>
             
-            <div 
-                style={{ 
-                    position: 'sticky', 
-                    top: '64px', 
-                    zIndex: 1010,
-                    backgroundColor: '#ffffff',
-                    borderBottom: '1px solid #f0f0f0',
-                    // marginBottom: '16px'
-                }}
-                className='border-bottom-0 mb-2 '
-            >
+            <div className="px-3 pt-3">
                 <Tabs
                     activeKey={activeKey}
                     onSelect={(k) => setActiveKey(k)}
-                    className="custom-tabs pt-3 px-2"
+                    className="pestanas-plan"
                     fill
                 >
                     <Tab 
@@ -147,125 +127,10 @@ const TabNavigation = ({
                     />
                 </Tabs>
                 
-                <style>{`
-                    .custom-tabs .nav-tabs {
-                        border-bottom: 1px solid #f0f0f0;
-                        background: #ffffff;
-                        padding: 0;
-                        margin: 0 20px;
-                    }
-                    
-                    .custom-tabs .nav-tabs .nav-link {
-                        border: none;
-                        border-bottom: 2px solid transparent;
-                        border-radius: 0;
-                        margin: 0;
-                        padding: 12px 16px;
-                        background: transparent;
-                        color: #8e8e93;
-                        font-weight: 400;
-                        font-size: 0.95em;
-                        transition: all 0.2s ease;
-                        position: relative;
-                        min-height: auto;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        letter-spacing: 0.2px;
-                    }
-                    
-                    .custom-tabs .nav-tabs .nav-link:hover {
-                        background: rgba(0, 123, 255, 0.02);
-                        color: #495057;
-                        border-bottom-color: #dee2e6;
-                    }
-                    
-                    .custom-tabs .nav-tabs .nav-link.active {
-                        background: transparent;
-                        border-bottom-color: #007bff;
-                        color: #007bff;
-                        font-weight: 500;
-                    }
-                    
-                    .tab-icon {
-                        font-size: 1em;
-                        transition: all 0.2s ease;
-                        opacity: 0.7;
-                    }
-                    
-                    .custom-tabs .nav-tabs .nav-link:hover .tab-icon {
-                        opacity: 0.9;
-                    }
-                    
-                    .custom-tabs .nav-tabs .nav-link.active .tab-icon {
-                        opacity: 1;
-                    }
-                    
-                    .tab-text, .tab-text-short {
-                        font-size: inherit;
-                        font-weight: inherit;
-                        letter-spacing: inherit;
-                        margin-left: 8px;
-                    }
-                    
-                    .custom-tabs .tab-content {
-                        background: #ffffff;
-                        border: none;
-                        padding: 32px 20px;
-                    }
-                    
-                    @media (max-width: 992px) {
-                        .custom-tabs .nav-tabs {
-                            margin: 0 16px;
-                        }
-                        
-                        .custom-tabs .nav-tabs .nav-link {
-                            padding: 10px 14px;
-                            font-size: 0.9em;
-                        }
-                        
-                        .custom-tabs .tab-content {
-                            padding: 24px 16px;
-                        }
-                    }
-                    
-                    @media (max-width: 768px) {
-                        .custom-tabs .nav-tabs {
-                            margin: 0 12px;
-                        }
-                        
-                        .custom-tabs .nav-tabs .nav-link {
-                            padding: 8px 12px;
-                        }
-                        
-                        .tab-text {
-                            margin-left: 6px;
-                        }
-                    }
-                    
-                    @media (max-width: 576px) {
-                        .custom-tabs .nav-tabs {
-                            margin: 0 8px;
-                        }
-                        
-                        .custom-tabs .nav-tabs .nav-link {
-                            padding: 6px 8px;
-                            font-size: 0.85em;
-                        }
-                        
-                        .tab-text, .tab-text-short {
-                            margin-left: 4px;
-                        }
-                        
-                        .custom-tabs .tab-content {
-                            padding: 20px 8px;
-                        }
-                    }
-                `}</style>
             </div>
 
             <Card.Body>
-                <div className="tab-content">
+                <div>
                     {activeKey === 'general' && (
                         <GeneralTab value={value} onChange={onChange} />
                     )}

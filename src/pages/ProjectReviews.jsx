@@ -5,7 +5,8 @@ import { ButtonGroup, Button } from 'react-bootstrap';
 import { STATUS_OPTIONS } from '@u/Constants';
 import { listReviews, getChecklist, createReview, deleteReview as removeReview } from '@/services/reviews.service';
 import { exportReviewsExcel } from '@u/exportReviewsExcel';
-import { useConfirm } from '@c/ConfirmContext';
+import { useDialog } from '@c/DialogProvider';
+import { useToast } from '@c/ToastContext';
 import ProjectReviewModal from '@c/review/ProjectReviewModal';
 import ProjectReviewDetailModal from '@c/review/ProjectReviewDetailModal';
 import ProjectReviewCards from '@c/review/ProjectReviewCards';
@@ -13,7 +14,8 @@ import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 
 export default function ProjectReviews() {
     const { id } = useParams();
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
+    const { showToast } = useToast();
     const [reviews, setReviews] = useState([]);
     const [checklist, setChecklist] = useState([]);
     const [reviewVisible, setReviewVisible] = useState(false);
@@ -58,23 +60,34 @@ export default function ProjectReviews() {
     };
 
     const saveReview = async () => {
-        await createReview(id, form);
-        setNewReviewVisible(false);
-        fetchReviews();
+        try {
+            await createReview(id, form);
+            showToast('success', 'Revisión guardada');
+            setNewReviewVisible(false);
+            fetchReviews();
+        } catch (err) {
+            showToast('error', err.response?.data?.error || 'Error al guardar la revisión');
+        }
     };
 
     const deleteReview = async (reviewId) => {
-        showConfirm({
-            title: 'Eliminar Revisión',
-            message: '¿Estás seguro de que deseas eliminar esta revisión? Esta acción no se puede deshacer.',
-            confirmText: 'Eliminar',
-            cancelText: 'Cancelar',
-            confirmButtonClass: 'btn-danger',
-            onConfirm: async () => {
-                await removeReview(id, reviewId);
-                fetchReviews();
-            }
+        const target = reviews.find((r) => r.id === reviewId);
+        const date = target ? new Date(`${target.applied_at}T00:00:00`).toLocaleDateString('es-CL') : '';
+        const ok = await dialog.confirm({
+            title: 'Eliminar revisión',
+            message: `¿Eliminar la revisión${date ? ` del ${date}` : ''}? Esta acción no se puede deshacer.`,
+            acceptText: 'Eliminar',
+            danger: true,
         });
+        if (!ok) return;
+
+        try {
+            await removeReview(id, reviewId);
+            showToast('success', 'Revisión eliminada');
+            fetchReviews();
+        } catch {
+            showToast('error', 'Error al eliminar la revisión');
+        }
     };
 
     const handleViewDetail = (review) => {
@@ -87,7 +100,6 @@ export default function ProjectReviews() {
             actions={(
                 <ButtonGroup>
                     <Button
-                        variant="success"
                         size="sm"
                         className="d-inline-flex align-items-center"
                         onClick={startNewReview}
@@ -95,7 +107,7 @@ export default function ProjectReviews() {
                         <FaPlus className="me-2" />Revisión
                     </Button>
                     <Button
-                        variant="outline-success"
+                        variant="outline-secondary"
                         size="sm"
                         className="d-inline-flex align-items-center"
                         title="Exportar a Excel"
@@ -107,7 +119,7 @@ export default function ProjectReviews() {
             )}
         >
             {reviews.length === 0 ? (
-                <p>No hay revisiones</p>
+                <div className="vacio">Este proyecto aún no tiene revisiones. Crea la primera con «Revisión».</div>
             ) : (
                 <ProjectReviewCards 
                     reviews={reviews} 

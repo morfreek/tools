@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Button, Form, Dropdown } from 'react-bootstrap';
-import { FaSave, FaBan, FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
 import { saveProject } from '@/services/projects.service';
 
@@ -46,10 +46,10 @@ export default function ProjectModal({ show, onClose, onSaved, formData: initial
     };
 
     return (
-        <Modal show={show} onHide={onClose} backdrop="static" fullscreen="xl-down">
+        <Modal show={show} onHide={onClose} backdrop="static" centered>
             <Form onSubmit={handleSubmit}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{editing ? 'Editar Proyecto' : 'Crear Proyecto'}</Modal.Title>
+                    <Modal.Title>{editing ? 'Editar proyecto' : 'Nuevo proyecto'}</Modal.Title>
                 </Modal.Header>
 
                 <Modal.Body>
@@ -93,7 +93,7 @@ export default function ProjectModal({ show, onClose, onSaved, formData: initial
                     <Form.Group className="mb-3">
                         <Form.Label>Desarrolladores</Form.Label>
                         <Dropdown className="w-100">
-                            <Dropdown.Toggle className="w-100 text-start bg-white border" variant="light">
+                            <Dropdown.Toggle className="w-100 text-start" variant="outline-secondary">
                                 <div className="d-flex justify-content-between align-items-center w-100">
                                     <span>
                                         {formData.developer_ids.length > 0
@@ -134,13 +134,11 @@ export default function ProjectModal({ show, onClose, onSaved, formData: initial
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button type="submit" variant="success" size="sm" className="d-inline-flex align-items-center">
-                        <FaSave className="me-2" />
-                        {editing ? 'Actualizar' : 'Crear'}
-                    </Button>
-                    <Button variant="danger" size="sm" className="d-inline-flex align-items-center" onClick={onClose}>
-                        <FaBan className="me-2" />
+                    <Button variant="link" className="text-secondary" onClick={onClose}>
                         Cancelar
+                    </Button>
+                    <Button type="submit">
+                        {editing ? 'Actualizar' : 'Crear'}
                     </Button>
                 </Modal.Footer>
             </Form>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import { FaSave, FaBan } from 'react-icons/fa';
 
 export default function UserModal({
     show,
@@ -21,10 +20,10 @@ export default function UserModal({
     };
 
     return (
-        <Modal show={show} onHide={onClose} backdrop="static" fullscreen="xl-down">
+        <Modal show={show} onHide={onClose} backdrop="static" centered>
             <Form onSubmit={handleSubmit}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{editing ? 'Editar Usuario' : 'Crear Usuario'}</Modal.Title>
+                    <Modal.Title>{editing ? 'Editar usuario' : 'Nuevo usuario'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form.Group className="mb-3">
@@ -38,26 +37,13 @@ export default function UserModal({
                         />
                     </Form.Group>
 
-                    {/* Agrega aquí más campos que necesites para usuarios */}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button 
-                        type="submit" 
-                        variant="success" 
-                        size="sm" 
-                        className="d-inline-flex align-items-center"
-                    >
-                        <FaSave className="me-2"/>
-                        {editing ? 'Actualizar' : 'Crear'}
-                    </Button>
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        className="d-inline-flex align-items-center"
-                        onClick={onClose}
-                    >
-                        <FaBan className="me-2" />
+                    <Button variant="link" className="text-secondary" onClick={onClose}>
                         Cancelar
+                    </Button>
+                    <Button type="submit">
+                        {editing ? 'Actualizar' : 'Crear'}
                     </Button>
                 </Modal.Footer>
             </Form>

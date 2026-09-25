@@ -1,17 +1,18 @@
 import React, { useRef, useState, memo, useMemo } from 'react';
 import { Button, Alert, Card, Form, Row, Col, OverlayTrigger, Tooltip, Badge, Collapse, Modal } from 'react-bootstrap';
-import { FaPlus, FaGlobe, FaInfoCircle, FaTrash, FaCopy, FaUpload, FaCheckCircle, FaTimes, FaChevronDown, FaChevronUp, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPlus, FaGlobe, FaInfoCircle, FaTrash, FaCopy, FaUpload, FaCheckCircle, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import RoutesSelectorModal from '../modals/RoutesSelectorModal';
 import GlobalAssertionsModal from '../modals/GlobalAssertionsModal';
 import { useToast } from '@/components/ToastContext';
+import { useDialog } from '@/components/DialogProvider';
 
 const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClearAll }) => {
     const [showRoutesModal, setShowRoutesModal] = useState(false);
     const [showGlobalAssertions, setShowGlobalAssertions] = useState(false);
     const [laravelRoutes, setLaravelRoutes] = useState([]);
-    const [showClearModal, setShowClearModal] = useState(false);
     const fileInputRef = useRef(null);
     const { showToast } = useToast();
+    const dialog = useDialog();
 
     const renderTooltip = (content) => (
         <Tooltip id="tooltip" className="text-start" style={{ textAlign: 'left' }}>
@@ -149,9 +150,14 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClear
         setShowGlobalAssertions(false);
     };
 
-    const handleClearAll = () => {
-        onClearAll();
-        setShowClearModal(false);
+    const handleClearAll = async () => {
+        const ok = await dialog.confirm({
+            title: 'Eliminar todas las peticiones',
+            message: `¿Eliminar las ${requests.length} peticiones HTTP del plan? Esta acción no se puede deshacer.`,
+            acceptText: 'Eliminar todo',
+            danger: true,
+        });
+        if (ok) onClearAll();
     };
 
     const requestHandlers = useMemo(() => {
@@ -218,10 +224,10 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClear
                     Define las peticiones HTTP que JMeter ejecutará. Puedes agregarlas manualmente o cargar rutas desde Laravel.
                 </p>
             </Alert>
-            <Alert variant="light" className="small">
+            <Alert variant="secondary" className="small">
                 <strong>💡 Tip:</strong> Para obtener el archivo routes.json de Laravel, ejecuta en tu proyecto:
                 <br />
-                <code className="bg-dark text-light px-2 py-1 rounded mt-1 d-inline-block">
+                <code className="codigo px-2 py-1 mt-1 d-inline-block">
                     php artisan route:list --json &gt; routes.json
                 </code>
             </Alert>
@@ -264,7 +270,7 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClear
                         <Button
                             size="sm"
                             variant="outline-danger"
-                            onClick={() => setShowClearModal(true)}
+                            onClick={handleClearAll}
                             className="d-flex align-items-center gap-1"
                         >
                             <FaTrash size={12} />
@@ -283,7 +289,7 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClear
             />
 
             {requests.length === 0 && (
-                <Alert variant="light" className="text-center border">
+                <Alert variant="secondary" className="text-center border">
                     <p className="mb-2">No hay peticiones HTTP configuradas</p>
                     <div className="d-flex gap-2 justify-content-center">
                         <Button size="sm" variant="outline-primary" onClick={() => fileInputRef.current?.click()}>
@@ -321,31 +327,6 @@ const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClear
                 requestsCount={requests.length}
             />
 
-            <Modal show={showClearModal} onHide={() => setShowClearModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>
-                        <FaExclamationTriangle className="text-warning me-2" />
-                        Confirmar eliminación
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <p>
-                        ¿Estás seguro de que deseas eliminar todas las peticiones HTTP?
-                    </p>
-                    <p className="mb-0">
-                        <strong>Se eliminarán {requests.length} peticiones.</strong> Esta acción no se puede deshacer.
-                    </p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowClearModal(false)}>
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={handleClearAll}>
-                        <FaTrash className="me-1" />
-                        Eliminar Todo
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 };
@@ -646,7 +627,7 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                 <>
                                     <div className="border-top my-2" />
                                     <h6 className="mb-2">Assertions</h6>
-                                    <div className="border rounded p-2 bg-light">
+                                    <div className="border rounded p-2 superficie">
                                         <div className="mb-3">
                                             <div className="d-flex justify-content-between align-items-center mb-2">
                                                 <h6 className="m-0 d-flex align-items-center gap-2">
@@ -726,7 +707,7 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                             ))}
 
                                             {req.responseAssertions?.length === 0 && (
-                                                <Alert variant="light" className="small text-center py-2 mb-0">
+                                                <Alert variant="secondary" className="small text-center py-2 mb-0">
                                                     No hay response assertions configuradas
                                                 </Alert>
                                             )}
@@ -806,7 +787,7 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                             ))}
 
                                             {req.jsonAssertions?.length === 0 && (
-                                                <Alert variant="light" className="small text-center py-2 mb-0">
+                                                <Alert variant="secondary" className="small text-center py-2 mb-0">
                                                     No hay JSON assertions configuradas
                                                 </Alert>
                                             )}

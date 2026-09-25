@@ -11,7 +11,7 @@ import {
     CloseButton
 } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
-import { useConfirm } from '@c/ConfirmContext';
+import { useDialog } from '@c/DialogProvider';
 import { listNotes, deleteNote } from '@/services/notes.service';
 import ProjectNoteModal from './ProjectNoteModal';
 
@@ -24,7 +24,7 @@ export default function ProjectNoteList({
     refreshKey
 }) {
     const { showToast } = useToast();
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -63,23 +63,22 @@ export default function ProjectNoteList({
         setShowEditModal(true);
     };
 
-    const handleDelete = (noteId) => {
-        showConfirm({
-            title: "Eliminar Nota",
-            message: "¿Estás seguro de eliminar esta nota? Esta acción no se puede deshacer.",
-            confirmText: "Eliminar",
-            cancelText: "Cancelar",
-            onConfirm: async () => {
-                try {
-                    await deleteNote(projectId, noteId);
-                    showToast('success', 'Nota eliminada correctamente');
-                    fetchNotes();
-                } catch (err) {
-                    console.error(err);
-                    showToast('error', 'Error al eliminar la nota');
-                }
-            }
+    const handleDelete = async (noteId) => {
+        const ok = await dialog.confirm({
+            title: 'Eliminar nota',
+            message: `¿Eliminar la nota ${currentNoteIndex + 1} de ${notes.length}? Esta acción no se puede deshacer.`,
+            acceptText: 'Eliminar',
+            danger: true,
         });
+        if (!ok) return;
+
+        try {
+            await deleteNote(projectId, noteId);
+            showToast('success', 'Nota eliminada');
+            fetchNotes();
+        } catch {
+            showToast('error', 'Error al eliminar la nota');
+        }
     };
 
     const handleNext = () => {
@@ -112,12 +111,8 @@ export default function ProjectNoteList({
     return (
         <>
             {isModal && (
-                <div 
-                    className="position-fixed top-0 start-0 w-100 h-100"
-                    style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        zIndex: 1039
-                    }}
+                <div
+                    className="velo position-fixed top-0 start-0 w-100 h-100"
                     onClick={onClose}
                 />
             )}
@@ -126,9 +121,9 @@ export default function ProjectNoteList({
                 style={defaultContainerStyle}
                 ref={sidebarRef}
             >
-                <Card.Header className="bg-white">
+                <Card.Header>
                     <div className="d-flex justify-content-between align-items-center">
-                        <Card.Title className="h5 mb-0">Notas del Proyecto</Card.Title>
+                        <Card.Title className="h5 mb-0">Notas del proyecto</Card.Title>
                         <div className="d-flex align-items-center gap-2">
                             <Button
                                 variant="outline-success"
@@ -203,7 +198,7 @@ export default function ProjectNoteList({
                 </Card.Body>
 
                 {!loading && notes.length > 0 && (
-                    <Card.Footer className="bg-white">
+                    <Card.Footer>
                         <Container fluid className="px-0">
                             <div className="d-flex justify-content-between align-items-center">
                                 <Button
