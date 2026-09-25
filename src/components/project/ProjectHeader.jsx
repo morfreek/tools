@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Badge, Button, Nav, Placeholder } from 'react-bootstrap';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaExchangeAlt } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
 import ProjectModal from '@c/modal/ProjectModal';
 import ProjectSwitcher from '@c/project/ProjectSwitcher';
-import { getProject } from '@/services/projects.service';
+import { getProject, transferProject } from '@/services/projects.service';
+import { listAccountOptions } from '@/services/accounts.service';
+import { useSession } from '@c/SessionContext';
+import TransferModal from '@c/account/TransferModal';
 import { listUsers } from '@/services/users.service';
 import { recordVisit } from '@u/recent';
 
@@ -27,6 +30,9 @@ export default function ProjectHeader({ projectId }) {
     const [project, setProject] = useState(null);
     const [users, setUsers] = useState([]);
     const [editing, setEditing] = useState(null);
+    const [transferAccounts, setTransferAccounts] = useState(null);
+    const { account } = useSession();
+    const navigate = useNavigate();
 
     const section = PROJECT_SECTIONS.find((s) => location.pathname.endsWith(`/${s.path}`)) ?? PROJECT_SECTIONS[0];
 
@@ -54,8 +60,25 @@ export default function ProjectHeader({ projectId }) {
             to: `/projects/${project.id}/${section.path}`,
             label: project.name,
             detail: `${project.code} · ${section.label}`,
+            account: account?.id,
         });
-    }, [project, section.path, section.label]);
+    }, [project, section.path, section.label, account?.id]);
+
+    const openTransfer = async () => {
+        try {
+            const options = await listAccountOptions();
+            setTransferAccounts(options.filter((a) => a.id !== account.id));
+        } catch {
+            showToast('error', 'No se pudieron cargar las cuentas');
+        }
+    };
+
+    // Tras transferir, el proyecto deja de pertenecer a esta cuenta: se vuelve al listado
+    const transfer = async (accountId) => {
+        const { message } = await transferProject(project.id, accountId);
+        showToast('success', message);
+        navigate('/projects');
+    };
 
     const coordinator = users.find((u) => u.id === project?.coordinator_id)?.name;
     const team = (project?.developers || []).map((d) => d.name);
@@ -101,6 +124,11 @@ export default function ProjectHeader({ projectId }) {
                             <FaEdit />
                         </Button>
                     )}
+                    {project && (
+                        <Button variant="link" size="sm" className="accion" title="Transferir proyecto a otra cuenta" onClick={openTransfer}>
+                            <FaExchangeAlt />
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -116,6 +144,15 @@ export default function ProjectHeader({ projectId }) {
                 onSaved={load}
                 formData={editing}
                 users={users}
+            />
+            <TransferModal
+                show={Boolean(transferAccounts)}
+                onClose={() => setTransferAccounts(null)}
+                title="Transferir proyecto"
+                description={project && `${project.name} pasará a la cuenta elegida, que será su única dueña, con sus revisiones, notas, archivos y configuraciones. Usted dejará de verlo.`}
+                accounts={transferAccounts || []}
+                acceptText="Transferir proyecto"
+                onConfirm={transfer}
             />
         </section>
     );

@@ -16,6 +16,7 @@ import ProjectNotes from '@/pages/ProjectNotes';
 import ProjectFiles from '@/pages/ProjectFiles';
 import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment';
 import JMeterTestCreator from '@/pages/JMeterTestCreator';
+import Accounts from '@/pages/Accounts';
 import { HERRAMIENTAS } from '@/config/tools';
 import { recordVisit } from '@u/recent';
 
@@ -29,6 +30,7 @@ const ROUTES = [
     { path: '/projects/:id/notes', element: <RequireAuth><ProjectNotes /></RequireAuth> },
     { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> },
     { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> },
+    { path: '/cuentas', element: <RequireAuth admin><Accounts /></RequireAuth> },
     { path: '/jmeter-test-creator', element: <JMeterTestCreator /> },
     { path: '/phpstan', element: <PhpStanViewer /> },
     { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> },

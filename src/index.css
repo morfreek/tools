@@ -16,6 +16,23 @@
 /* Los dropdowns con ícono propio (menú de opciones) no muestran el caret */
 .dropdown-toggle::after { display: none !important; }
 
+/* Menú de la cuenta en la cabecera: base.css da estilo de botón a todo button/a dentro
+   de .acciones; el disparador va como texto y las opciones como ítems de menú */
+.acciones .dropdown-toggle.btn-link {
+  border: 0; background: transparent; padding: 4px 6px;
+  color: var(--suave); text-decoration: none;
+}
+.acciones .dropdown-toggle.btn-link:hover,
+.acciones .dropdown-toggle.btn-link:focus-visible,
+.acciones .dropdown-toggle.btn-link.show { color: var(--texto); }
+.acciones .dropdown-menu .dropdown-item {
+  padding: 6px 14px; border: 0; border-radius: 0;
+  background: transparent; color: var(--texto); font-size: 13px;
+}
+.acciones .dropdown-menu .dropdown-item:hover,
+.acciones .dropdown-menu .dropdown-item:focus-visible { background: var(--fondo); }
+.acciones .dropdown-menu .dropdown-header { font-size: 12px; color: var(--suave); }
+
 .modal-90w { max-width: 90% !important; }
 
 /* Previsualización de código (YAML, XML) */
