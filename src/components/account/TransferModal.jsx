@@ -50,7 +50,7 @@ export default function TransferModal({ show, onClose, title, description, accou
                 </Modal.Body>
                 <Modal.Footer>
                     <CancelButton onClick={onClose} disabled={saving} />
-                    <Button type="submit" size="sm" variant="danger" disabled={saving || !target}>
+                    <Button type="submit" size="sm" disabled={saving || !target}>
                         {saving ? 'Transfiriendo…' : acceptText}
                     </Button>
                 </Modal.Footer>

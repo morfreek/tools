@@ -5,6 +5,7 @@ import RoutesSelectorModal from '../modals/RoutesSelectorModal';
 import GlobalAssertionsModal from '../modals/GlobalAssertionsModal';
 import { useToast } from '@/components/ToastContext';
 import { useDialog } from '@/components/DialogProvider';
+import CancelButton from '@c/ui/CancelButton';
 
 const RequestsTab = ({ requests, onAdd, onDelete, onDuplicate, onChange, onClearAll }) => {
     const [showRoutesModal, setShowRoutesModal] = useState(false);
@@ -829,9 +830,7 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                     </Alert>
                 </Modal.Body>
                 <Modal.Footer className="pt-1 pb-2">
-                    <Button size="sm" onClick={() => setShowJsonHelp(false)}>
-                        Entendido
-                    </Button>
+                    <CancelButton onClick={() => setShowJsonHelp(false)}>Cerrar</CancelButton>
                 </Modal.Footer>
             </Modal>
         </Card>
