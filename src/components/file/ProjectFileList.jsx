@@ -6,7 +6,7 @@ import { ListGroup, Button, Placeholder, ButtonGroup, Image, Offcanvas } from 'r
 import { useToast } from '@c/ToastContext';
 import { useConfirm } from '@c/ConfirmContext';
 import ProjectFileUploader from './ProjectFileUploader';
-import api from '@/api';
+import { listFiles, downloadFile, deleteFile, filePreviewUrl } from '@/services/files.service';
 
 // Función auxiliar para formatear el tamaño del archivo
 const formatFileSize = (bytes) => {
@@ -42,8 +42,8 @@ export default function ProjectFileList({
     const fetchFiles = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/projects/${projectId}/files`);
-            setFiles(response.data.sort((a, b) =>
+            const response = await listFiles(projectId);
+            setFiles(response.sort((a, b) =>
                 new Date(b.created_at) - new Date(a.created_at)
             ));
         } catch (err) {
@@ -69,10 +69,8 @@ export default function ProjectFileList({
 
     const handleDownload = async (fileId, filename) => {
         try {
-            const response = await api.get(`/projects/${projectId}/files/${fileId}/download`, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const blob = await downloadFile(projectId, fileId);
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', filename);
@@ -93,7 +91,7 @@ export default function ProjectFileList({
             cancelText: "Cancelar",
             onConfirm: async () => {
                 try {
-                    await api.delete(`/projects/${projectId}/files/${fileId}`);
+                    await deleteFile(projectId, fileId);
                     showToast('success', 'Archivo eliminado correctamente');
                     fetchFiles();
                 } catch (err) {
@@ -187,7 +185,7 @@ export default function ProjectFileList({
                                         {file.mime_type.startsWith('image/') && (
                                             <div className="mt-2">
                                                 <Image
-                                                    src={`${import.meta.env.VITE_API_URL}/projects/${projectId}/files/${file.id}/preview`}
+                                                    src={filePreviewUrl(projectId, file.id)}
                                                     alt={file.name}
                                                     thumbnail
                                                     style={{ maxHeight: '100px' }}

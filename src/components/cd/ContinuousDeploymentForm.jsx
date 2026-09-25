@@ -10,7 +10,7 @@ import LoadEnvModal from '@c/cd/LoadEnvModal';
 import EnvVariableRow from '@c/cd/EnvVariableRow';
 import { defaultConfig } from '@/config/ContinuousDeploymentDefaults.jsx';
 import { generateYamlContent } from '@c/cd/ContinuousDeploymentYamlGenerator';
-import api from '@/api';
+import { listConfigs, saveConfig, deleteConfig } from '@/services/configs.service';
 
 export default function ContinuousDeploymentForm({ projectId }) {
     const { showToast } = useToast();
@@ -39,8 +39,8 @@ export default function ContinuousDeploymentForm({ projectId }) {
     const fetchSavedConfigs = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/projects/${projectId}/configs`);
-            setSavedConfigs(response.data);
+            const response = await listConfigs(projectId);
+            setSavedConfigs(response);
         } catch (error) {
             console.error('Error al cargar configuraciones:', error);
             showToast('error', 'Error al cargar las configuraciones guardadas');
@@ -57,13 +57,7 @@ export default function ContinuousDeploymentForm({ projectId }) {
 
         try {
             setLoading(true);
-            const configData = {
-                name: name,
-                config: config,
-                projectId: projectId || 'global',
-                savedAt: new Date().toISOString()
-            };
-            await api.post(`/projects/${projectId}/configs`, configData);
+            await saveConfig(projectId, name, config);
             await fetchSavedConfigs();
             setShowSaveModal(false);
             showToast('success', 'Configuración guardada correctamente');
@@ -84,9 +78,7 @@ export default function ContinuousDeploymentForm({ projectId }) {
     const handleDeleteConfig = async (name) => {
         try {
             setLoading(true);
-            await api.delete(`/projects/${projectId}/configs`, {
-                data: { name }
-            });
+            await deleteConfig(projectId, name);
             await fetchSavedConfigs();
             showToast('success', 'Configuración eliminada correctamente');
         } catch (error) {

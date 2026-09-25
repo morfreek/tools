@@ -1,11 +1,9 @@
-// src/pages/ProjectDetail.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaClipboardCheck, FaStickyNote, FaRocket } from 'react-icons/fa';
-import { Container, Row, Col, Card } from 'react-bootstrap';
-import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import { Row, Col, Card } from 'react-bootstrap';
+import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 import ProjectNoteList from '@c/note/ProjectNoteList';
-import Breadcrumb from '@c/Breadcrumb';
 
 const ActionCard = ({ icon: Icon, title, description, onClick, color }) => (
     <Card 
@@ -43,23 +41,21 @@ export default function ProjectDetail() {
         {
             icon: FaStickyNote,
             title: 'Notas',
-            description: 'Anotaciones realicionadas al proyecto',
+            description: 'Anotaciones relacionadas al proyecto',
             path: 'notes',
             color: 'warning'
         },
         {
             icon: FaRocket,
             title: 'Despliegue Continuo',
-            description: 'Generara pipelines para CD (continuous deployment)',
+            description: 'Generar pipelines de despliegue continuo (CD)',
             path: 'continuous-deployment',
             color: 'danger'
         }
     ];
 
     return (
-        <Container fluid className="mt-4">
-            <Breadcrumb />
-            <ProjectInfoCard id={id} />
+        <ProjectPageLayout>
             <ProjectNoteList projectId={id} />
 
             <h5>Acciones</h5>
@@ -73,6 +69,6 @@ export default function ProjectDetail() {
                     </Col>
                 ))}
             </Row>
-        </Container>
+        </ProjectPageLayout>
     );
 }

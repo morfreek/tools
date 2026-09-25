@@ -2,43 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Button, Form, Dropdown } from 'react-bootstrap';
 import { FaSave, FaBan, FaChevronDown } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
-import api from '@/api';
+import { saveProject } from '@/services/projects.service';
 
-export default function ProjectModal({ show, onClose, formData: initialData }) {
+const EMPTY_PROJECT = {
+    id: null,
+    name: '',
+    code: '',
+    coordinator_id: '',
+    developer_ids: [],
+};
+
+// formData: proyecto a editar (null = nuevo). users: lo carga quien abre el modal.
+export default function ProjectModal({ show, onClose, onSaved, formData: initialData, users = [] }) {
     const { showToast } = useToast();
-    const [users, setUsers] = useState([]);
-    const [formData, setFormData] = useState({
-        id: null,
-        name: '',
-        code: '',
-        coordinator_id: '',
-        developer_ids: [],
-    });
+    const [formData, setFormData] = useState(EMPTY_PROJECT);
 
     const editing = formData.id !== null;
 
     useEffect(() => {
-        if (show) {
-            setFormData(initialData || {
-                id: null,
-                name: '',
-                code: '',
-                coordinator_id: '',
-                developer_ids: [],
-            });
-            fetchUsers();
-        }
+        if (show) setFormData(initialData || EMPTY_PROJECT);
     }, [show, initialData]);
-
-    const fetchUsers = async () => {
-        try {
-            const usersRes = await api.get(`/users`);
-            setUsers(usersRes.data);
-        } catch (err) {
-            console.error(err);
-            showToast('error', 'Error al cargar usuarios');
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value, type, options } = e.target;
@@ -53,16 +36,11 @@ export default function ProjectModal({ show, onClose, formData: initialData }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (editing) {
-                await api.put(`/projects/${formData.id}`, formData);
-                showToast('success', 'Proyecto actualizado');
-            } else {
-                await api.post(`/projects`, formData);
-                showToast('success', 'Proyecto creado');
-            }
+            await saveProject(formData);
+            showToast('success', editing ? 'Proyecto actualizado' : 'Proyecto creado');
+            onSaved?.();
             onClose();
-        } catch (err) {
-            console.error('Error al guardar proyecto:', err);
+        } catch {
             showToast('error', 'Error al guardar proyecto');
         }
     };

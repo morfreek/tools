@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaExchangeAlt } from 'react-icons/fa';
 import { Breadcrumb as BSBreadcrumb, Modal, ListGroup, Form } from 'react-bootstrap';
 import { useBreadcrumb } from '@hk/useBreadcrumb';
-import api from '@/api';
+import { listProjects } from '@/services/projects.service';
+import { matchesSearch } from '@u/text';
 
 export default function Breadcrumb() {
     const items = useBreadcrumb();
@@ -23,25 +24,10 @@ export default function Breadcrumb() {
     // Helpers para mostrar nombres
     const getProjectName = (p) => p?.name || p?.title || p?.id;
 
-    // Normalizador que elimina acentos y pasa a minúsculas
-    const normalizeString = (str) =>
-        (str ?? '')
-            .toString()
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
-
     // Proyectos visibles (excluye actual y filtra por búsqueda: nombre, código o desarrolladores)
     const visibleProjects = projects
         .filter(p => !currentProjectId || String(p.id) !== String(currentProjectId))
-        .filter(p => {
-            if (!search) return true;
-            const q = normalizeString(search);
-            const name = normalizeString(getProjectName(p));
-            const code = normalizeString(p?.code);
-            const devs = Array.isArray(p?.developer_names) ? p.developer_names.map(normalizeString).join(' ') : '';
-            return name.includes(q) || code.includes(q) || devs.includes(q);
-        });
+        .filter(p => matchesSearch(search, [getProjectName(p), p?.code, ...(p?.developer_names || [])]));
 
     // Cargar proyectos al abrir el modal
     useEffect(() => {
@@ -54,7 +40,7 @@ export default function Breadcrumb() {
             try {
                 setLoadingProjects(true);
                 setProjectsError(null);
-                const { data } = await api.get('/projects'); // Espera un array de proyectos
+                const data = await listProjects();
                 if (!ignore) setProjects(Array.isArray(data) ? data : []);
             } catch (e) {
                 if (!ignore) setProjectsError(e?.message || 'Error');

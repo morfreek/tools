@@ -12,7 +12,7 @@ import {
 } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
 import { useConfirm } from '@c/ConfirmContext';
-import api from '@/api';
+import { listNotes, deleteNote } from '@/services/notes.service';
 import ProjectNoteModal from './ProjectNoteModal';
 
 export default function ProjectNoteList({
@@ -36,8 +36,8 @@ export default function ProjectNoteList({
     const fetchNotes = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/projects/${projectId}/notes`);
-            setNotes(response.data.sort((a, b) =>
+            const response = await listNotes(projectId);
+            setNotes(response.sort((a, b) =>
                 new Date(b.created_at) - new Date(a.created_at)
             ));
         } catch (err) {
@@ -71,7 +71,7 @@ export default function ProjectNoteList({
             cancelText: "Cancelar",
             onConfirm: async () => {
                 try {
-                    await api.delete(`/projects/${projectId}/notes/`, { data: { noteId } });
+                    await deleteNote(projectId, noteId);
                     showToast('success', 'Nota eliminada correctamente');
                     fetchNotes();
                 } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Modal, Button, Form, Table, Badge, Alert, InputGroup } from 'react-bootstrap';
-import { FaSearch, FaFilter, FaCheckSquare, FaSquare } from 'react-icons/fa';
+import { FaSearch, FaCheckSquare, FaSquare } from 'react-icons/fa';
 
 const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
     const [selectedRoutes, setSelectedRoutes] = useState(new Set());

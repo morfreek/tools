@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Dropdown, Button, Card, Placeholder } from 'react-bootstrap';
-import { FaEdit, FaStickyNote, FaEye, FaEllipsisV, FaUpload, FaFile } from 'react-icons/fa';
-import api from '@/api';
+import { Dropdown, Card, Placeholder } from 'react-bootstrap';
+import { FaEdit, FaStickyNote, FaEye, FaEllipsisV } from 'react-icons/fa';
+import { getProject } from '@/services/projects.service';
+import { listUsers } from '@/services/users.service';
 import { useToast } from '@c/ToastContext';
 import ProjectModal from '@c/modal/ProjectModal';
 import ProjectNoteModal from '@c/note/ProjectNoteModal';
@@ -60,14 +61,10 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
     const fetchAll = async () => {
         setLoading(true);
         try {
-            const [projectRes, usersRes] = await Promise.all([
-                api.get(`/projects/${id}`),
-                api.get(`/users`)
-            ]);
-            setProject(projectRes.data);
-            setUsers(usersRes.data);
-        } catch (err) {
-            console.error(err);
+            const [projectData, usersData] = await Promise.all([getProject(id), listUsers()]);
+            setProject(projectData);
+            setUsers(usersData);
+        } catch {
             showToast('error', 'Error al cargar datos del proyecto');
         } finally {
             setLoading(false);
@@ -94,8 +91,11 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
     const handleCloseModal = () => {
         setFormDataProject(null);
         setShowModal(false);
+    };
+
+    const handleProjectSaved = () => {
         fetchAll();
-        if (onRefresh) onRefresh();
+        onRefresh?.();
     };
 
     const handleCloseNoteModal = () => {
@@ -161,7 +161,9 @@ export default function ProjectInfoCard({ id, onRefresh, onNoteAdded }) {
             <ProjectModal
                 show={showModal}
                 onClose={handleCloseModal}
+                onSaved={handleProjectSaved}
                 formData={formDataProject}
+                users={users}
             />
 
             <ProjectNoteModal

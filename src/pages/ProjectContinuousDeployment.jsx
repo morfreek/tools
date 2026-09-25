@@ -1,18 +1,14 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Container } from 'react-bootstrap';
-import ProjectInfoCard from '@c/info/ProjectInfoCard';
-import Breadcrumb from '@c/Breadcrumb';
+import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 import ContinuousDeploymentForm from '@c/cd/ContinuousDeploymentForm';
 
 export default function ProjectContinuousDeployment() {
     const { id } = useParams();
 
     return (
-        <Container fluid className="mt-4">
-            <Breadcrumb />
-            <ProjectInfoCard id={id} />
+        <ProjectPageLayout>
             <ContinuousDeploymentForm projectId={id} />
-        </Container>
+        </ProjectPageLayout>
     );
 }

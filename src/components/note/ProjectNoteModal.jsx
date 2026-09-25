@@ -5,7 +5,7 @@ import Editor from 'react-simple-wysiwyg';
 import { FaSave, FaBan } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
 import { useConfirm } from '@c/ConfirmContext';
-import api from '@/api';
+import { createNote, updateNote } from '@/services/notes.service';
 
 export default function ProjectNoteModal({ show, onClose, onSaved, projectId, note }) {
     const [content, setContent] = useState(note?.detail || '');
@@ -27,15 +27,9 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
         setLoading(true);
         try {
             if (note) {
-                await api.put(`/projects/${projectId}/notes`, {
-                    noteId: note.id,
-                    detail: content
-                });
+                await updateNote(projectId, note.id, content);
             } else {
-                await api.post(`/projects/${projectId}/notes`, {
-                    detail: content,
-                    created_at: new Date().toISOString()
-                });
+                await createNote(projectId, content);
             }
             showToast('success', 'Nota guardada correctamente.');
             await onSaved();
