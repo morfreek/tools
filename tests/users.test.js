@@ -59,4 +59,60 @@ describe('Users Endpoints', () => {
       expect(response.data).toEqual({ error: 'El nombre es obligatorio' });
     });
   });
+
+  describe('PUT /tools/api/users/:id', () => {
+    it('debe actualizar el nombre del usuario', async () => {
+      mockDb.run.mockResolvedValue({ changes: 1 });
+
+      const response = await httpClient.put('/tools/api/users/1', { name: '  Juan Pérez Soto ' });
+
+      expect(response.status).toBe(200);
+      expect(response.data).toEqual({ id: 1, name: 'Juan Pérez Soto' });
+      expect(mockDb.run).toHaveBeenCalledWith('UPDATE users SET name = ? WHERE id = ?', ['Juan Pérez Soto', '1']);
+    });
+
+    it('debe rechazar un nombre vacío', async () => {
+      const response = await httpClient.put('/tools/api/users/1', { name: '   ' });
+
+      expect(response.status).toBe(400);
+      expect(mockDb.run).not.toHaveBeenCalled();
+    });
+
+    it('debe retornar 404 para usuario inexistente', async () => {
+      mockDb.run.mockResolvedValue({ changes: 0 });
+
+      const response = await httpClient.put('/tools/api/users/999', { name: 'Nadie' });
+
+      expect(response.status).toBe(404);
+      expect(response.data).toEqual({ error: 'Usuario no encontrado' });
+    });
+  });
+
+  describe('Manejo central de errores', () => {
+    it('debe responder JSON genérico sin detalles internos', async () => {
+      mockDb.all.mockRejectedValue(new Error('SQLITE_BUSY: detalle interno'));
+
+      const response = await httpClient.get('/tools/api/users');
+
+      expect(response.status).toBe(500);
+      expect(response.data).toEqual({ error: 'Error interno del servidor' });
+    });
+
+    it('debe responder 400 ante JSON mal formado', async () => {
+      const response = await httpClient.post('/tools/api/users', '{"name":', {
+        headers: { 'Content-Type': 'application/json' },
+        transformRequest: [(data) => data]
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: 'El cuerpo de la solicitud no es JSON válido' });
+    });
+
+    it('debe responder 404 JSON para rutas inexistentes', async () => {
+      const response = await httpClient.get('/tools/api/no-existe');
+
+      expect(response.status).toBe(404);
+      expect(response.data).toEqual({ error: 'Ruta no encontrada' });
+    });
+  });
 });

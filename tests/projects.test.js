@@ -20,15 +20,17 @@ describe('Projects Endpoints', () => {
   describe('GET /tools/api/projects', () => {
     it('debe retornar lista de proyectos con desarrolladores', async () => {
       mockDb.all
-        .mockResolvedValueOnce(mockProjects)
-        .mockResolvedValueOnce([{ id: 2, name: 'Ana García' }]);
+        .mockResolvedValueOnce(mockProjects.map(({ developer_ids, developer_names, ...p }) => p))
+        .mockResolvedValueOnce([{ project_id: 1, id: 2, name: 'Ana García' }]);
 
       const response = await httpClient.get('/tools/api/projects');
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveLength(1);
-      expect(response.data[0]).toHaveProperty('developer_ids');
-      expect(response.data[0]).toHaveProperty('developer_names');
+      expect(response.data[0].developer_ids).toEqual([2]);
+      expect(response.data[0].developer_names).toEqual(['Ana García']);
+      // Desarrolladores de todos los proyectos en una sola consulta (sin N+1)
+      expect(mockDb.all).toHaveBeenCalledTimes(2);
     });
 
     it('debe solicitar proyectos finalizados cuando se indica el estado', async () => {
@@ -62,7 +64,7 @@ describe('Projects Endpoints', () => {
       const developers = [{ id: 2, name: 'Ana García' }];
 
       mockDb.get.mockResolvedValue(projectDetail);
-      mockDb.all.mockResolvedValue(developers);
+      mockDb.all.mockResolvedValue(developers.map((d) => ({ project_id: 1, ...d })));
 
       const response = await httpClient.get('/tools/api/projects/1');
       
@@ -103,6 +105,20 @@ describe('Projects Endpoints', () => {
         id: 5,
         ...newProject
       });
+    });
+
+    it('debe revertir la transacción si falla la asignación de desarrolladores', async () => {
+      mockDb.run
+        .mockResolvedValueOnce({ lastID: 5 })
+        .mockRejectedValueOnce(new Error('FOREIGN KEY constraint failed'));
+
+      const response = await httpClient.post('/tools/api/projects', {
+        name: 'Proyecto', code: 'P-1', coordinator_id: 1, developer_ids: [99]
+      });
+
+      expect(response.status).toBe(500);
+      expect(response.data).toEqual({ error: 'Error al crear el proyecto' });
+      expect(mockDb.exec.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'ROLLBACK']);
     });
 
     it('debe rechazar proyectos con datos incompletos', async () => {
@@ -198,6 +214,9 @@ describe('Projects Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toEqual({ success: true, deleted: 1 });
+      const statements = mockDb.run.mock.calls.map(([sql]) => sql);
+      expect(statements).toContain('DELETE FROM project_files WHERE project_id = ?');
+      expect(statements.at(-1)).toBe('DELETE FROM projects WHERE id = ?');
     });
 
     it('debe manejar errores durante eliminación', async () => {

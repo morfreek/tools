@@ -1,4 +1,7 @@
 import { createServer } from 'http';
+import { mkdtemp } from 'fs/promises';
+import { tmpdir } from 'os';
+import path from 'path';
 
 let server = null;
 let baseUrl = null;
@@ -8,8 +11,11 @@ let baseUrl = null;
 export const startTestServer = async () => {
   if (server) return baseUrl;
 
-  // NODE_ENV=test evita que server.js haga listen por su cuenta
+  // NODE_ENV=test evita que server.js haga listen por su cuenta. Las rutas de
+  // datos apuntan a temporales para que ninguna prueba toque la base real ni data/configs.
   process.env.NODE_ENV = 'test';
+  process.env.DB_PATH = ':memory:';
+  process.env.CONFIGS_DIR ??= await mkdtemp(path.join(tmpdir(), 'tools-configs-'));
   const { default: app } = await import('../src/api/server.js');
 
   server = createServer(app);

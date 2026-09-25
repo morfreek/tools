@@ -23,7 +23,7 @@ describe('Reviews Endpoints', () => {
         { id: 1, project_id: 1, applied_at: '2024-01-01', note: 'Revisión inicial' }
       ];
       const mockResults = [
-        { point_id: 1, status: 'Cumple', observation: 'Todo OK' }
+        { review_id: 1, point_id: 1, status: 'Cumple', observation: 'Todo OK' }
       ];
 
       mockDb.all
@@ -34,7 +34,9 @@ describe('Reviews Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveLength(1);
-      expect(response.data[0]).toHaveProperty('results');
+      expect(response.data[0].results).toEqual([
+        { point_id: 1, status: 'Cumple', observation: 'Todo OK' }
+      ]);
     });
   });
 
@@ -65,7 +67,29 @@ describe('Reviews Endpoints', () => {
       });
 
       expect(response.status).toBe(500);
-      expect(response.data).toHaveProperty('error');
+      expect(response.data).toEqual({ error: 'Error al crear la revisión' });
+      expect(mockDb.exec).toHaveBeenCalledWith('ROLLBACK');
+    });
+
+    it('debe revertir la transacción si falla un resultado', async () => {
+      mockDb.run
+        .mockResolvedValueOnce({ lastID: 7 })
+        .mockRejectedValueOnce(new Error('CHECK constraint failed'));
+
+      const response = await httpClient.post('/tools/api/projects/1/reviews', {
+        applied_at: '2024-01-01',
+        results: [{ point_id: 1, status: 'invalido', observation: '' }]
+      });
+
+      expect(response.status).toBe(500);
+      expect(mockDb.exec.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'ROLLBACK']);
+    });
+
+    it('debe rechazar revisiones sin resultados', async () => {
+      const response = await httpClient.post('/tools/api/projects/1/reviews', { applied_at: '2024-01-01' });
+
+      expect(response.status).toBe(400);
+      expect(mockDb.run).not.toHaveBeenCalled();
     });
   });
 
@@ -79,6 +103,9 @@ describe('Reviews Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toEqual({ success: true });
+      // Primero los resultados, luego la revisión
+      expect(mockDb.run.mock.calls[0][0]).toContain('DELETE FROM review_point_results');
+      expect(mockDb.run.mock.calls[1][0]).toContain('DELETE FROM project_reviews');
     });
   });
 });

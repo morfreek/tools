@@ -1,13 +1,37 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { getDbPath } from './lib/paths.js';
 
-export async function openDb() {
+let dbPromise = null;
+
+// Conexión única y compartida. El esquema, las migraciones y el seed se
+// ejecutan una sola vez, al abrir la conexión por primera vez.
+export function openDb() {
+    if (!dbPromise) {
+        dbPromise = initDb().catch((error) => {
+            dbPromise = null; // permitir reintentar en la próxima solicitud
+            throw error;
+        });
+    }
+    return dbPromise;
+}
+
+export async function closeDb() {
+    if (!dbPromise) return;
+    const db = await dbPromise;
+    dbPromise = null;
+    await db.close();
+}
+
+async function initDb() {
     const db = await open({
-        filename: './projects.sqlite',
+        filename: getDbPath(),
         driver: sqlite3.Database,
     });
 
     try {
+        await db.exec('PRAGMA foreign_keys = ON');
+
         // Crear tablas si no existen
         await db.exec(`
             CREATE TABLE IF NOT EXISTS users (
@@ -99,6 +123,11 @@ export async function openDb() {
             await db.exec(`ALTER TABLE projects ADD COLUMN termination_date DATE DEFAULT NULL;`);
         }
 
+        // Limpiar resultados huérfanos que dejó el borrado de revisiones previo a la cascada
+        await db.run(
+            'DELETE FROM review_point_results WHERE review_id NOT IN (SELECT id FROM project_reviews)'
+        );
+
         // Insertar aspectos y puntos solo si no existen
         const existing = await db.get(`SELECT COUNT(*) as count FROM checklist_aspects`);
         if (existing.count === 0) {
@@ -144,6 +173,7 @@ export async function openDb() {
         }
     } catch (error) {
         console.error('Error initializing database:', error);
+        await db.close();
         throw error;
     }
 
