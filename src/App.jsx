@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from 'react-router-dom'; // Import useLocation and matchPath
+import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar';
 import RequireAuth from '@/components/RequireAuth';
 import Home from '@/pages/Home';
 import PhpStanViewer from '@/pages/PhpStanViewer';
-import ServersRequestPage from '@/pages/ServersRequestPage'; // Import ServersRequestPage
-import NotFound from '@/pages/NotFound'; // Import the 404 page component
+import ServersRequestPage from '@/pages/ServersRequestPage';
+import NotFound from '@/pages/NotFound';
 
 import Projects from '@/pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
 import ProjectReviews from '@/pages/ProjectReviews';
 import ProjectNotes from '@/pages/ProjectNotes';
-import ProjectFiles from '@/pages/ProjectFiles'; // Import ProjectFiles
-import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment'; // Import ProjectContinuousDeployment
-import { ToastProvider } from '@/components/ToastContext'; // Importa el ToastProvider
-import { ConfirmProvider } from '@/components/ConfirmContext'; // Import ConfirmProvider
-import JMeterTestCreator from '@/pages/JMeterTestCreator'; // NUEVO: import de la nueva página
+import ProjectFiles from '@/pages/ProjectFiles';
+import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment';
+import { ToastProvider } from '@/components/ToastContext';
+import { ConfirmProvider } from '@/components/ConfirmContext';
+import JMeterTestCreator from '@/pages/JMeterTestCreator';
 
 const basename = import.meta.env.VITE_BASE_URL;
 
@@ -39,7 +39,7 @@ const App = () => {
     return (
         <ToastProvider>
             <ConfirmProvider>
-                <Router basename={basename}>{/* si usas subdirectorio */}
+                <Router basename={basename}>
                     <LocationWrapper />
                 </Router>
             </ConfirmProvider>
@@ -74,11 +74,11 @@ const LocationWrapper = () => {
         { path: '/projects/:id/detail', element: <RequireAuth><ProjectDetail /></RequireAuth> },
         { path: '/projects/:id/review', element: <RequireAuth><ProjectReviews /></RequireAuth> },
         { path: '/projects/:id/notes', element: <RequireAuth><ProjectNotes /></RequireAuth> },
-        { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> }, // Add ProjectFiles route
-        { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> }, // Add ProjectContinuousDeployment route
-        { path: '/jmeter-test-creator', element: <JMeterTestCreator /> }, // NUEVO: ruta para la nueva página
+        { path: '/projects/:id/files', element: <RequireAuth><ProjectFiles /></RequireAuth> },
+        { path: '/projects/:id/continuous-deployment', element: <RequireAuth><ProjectContinuousDeployment /></RequireAuth> },
+        { path: '/jmeter-test-creator', element: <JMeterTestCreator /> },
         { path: '/phpstan', element: <PhpStanViewer /> },
-        { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> } // Add ServersRequestPage route
+        { path: '/solicitud-maquina-virtual-upt', element: <ServersRequestPage /> }
     ];
 
     // Check if the current path matches any valid route

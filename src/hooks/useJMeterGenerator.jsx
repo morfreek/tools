@@ -103,8 +103,6 @@ export function useJMeterGenerator() {
                 }
             });
 
-            console.log('Parsed JMX params:', parsedParams); // Para debug
-
             return {
                 success: true,
                 params: parsedParams,

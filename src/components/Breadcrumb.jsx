@@ -138,7 +138,6 @@ export default function Breadcrumb() {
                                 <ListGroup>
                                     {visibleProjects.map(p => {
                                         const devs = Array.isArray(p?.developer_names) ? p.developer_names.filter(Boolean) : [];
-                                        const coord = null;
                                         return (
                                             <ListGroup.Item
                                                 key={p.id}
@@ -152,7 +151,6 @@ export default function Breadcrumb() {
                                                 </div>
                                                 <div className="text-muted small">
                                                     Desarrolladores: {devs.length ? devs.join(', ') : 'N/D'}
-                                                    {coord && <> • Coordinador: {coord}</>}
                                                 </div>
                                             </ListGroup.Item>
                                         );

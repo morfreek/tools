@@ -35,7 +35,7 @@ const ServersRequest = () => {
     const [radioGroups, setRadioGroups] = useState({
         'tipo_ambiente': '', // testing, desarrollo, produccion, integracion
         'ip_publica': '', // si, no
-        // NUEVO: configuración de recursos y sistema operativo
+        // Configuración de recursos y sistema operativo
         'configuracion_recursos': '', // baja, media, alta
         'sistema_operativo': '' // windows, linux
     });
@@ -45,7 +45,7 @@ const ServersRequest = () => {
     const [customFields, setCustomFields] = useState([]);
     const [newFieldName, setNewFieldName] = useState('');
 
-    // NUEVO: opciones de instalación y selección múltiple
+    // Opciones de instalación y selección múltiple
     const INSTALL_OPTIONS = [
         {
             group: 'PHP',
@@ -74,7 +74,7 @@ const ServersRequest = () => {
                 { value: 'estructura_base_devel', label: 'Estructura base devel (https://sandbox.ucsc.cl/desarrollo/common/environment-config/base-devel)' }
             ]
         },
-        // NUEVO: Base de datos
+        // Base de datos
         {
             group: 'Base de datos',
             options: [
@@ -326,7 +326,7 @@ const ServersRequest = () => {
                     instalacionChecks[`instalacion_${opt.value}_checked`] = sel ? 'X' : '';
                 });
             });
-            // NUEVO: fusionar texto libre + selecciones al campo "instalacion"
+            // Fusionar texto libre + selecciones al campo "instalacion"
             const mergedInstalacion = [String(formData.instalacion || '').trim(), instalacionBullets]
                 .filter(Boolean)
                 .join('\n');
@@ -359,10 +359,9 @@ const ServersRequest = () => {
                 instalacion_bullets: instalacionBullets,
                 instalacion_count: selectedInstalaciones.length,
                 ...instalacionChecks,
-                // NUEVO: sobrescribir "instalacion" con el merge
+                // Sobrescribir "instalacion" con el merge
                 instalacion: mergedInstalacion
             };
-            console.log(templateData)
 
             try {
                 doc.render(templateData);
@@ -486,7 +485,6 @@ const ServersRequest = () => {
                 { value: 'si', label: 'Si' },
                 { value: 'no', label: 'No' }
             ],
-            // NUEVO
             'configuracion_recursos': [
                 { value: 'baja', label: 'Baja' },
                 { value: 'media', label: 'Media' },
@@ -505,7 +503,6 @@ const ServersRequest = () => {
         const groupLabelMap = {
             'tipo_ambiente': 'Tipo de ambiente',
             'ip_publica': 'IP Pública',
-            // NUEVO
             'configuracion_recursos': 'Configuración de recursos',
             'sistema_operativo': 'Sistema operativo a utilizar'
         };
@@ -543,38 +540,8 @@ const ServersRequest = () => {
                                         <small className="text-danger">{templateError}</small>
                                     </div>
                                     <div className="mt-3">
-                                        <Button variant="outline-danger" size="sm" onClick={reloadTemplate} className="me-2">
+                                        <Button variant="outline-danger" size="sm" onClick={reloadTemplate}>
                                             Intentar recargar
-                                        </Button>
-                                        <Button 
-                                            variant="outline-info" 
-                                            size="sm" 
-                                            onClick={() => {
-                                                const debugInfo = {
-                                                    templateBuffer: templateBuffer ? `${templateBuffer.byteLength} bytes` : 'null',
-                                                    templateLoaded,
-                                                    templateError,
-                                                    templateSource,
-                                                    baseUrl: import.meta.env.VITE_BASE_URL,
-                                                    entorno: import.meta.env.MODE
-                                                };
-                                                
-                                                if (templateBuffer) {
-                                                    const uint8Array = new Uint8Array(templateBuffer);
-                                                    const firstBytes = Array.from(uint8Array.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-                                                    const textSample = new TextDecoder().decode(uint8Array.slice(0, 100));
-                                                    debugInfo.bufferInfo = {
-                                                        tamaño: templateBuffer.byteLength,
-                                                        primeros8Bytes: firstBytes,
-                                                        muestraTexto: textSample
-                                                    };
-                                                }
-                                                
-                                                console.log('=== INFORMACIÓN DE DEBUGGING ===', debugInfo);
-                                                alert('Revisa la consola del navegador para ver la información de debugging');
-                                            }}
-                                        >
-                                            Debug Info
                                         </Button>
                                     </div>
                                 </Alert>
@@ -719,7 +686,7 @@ const ServersRequest = () => {
                                                             onChange={(e) => handleInputChange(key, e.target.value)}
                                                             placeholder={`Ingresa ${getFieldLabel(key).toLowerCase()}`}
                                                         />
-                                                        {/* NUEVO: selector múltiple de tecnologías */}
+                                                        {/* Selector múltiple de tecnologías */}
                                                         <Form.Label className="mt-2">Seleccionar tecnologías:</Form.Label>
                                                         <Form.Select
                                                             multiple
