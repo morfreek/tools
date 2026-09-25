@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import CancelButton from '@c/ui/CancelButton';
 
 const DialogContext = createContext(null);
 
@@ -53,11 +54,11 @@ export const DialogProvider = ({ children }) => {
                         </Modal.Body>
                         <Modal.Footer>
                             {dialog.kind !== 'alert' && (
-                                <Button variant="link" className="text-secondary" onClick={cancel} autoFocus={dialog.danger}>
+                                <CancelButton onClick={cancel} autoFocus={dialog.danger}>
                                     {dialog.cancelText || 'Cancelar'}
-                                </Button>
+                                </CancelButton>
                             )}
-                            <Button type="submit" variant={dialog.danger ? 'danger' : 'primary'} autoFocus={!dialog.danger && dialog.kind !== 'prompt'}>
+                            <Button type="submit" size="sm" variant={dialog.danger ? 'danger' : 'primary'} autoFocus={!dialog.danger && dialog.kind !== 'prompt'}>
                                 {dialog.acceptText || (dialog.kind === 'alert' ? 'Entendido' : 'Aceptar')}
                             </Button>
                         </Modal.Footer>

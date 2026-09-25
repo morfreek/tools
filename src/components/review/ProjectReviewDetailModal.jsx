@@ -1,7 +1,8 @@
 import React from 'react';
-import { Modal, Button, Accordion, Row, Col, Card } from 'react-bootstrap';
-import { FaBan, FaStickyNote } from 'react-icons/fa';
+import { Modal, Accordion, Row, Col, Card } from 'react-bootstrap';
+import { FaStickyNote } from 'react-icons/fa';
 import StatusBadge from '@c/StatusBadge';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function ProjectReviewDetailModal({ visible, checklist, review, onClose }) {
     if (!visible) return null;
@@ -66,15 +67,7 @@ export default function ProjectReviewDetailModal({ visible, checklist, review, o
                 </Accordion>
             </Modal.Body>
             <Modal.Footer>
-                <Button 
-                    variant="danger" 
-                    size="sm" 
-                    className="d-inline-flex align-items-center"
-                    onClick={onClose}
-                >
-                    <FaBan className="me-2" />
-                    Cerrar
-                </Button>
+                <CancelButton onClick={onClose}>Cerrar</CancelButton>
             </Modal.Footer>
         </Modal>
     );

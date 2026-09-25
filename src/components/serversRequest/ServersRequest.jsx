@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
+import { FaTimes } from 'react-icons/fa';
 // Vite la copia a dist/assets con hash y resuelve la URL con el base /tools/
 import defaultTemplateUrl from '@/assets/templates/formulariosolicitudmaquina.docx?url';
 import { Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
@@ -730,13 +731,13 @@ const ServersRequest = () => {
                                                 <Form.Label className="d-flex justify-content-between align-items-center">
                                                     {getFieldLabel(fieldName)}:
                                                     <Button
-                                                        variant="outline-danger"
+                                                        variant="link"
                                                         size="sm"
-                                                        onClick={() => removeCustomField(fieldName)}
+                                                        className="accion accion-eliminar ms-2"
                                                         title="Eliminar campo"
-                                                        className="ms-2"
+                                                        onClick={() => removeCustomField(fieldName)}
                                                     >
-                                                        ×
+                                                        <FaTimes />
                                                     </Button>
                                                 </Form.Label>
                                                 <Form.Control

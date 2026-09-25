@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function UserModal({
     show,
@@ -39,11 +40,9 @@ export default function UserModal({
 
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="link" className="text-secondary" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit">
-                        {editing ? 'Actualizar' : 'Crear'}
+                    <CancelButton onClick={onClose} />
+                    <Button type="submit" size="sm">
+                        {editing ? 'Actualizar usuario' : 'Crear usuario'}
                     </Button>
                 </Modal.Footer>
             </Form>

@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Button, Form, ListGroup } from 'react-bootstrap';
-import { FaSave, FaBan } from 'react-icons/fa';
 import { uploadFiles } from '@/services/files.service';
 import { useToast } from '@c/ToastContext';
+import CancelButton from '@c/ui/CancelButton';
 
 const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => {
     const fileInput = useRef(null);
@@ -76,24 +76,9 @@ const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => 
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button
-                    variant="success"
-                    size="sm"
-                    onClick={handleUpload}
-                    disabled={selectedFiles.length === 0}
-                    className="d-inline-flex align-items-center"
-                >
-                    <FaSave className="me-2" />
+                <CancelButton onClick={handleClose} />
+                <Button size="sm" onClick={handleUpload} disabled={selectedFiles.length === 0}>
                     Subir archivos
-                </Button>
-                <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={handleClose}
-                    className="d-inline-flex align-items-center"
-                >
-                    <FaBan className="me-2" />
-                    Cancelar
                 </Button>
             </Modal.Footer>
         </Modal>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Modal, Button, Form, Table, Badge, Alert, InputGroup } from 'react-bootstrap';
 import { FaSearch, FaCheckSquare, FaSquare } from 'react-icons/fa';
+import CancelButton from '@c/ui/CancelButton';
 
 const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
     const [selectedRoutes, setSelectedRoutes] = useState(new Set());
@@ -263,16 +264,9 @@ const RoutesSelectorModal = ({ show, onHide, routes, onRoutesSelected }) => {
             </Modal.Body>
             
             <Modal.Footer>
-                <Button size="sm" variant="secondary" onClick={onHide}>
-                    Cancelar
-                </Button>
-                <Button 
-                    size="sm"
-                    variant="primary" 
-                    onClick={handleConfirm}
-                    disabled={selectedRoutes.size === 0}
-                >
-                    Agregar {selectedRoutes.size} Peticiones
+                <CancelButton onClick={onHide} />
+                <Button size="sm" onClick={handleConfirm} disabled={selectedRoutes.size === 0}>
+                    Agregar {selectedRoutes.size} peticiones
                 </Button>
             </Modal.Footer>
         </Modal>

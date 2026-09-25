@@ -2,6 +2,7 @@ import React from 'react';
 import { useDialog } from '@c/DialogProvider';
 import { Modal, Button, ListGroup, Spinner } from 'react-bootstrap';
 import { FaTrash } from 'react-icons/fa';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelete, loading = false }) {
     const dialog = useDialog();
@@ -50,8 +51,10 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                                         </small>
                                     </div>
                                     <Button
-                                        variant="outline-danger"
+                                        variant="link"
                                         size="sm"
+                                        className="accion accion-eliminar"
+                                        title="Eliminar configuración"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteClick(config.name);
@@ -66,9 +69,7 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                     )}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={onHide} size="sm">
-                        Cerrar
-                    </Button>
+                    <CancelButton onClick={onHide}>Cerrar</CancelButton>
                 </Modal.Footer>
             </Modal>
 

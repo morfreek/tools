@@ -12,6 +12,7 @@ import EnvVariableRow from '@c/cd/EnvVariableRow';
 import { defaultConfig } from '@/config/ContinuousDeploymentDefaults.jsx';
 import { generateYamlContent } from '@c/cd/ContinuousDeploymentYamlGenerator';
 import { listConfigs, saveConfig, deleteConfig } from '@/services/configs.service';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function ContinuousDeploymentForm({ projectId }) {
     const { showToast } = useToast();
@@ -666,32 +667,27 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                         <CodePreview content={yamlContent} />
                     </Modal.Body>
                     <Modal.Footer>
-                        <div className="me-auto">
-                            <Button
-                                size="sm"
-                                variant="outline-secondary"
-                                onClick={handleCopyToClipboard}
-                                className="d-inline-flex align-items-center"
-                            >
-                                <FaCopy className="me-1" /> Copiar al Portapapeles
-                            </Button>
-                        </div>
-                        <Button size="sm" variant="secondary" onClick={() => setShowPreview(false)}>
-                            Cerrar
+                        <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            onClick={handleCopyToClipboard}
+                            className="d-inline-flex align-items-center me-auto"
+                        >
+                            <FaCopy className="me-1" /> Copiar al portapapeles
                         </Button>
-                        <Button size="sm" variant="primary" onClick={handleDownload}>
+                        <CancelButton onClick={() => setShowPreview(false)}>Cerrar</CancelButton>
+                        <Button size="sm" variant="outline-secondary" onClick={handleDownload}>
                             Descargar .gitlab-ci.yml
                         </Button>
-                        <Button 
-                            size="sm" 
-                            variant="success" 
+                        <Button
+                            size="sm"
                             onClick={() => {
                                 handleDownload();
-                                showToast('success', 'Archivo .gitlab-ci.yml generado correctamente siguiendo el template cdv2');
+                                showToast('success', 'Archivo .gitlab-ci.yml generado con la plantilla cdv2');
                                 setShowPreview(false);
                             }}
                         >
-                            Descargar y Finalizar
+                            Descargar y cerrar
                         </Button>
                     </Modal.Footer>
                 </div>
