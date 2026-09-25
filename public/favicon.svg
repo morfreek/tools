@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Herramientas UDS: fondo --acento con una llave inglesa -->
   <rect width="32" height="32" rx="7" fill="#1b4f9c"/>
   <g fill="#fff">
-    <path d="M21.6 6.2a5.8 5.8 0 0 0-6.9 7.5l-7.6 7.6a2 2 0 0 0 2.8 2.8l7.6-7.6a5.8 5.8 0 0 0 7.5-6.9l-3.3 3.3-2.9-.5-.5-2.9z"/>
+    <rect x="12" y="6.5" width="8" height="2.5" rx="1.25" opacity=".55"/>
+    <rect x="6" y="10.5" width="20" height="5" rx="2" opacity=".55"/>
+    <rect x="6" y="17" width="20" height="8.5" rx="2"/>
+    <rect x="14" y="14" width="4" height="5" rx="1"/>
   </g>
 </svg>
