@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
@@ -6,22 +6,15 @@ import {
     Button,
     Placeholder,
     Container,
-    Card,
-    CloseButton
+    Card
 } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
 import { useDialog } from '@c/DialogProvider';
 import { listNotes, deleteNote } from '@/services/notes.service';
 import ProjectNoteModal from './ProjectNoteModal';
 
-export default function ProjectNoteList({
-    projectId,
-    show,
-    onClose,
-    className = '',
-    containerStyle = {},
-    refreshKey
-}) {
+// Visor de notas del proyecto (una a la vez, con navegación), dentro de un panel
+export default function ProjectNoteList({ projectId }) {
     const { showToast } = useToast();
     const dialog = useDialog();
     const [notes, setNotes] = useState([]);
@@ -30,7 +23,6 @@ export default function ProjectNoteList({
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
     const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-    const sidebarRef = useRef(null);
 
     const fetchNotes = async () => {
         setLoading(true);
@@ -50,12 +42,6 @@ export default function ProjectNoteList({
     useEffect(() => {
         if (projectId) fetchNotes();
     }, [projectId]);
-
-    useEffect(() => {
-        if (projectId && refreshKey) {
-            fetchNotes();
-        }
-    }, [projectId, refreshKey]);
 
     const handleEdit = (note) => {
         setSelectedNote(note);
@@ -92,37 +78,12 @@ export default function ProjectNoteList({
         }
     };
 
-    const defaultContainerStyle = !Object.keys(containerStyle).length ? {
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        height: '100%',
-        width: '400px',
-        zIndex: 1040,
-        transform: `translateX(${show ? '0' : '100%'})`,
-        transition: 'transform 0.3s ease-in-out'
-    } : containerStyle;
-
-    const isModal = defaultContainerStyle.position === 'fixed';
-
-    if (!show) return null;
-
     return (
         <>
-            {isModal && (
-                <div
-                    className="velo position-fixed top-0 start-0 w-100 h-100"
-                    onClick={onClose}
-                />
-            )}
-            <Card
-                className={`h-100 border-0 ${className} ${isModal && 'rounded-0'}`}
-                style={defaultContainerStyle}
-                ref={sidebarRef}
-            >
+            <Card>
                 <Card.Header>
                     <div className="d-flex justify-content-between align-items-center">
-                        <Card.Title className="h5 mb-0">Notas del proyecto</Card.Title>
+                        <h2 className="h6 fw-semibold mb-0">Notas <span className="sub fw-normal">{notes.length}</span></h2>
                         <div className="d-flex align-items-center gap-2">
                             <Button
                                 size="sm"
@@ -131,9 +92,6 @@ export default function ProjectNoteList({
                             >
                                 <FaPlus className="me-1" /> Nueva nota
                             </Button>
-                            {typeof onClose === 'function' && (
-                                <CloseButton onClick={onClose} />
-                            )}
                         </div>
                     </div>
                     {!loading && notes.length > 0 && (
@@ -169,7 +127,7 @@ export default function ProjectNoteList({
                     )}
                 </Card.Header>
 
-                <Card.Body className="overflow-auto p-0">
+                <Card.Body className="p-0">
                     {loading ? (
                         <Container fluid className="p-3">
                             <Placeholder animation="glow">
@@ -178,13 +136,11 @@ export default function ProjectNoteList({
                             </Placeholder>
                         </Container>
                     ) : notes.length === 0 ? (
-                        <Container fluid className="p-3 text-muted text-center">
-                            No hay notas registradas
-                        </Container>
+                        <div className="vacio m-3">Este proyecto aún no tiene notas. Crea la primera con «Nueva nota».</div>
                     ) : (
                         <Container fluid className="p-3">
                             <div key={notes[currentNoteIndex].id}>
-                                <div className="border-start border-4 border-info ps-3">
+                                <div className="nota-contenido">
                                     <div
                                         className="note-content"
                                         dangerouslySetInnerHTML={{

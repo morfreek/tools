@@ -55,26 +55,19 @@ describe('Configs Endpoints', () => {
       expect(response.data).toEqual(mockConfigs.configs);
     });
 
-    it('debe crear archivo de configuración si no existe', async () => {
-      const emptyConfig = { configs: [] };
-
-      mockFs.mkdir.mockResolvedValue();
-      mockFs.access.mockRejectedValue(new Error('File not found'));
-      mockFs.writeFile.mockResolvedValue();
-      mockFs.readFile.mockResolvedValue(JSON.stringify(emptyConfig));
+    it('debe responder lista vacía sin crear archivo si no existe', async () => {
+      mockFs.readFile.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
 
       const response = await httpClient.get('/tools/api/projects/1/configs');
 
       expect(response.status).toBe(200);
       expect(response.data).toEqual([]);
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining('1.json'),
-        JSON.stringify({ configs: [] })
-      );
+      expect(mockFs.writeFile).not.toHaveBeenCalled();
+      expect(mockFs.mkdir).not.toHaveBeenCalled();
     });
 
     it('debe manejar errores de lectura', async () => {
-      mockFs.mkdir.mockRejectedValue(new Error('Permission denied'));
+      mockFs.readFile.mockRejectedValue(Object.assign(new Error('Permission denied'), { code: 'EACCES' }));
 
       const response = await httpClient.get('/tools/api/projects/1/configs');
 

@@ -13,9 +13,6 @@
 .toast-aviso .btn-close { margin-left: auto; width: 8px; height: 8px; }
 .aviso-info { border-color: var(--acento); color: var(--acento); }
 
-/* Migas de pan sin margen propio: las ubica el layout */
-.breadcrumb { margin-bottom: 0 !important; }
-
 /* Los dropdowns con ícono propio (menú de opciones) no muestran el caret */
 .dropdown-toggle::after { display: none !important; }
 
@@ -145,3 +142,49 @@ a.tarjeta:hover, .tarjeta[role="button"]:hover, a.tarjeta:focus-visible {
 
 /* Velo detrás de paneles laterales (notas), igual al backdrop de los diálogos */
 .velo { background: rgba(15, 20, 25, .45); z-index: 1039; }
+
+/* ---------------------------------------------------------------------
+   Cabecera de proyecto (ProjectHeader): migas, ficha y pestañas en un panel
+   --------------------------------------------------------------------- */
+.proyecto-cabecera { padding-bottom: 0; }
+.proyecto-titulo { margin: 0 0 2px; font-size: 18px; font-weight: 600; word-break: break-word; }
+
+.migas {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 0 0 6px; padding: 0; list-style: none;
+  font-size: 12px; color: var(--suave);
+}
+.migas li + li::before { content: "›"; margin-right: 6px; color: var(--suave); }
+.migas a { color: var(--suave); text-decoration: none; }
+.migas a:hover, .migas a:focus-visible { color: var(--acento); }
+.migas-selector {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 1px 6px; margin: -1px -6px;
+  border: 1px solid transparent; border-radius: 6px;
+  background: none; color: var(--texto); font: inherit; font-weight: 600;
+}
+.migas-selector:hover, .migas-selector[aria-expanded="true"] { border-color: var(--borde); background: var(--fondo); }
+.migas-menu { width: min(360px, calc(100vw - 32px)); padding-top: 8px; }
+.migas-lista { max-height: 320px; overflow-y: auto; }
+.migas-lista .dropdown-item { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+
+/* Pestañas de sección: mismo tratamiento que la navegación de la cabecera */
+.pestanas-proyecto {
+  --bs-nav-link-color: var(--suave);
+  --bs-nav-link-hover-color: var(--texto);
+  --bs-nav-underline-link-active-color: var(--acento);
+  --bs-nav-link-font-size: 13px;
+  --bs-nav-link-padding-y: 10px;
+  gap: 18px;
+  margin: 14px -18px 0; padding: 0 18px;
+  border-top: 1px solid var(--borde);
+  overflow-x: auto; flex-wrap: nowrap; white-space: nowrap;
+}
+.min-w-0 { min-width: 0; }
+
+/* Contenido HTML de una nota (editor enriquecido), con filete de acento */
+.nota-contenido { border-left: 3px solid var(--acento); padding-left: 14px; }
+.nota-contenido > :last-child { margin-bottom: 0; }
+
+/* Vista previa de la última nota en el resumen: máximo 3 líneas */
+.resumen-nota { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

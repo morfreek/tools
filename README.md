@@ -85,8 +85,9 @@ src/
   pages/                   Una pantalla por ruta
   components/              Componentes por dominio (cd, file, note, review, project, jmeterCreator…)
     layout/                Cabecera y ProjectPageLayout (estructura común de /projects/:id/*)
+    project/               ProjectHeader (migas, selector de proyecto, pestañas), tabla y selector
   services/                Llamadas a la API, un módulo por recurso
-  hooks/                   useProjects, useTheme, useJMeterGenerator, useBreadcrumb
+  hooks/                   useProjects, useTheme, useJMeterGenerator
   utils/                   Constantes (estados de revisión), búsqueda sin tildes, exportación Excel
   assets/                  favicon.svg y templates/ (plantilla DOCX de solicitud de servidores)
   styles/                  base.css y bootstrap-bridge.css del sistema visual

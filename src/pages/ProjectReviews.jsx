@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaPlus, FaFileExcel } from 'react-icons/fa';
-import { ButtonGroup, Button } from 'react-bootstrap';
+import { Button, Card } from 'react-bootstrap';
 import { STATUS_OPTIONS } from '@u/Constants';
 import { listReviews, getChecklist, createReview, deleteReview as removeReview } from '@/services/reviews.service';
 import { exportReviewsExcel } from '@u/exportReviewsExcel';
@@ -96,37 +96,41 @@ export default function ProjectReviews() {
     };
 
     return (
-        <ProjectPageLayout
-            actions={(
-                <ButtonGroup>
-                    <Button
-                        size="sm"
-                        className="d-inline-flex align-items-center"
-                        onClick={startNewReview}
-                    >
-                        <FaPlus className="me-2" />Revisión
-                    </Button>
-                    <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        className="d-inline-flex align-items-center"
-                        title="Exportar a Excel"
-                        onClick={() => exportReviewsExcel(checklist, reviews)}
-                    >
-                        <FaFileExcel />
-                    </Button>
-                </ButtonGroup>
-            )}
-        >
-            {reviews.length === 0 ? (
-                <div className="vacio">Este proyecto aún no tiene revisiones. Crea la primera con «Revisión».</div>
-            ) : (
-                <ProjectReviewCards 
-                    reviews={reviews} 
-                    startReview={handleViewDetail}
-                    deleteReview={deleteReview}
-                />
-            )}
+        <ProjectPageLayout>
+            <Card>
+                <Card.Header className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h2 className="h6 fw-semibold mb-0">Revisiones <span className="sub fw-normal">{reviews.length}</span></h2>
+                    <div className="d-flex gap-2">
+                        <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            className="d-inline-flex align-items-center"
+                            onClick={() => exportReviewsExcel(checklist, reviews)}
+                            disabled={reviews.length === 0}
+                        >
+                            <FaFileExcel className="me-2" />Exportar Excel
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="d-inline-flex align-items-center"
+                            onClick={startNewReview}
+                        >
+                            <FaPlus className="me-2" />Nueva revisión
+                        </Button>
+                    </div>
+                </Card.Header>
+                <Card.Body>
+                    {reviews.length === 0 ? (
+                        <div className="vacio">Este proyecto aún no tiene revisiones. Crea la primera con «Nueva revisión».</div>
+                    ) : (
+                        <ProjectReviewCards
+                            reviews={reviews}
+                            startReview={handleViewDetail}
+                            deleteReview={deleteReview}
+                        />
+                    )}
+                </Card.Body>
+            </Card>
 
             <ProjectReviewDetailModal
                 visible={reviewVisible}
