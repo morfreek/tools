@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaDownload, FaTrash, FaPlus, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
-import { ListGroup, Button, Placeholder, Image, Offcanvas } from 'react-bootstrap';
+import { ListGroup, Button, Placeholder, Image, Card } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
 import { useDialog } from '@c/DialogProvider';
 import ProjectFileUploader from './ProjectFileUploader';
@@ -26,13 +26,8 @@ const getFileIcon = (mimeType) => {
     return FaFile;
 };
 
-export default function ProjectFileList({
-    projectId,
-    show,
-    onClose,
-    className = '',
-    refreshKey
-}) {
+// Archivos del proyecto con descarga, vista previa de imágenes y subida
+export default function ProjectFileList({ projectId }) {
     const { showToast } = useToast();
     const dialog = useDialog();
     const [files, setFiles] = useState([]);
@@ -62,10 +57,6 @@ export default function ProjectFileList({
     useEffect(() => {
         if (projectId) fetchFiles();
     }, [projectId]);
-
-    useEffect(() => {
-        if (projectId) fetchFiles();
-    }, [projectId, refreshKey]);
 
     const handleDownload = async (fileId, filename) => {
         try {
@@ -101,30 +92,21 @@ export default function ProjectFileList({
         }
     };
 
-    if (!show) return null;
-
     return (
         <>
-            <Offcanvas 
-                show={show} 
-                onHide={onClose} 
-                placement="end" 
-                backdrop={true}
-                className={className}
-            >
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title className="flex-grow-1">Archivos del Proyecto</Offcanvas.Title>
+            <Card>
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                    <h2 className="h6 fw-semibold mb-0">Archivos <span className="sub fw-normal">{files.length}</span></h2>
                     <Button
-                        variant="outline-success"
                         size="sm"
-                        className="d-inline-flex align-items-center me-2"
+                        className="d-inline-flex align-items-center"
                         onClick={() => setShowUploader(true)}
                     >
-                        <FaPlus className="me-1" /> 
-                        Subir
+                        <FaPlus className="me-1" />
+                        Subir archivos
                     </Button>
-                </Offcanvas.Header>
-                <Offcanvas.Body>
+                </Card.Header>
+                <Card.Body className="p-0">
                     {loading ? (
                         <div className="p-3">
                             <Placeholder animation="glow">
@@ -133,9 +115,7 @@ export default function ProjectFileList({
                             </Placeholder>
                         </div>
                     ) : files.length === 0 ? (
-                        <div className="p-3 text-muted text-center">
-                            No hay archivos cargados
-                        </div>
+                        <div className="vacio m-3">Este proyecto aún no tiene archivos. Súbelos con «Subir archivos».</div>
                     ) : (
                         <ListGroup variant="flush">
                             {files.map(file => {
@@ -196,8 +176,8 @@ export default function ProjectFileList({
                             })}
                         </ListGroup>
                     )}
-                </Offcanvas.Body>
-            </Offcanvas>
+                </Card.Body>
+            </Card>
 
             <ProjectFileUploader
                 show={showUploader}

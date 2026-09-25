@@ -1,19 +1,15 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import Breadcrumb from '@c/Breadcrumb';
-import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import ProjectHeader from '@c/project/ProjectHeader';
 
-// Estructura común de las páginas /projects/:id/*: migas + acciones, ficha del proyecto y contenido
-export default function ProjectPageLayout({ actions, onNoteAdded, children }) {
+// Estructura común de las páginas /projects/:id/*: cabecera del proyecto (migas,
+// ficha, acciones y pestañas) y el contenido de la sección
+export default function ProjectPageLayout({ actions, children }) {
     const { id } = useParams();
 
     return (
         <>
-            <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
-                <Breadcrumb />
-                {actions}
-            </div>
-            <ProjectInfoCard id={id} onNoteAdded={onNoteAdded} />
+            <ProjectHeader projectId={id} actions={actions} />
             {children}
         </>
     );
