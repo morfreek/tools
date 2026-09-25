@@ -2,7 +2,7 @@
 
 Aplicación web interna de la Unidad de Desarrollo de Software (UDS · DSI) que reúne herramientas de administración y soporte técnico:
 
-- **Proyectos**: equipo (coordinador y desarrolladores), revisiones técnicas con checklist y exportación a Excel, notas, archivos adjuntos y generación de pipelines de despliegue continuo (CD). Un proyecto finalizado queda en solo lectura.
+- **Proyectos**: equipo (coordinador y desarrolladores), revisiones técnicas con checklist, seguimiento (pendientes, último cambio y evolución) y exportación a Excel, notas, archivos adjuntos y generación de pipelines de despliegue continuo (CD). Un proyecto finalizado queda en solo lectura.
 - **Pruebas JMeter**: arma planes de carga (hilos, peticiones HTTP, CSV, temporizadores, listeners, assertions), importa rutas Laravel o un `.jmx` existente y descarga el resultado.
 - **Visor PHPStan**: carga el reporte JSON de PHPStan, lo agrupa por archivo, lo filtra y lo exporta a Excel.
 - **Solicitud de servidores**: completa la plantilla DOCX de solicitud de máquinas virtuales UPT.
@@ -88,7 +88,7 @@ src/
     project/               ProjectHeader (migas, selector de proyecto, pestañas), tabla y selector
   services/                Llamadas a la API, un módulo por recurso
   hooks/                   useProjects, useTheme, useJMeterGenerator
-  utils/                   Constantes (estados de revisión), búsqueda sin tildes, exportación Excel
+  utils/                   Estados de revisión, seguimiento de revisiones, búsqueda sin tildes, exportación Excel
   assets/                  favicon.svg y templates/ (plantilla DOCX de solicitud de servidores)
   styles/                  base.css y bootstrap-bridge.css del sistema visual
   api/

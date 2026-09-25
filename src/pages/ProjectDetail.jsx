@@ -1,91 +1,151 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Placeholder } from 'react-bootstrap';
-import { FaClipboardCheck, FaStickyNote, FaFile, FaRocket } from 'react-icons/fa';
+import { Card, Col, Placeholder, Row } from 'react-bootstrap';
 import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 import StatusBadge from '@c/StatusBadge';
-import { listReviews } from '@/services/reviews.service';
-import { listNotes } from '@/services/notes.service';
-import { listFiles } from '@/services/files.service';
-import { listConfigs } from '@/services/configs.service';
+import ReviewTrendChart from '@c/review/ReviewTrendChart';
+import { listReviews, getChecklist } from '@/services/reviews.service';
+import { pendingPoints, lastChange, trendSeries, sortReviews } from '@u/reviewTracking';
 
-const formatDate = (value, withTime = false) => new Date(withTime ? value : `${value}T00:00:00`)
-    .toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-// Texto plano de una nota (HTML del editor), para la vista previa
-const plainText = (html) => new DOMParser().parseFromString(html || '', 'text/html').body.textContent.trim();
-
-const countByStatus = (results = []) => results.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] || 0) + 1 }), {});
-
-// Carga cada sección por separado: si una falla, las demás se muestran igual
-const useSummary = (projectId) => {
-    const [data, setData] = useState({});
-
-    useEffect(() => {
-        setData({});
-        const sources = { reviews: listReviews, notes: listNotes, files: listFiles, configs: listConfigs };
-        Object.entries(sources).forEach(([key, load]) => {
-            load(projectId)
-                .then((value) => setData((prev) => ({ ...prev, [key]: value })))
-                .catch(() => setData((prev) => ({ ...prev, [key]: null })));
-        });
-    }, [projectId]);
-
-    return data;
-};
-
-const SummaryCard = ({ to, icon: Icon, title, value, children }) => (
-    <Link to={to} className="tarjeta">
-        <Icon className="icono" size={18} aria-hidden="true" />
-        <h2>{title}</h2>
-        {value === undefined ? (
-            <Placeholder as="p" animation="glow"><Placeholder xs={8} /></Placeholder>
-        ) : value === null ? (
-            <p>No se pudo cargar.</p>
-        ) : children}
-    </Link>
+const Panel = ({ title, sub, children }) => (
+    <Card className="h-100">
+        <Card.Header>
+            <h2 className="h6 fw-semibold mb-0">{title} {sub && <span className="sub fw-normal">{sub}</span>}</h2>
+        </Card.Header>
+        <Card.Body>{children}</Card.Body>
+    </Card>
 );
 
-// Pestaña "Resumen": estado de cada sección, con acceso directo a su pestaña
+const Pending = ({ groups }) => {
+    const total = groups.reduce((n, g) => n + g.items.length, 0);
+    if (total === 0) {
+        return <div className="aviso aviso-ok m-0" role="status">Sin pendientes: todos los puntos evaluados están bien.</div>;
+    }
+    return groups.map((group) => (
+        <section key={group.aspect} className="seguimiento-grupo">
+            <h3 className="seguimiento-aspecto">{group.aspect}</h3>
+            <ul className="seguimiento-lista">
+                {group.items.map((item) => (
+                    <li key={item.pointId}>
+                        <div className="d-flex flex-wrap align-items-center gap-2">
+                            <StatusBadge status={item.status} />
+                            <span className="fw-semibold">{item.name}</span>
+                            <span className="sub">
+                                {item.streak > 1
+                                    ? `pendiente en las últimas ${item.streak} revisiones, desde el ${formatDate(item.since)}`
+                                    : 'nuevo en esta revisión'}
+                            </span>
+                        </div>
+                        {item.observation && <p className="seguimiento-observacion">{item.observation}</p>}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    ));
+};
+
+const ChangeList = ({ title, items, empty }) => (
+    <div>
+        <h3 className="seguimiento-aspecto">{title} <span className="sub fw-normal">{items.length}</span></h3>
+        {items.length === 0 ? <p className="sub mb-0">{empty}</p> : (
+            <ul className="seguimiento-lista">
+                {items.map((item) => (
+                    <li key={item.pointId} className="d-flex flex-wrap align-items-center gap-1">
+                        <span className="me-1">{item.name}</span>
+                        <StatusBadge status={item.before} />
+                        <span className="sub" aria-label="pasó a">→</span>
+                        <StatusBadge status={item.now} />
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+);
+
+// Pestaña "Seguimiento": qué tiene pendiente el proyecto y cómo evoluciona su calidad
 export default function ProjectDetail() {
     const { id } = useParams();
-    const { reviews, notes, files, configs } = useSummary(id);
-    const lastReview = reviews?.[0];
-    const lastNote = notes?.length ? [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] : null;
+    const [reviews, setReviews] = useState(null);
+    const [checklist, setChecklist] = useState([]);
+    const [error, setError] = useState(false);
 
-    return (
-        <ProjectPageLayout>
-            <div className="rejilla">
-                <SummaryCard to={`/projects/${id}/review`} icon={FaClipboardCheck} title="Revisiones" value={reviews}>
-                    {lastReview ? (
-                        <>
-                            <p className="mb-2">Última del {formatDate(lastReview.applied_at)} · {reviews.length} en total</p>
-                            <div className="d-flex flex-wrap gap-1">
-                                {Object.entries(countByStatus(lastReview.results)).map(([status, count]) => (
-                                    <StatusBadge key={status} status={status} text={`: ${count}`} />
-                                ))}
-                            </div>
-                        </>
-                    ) : <p>Sin revisiones todavía.</p>}
-                </SummaryCard>
+    useEffect(() => {
+        setReviews(null);
+        setError(false);
+        Promise.all([listReviews(id), getChecklist()])
+            .then(([reviewData, checklistData]) => {
+                setReviews(reviewData);
+                setChecklist(checklistData);
+            })
+            .catch(() => setError(true));
+    }, [id]);
 
-                <SummaryCard to={`/projects/${id}/notes`} icon={FaStickyNote} title="Notas" value={notes}>
-                    {lastNote ? (
-                        <>
-                            <p className="mb-1">{notes.length} {notes.length === 1 ? 'nota' : 'notas'} · última del {formatDate(lastNote.created_at, true)}</p>
-                            <p className="resumen-nota">{plainText(lastNote.detail)}</p>
-                        </>
-                    ) : <p>Sin notas todavía.</p>}
-                </SummaryCard>
+    const data = useMemo(() => {
+        if (!reviews?.length) return null;
+        return {
+            last: sortReviews(reviews)[0],
+            pending: pendingPoints(reviews, checklist),
+            change: lastChange(reviews, checklist),
+            series: trendSeries(reviews),
+        };
+    }, [reviews, checklist]);
 
-                <SummaryCard to={`/projects/${id}/files`} icon={FaFile} title="Archivos" value={files}>
-                    <p>{files?.length ? `${files.length} ${files.length === 1 ? 'archivo' : 'archivos'} · último del ${formatDate(files[0].created_at, true)}` : 'Sin archivos todavía.'}</p>
-                </SummaryCard>
-
-                <SummaryCard to={`/projects/${id}/continuous-deployment`} icon={FaRocket} title="Despliegue continuo" value={configs}>
-                    <p>{configs?.length ? `${configs.length} ${configs.length === 1 ? 'configuración guardada' : 'configuraciones guardadas'}: ${configs.map((c) => c.name).join(', ')}` : 'Sin configuraciones guardadas.'}</p>
-                </SummaryCard>
+    let content;
+    if (error) {
+        content = <div className="aviso aviso-rojo m-0" role="alert">No se pudieron cargar las revisiones del proyecto. Recarga la página para reintentar.</div>;
+    } else if (!reviews) {
+        content = <Card><Card.Body><Placeholder animation="glow"><Placeholder xs={12} /><Placeholder xs={8} /></Placeholder></Card.Body></Card>;
+    } else if (!data) {
+        content = (
+            <div className="vacio">
+                El seguimiento se arma a partir de las revisiones técnicas y este proyecto aún no tiene ninguna.{' '}
+                <Link to={`/projects/${id}/review`}>Crea la primera en Revisiones</Link>.
             </div>
-        </ProjectPageLayout>
-    );
+        );
+    } else {
+        const pendingCount = data.pending.reduce((n, g) => n + g.items.length, 0);
+        content = (
+            <Row className="g-3">
+                <Col xs={12}>
+                    <Panel title="Pendientes de la última revisión" sub={`${plural(pendingCount, 'punto', 'puntos')} · ${formatDate(data.last.applied_at)}`}>
+                        <Pending groups={data.pending} />
+                    </Panel>
+                </Col>
+                <Col xs={12} xl={7}>
+                    <Panel title="Evolución" sub={plural(reviews.length, 'revisión', 'revisiones')}>
+                        <ReviewTrendChart series={data.series} total={reviews.length} />
+                    </Panel>
+                </Col>
+                <Col xs={12} xl={5}>
+                    <Panel
+                        title="Último cambio registrado"
+                        sub={data.change?.changed ? `${formatDate(data.change.previous.applied_at)} → ${formatDate(data.change.current.applied_at)}` : undefined}
+                    >
+                        {!data.change ? (
+                            <p className="sub mb-0">Se necesitan al menos dos revisiones para comparar.</p>
+                        ) : !data.change.changed ? (
+                            <p className="sub mb-0">Ningún punto evaluado ha cambiado de estado en las {reviews.length} revisiones.</p>
+                        ) : (
+                            <div className="d-grid gap-3">
+                                {data.change.unchangedSince > 0 && (
+                                    <p className="sub mb-0">
+                                        {data.change.unchangedSince === 1
+                                            ? 'La revisión posterior no tuvo cambios.'
+                                            : `Las ${data.change.unchangedSince} revisiones posteriores no tuvieron cambios.`}
+                                    </p>
+                                )}
+                                <ChangeList title="Mejoraron" items={data.change.improved} empty="Ningún punto mejoró." />
+                                <ChangeList title="Empeoraron" items={data.change.worsened} empty="Ningún punto empeoró." />
+                            </div>
+                        )}
+                    </Panel>
+                </Col>
+            </Row>
+        );
+    }
+
+    return <ProjectPageLayout>{content}</ProjectPageLayout>;
 }
