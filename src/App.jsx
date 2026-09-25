@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, matchPath } from 'react-router-dom';
 import Cabecera from '@c/layout/Cabecera';
 import RequireAuth from '@c/RequireAuth';
@@ -16,6 +16,8 @@ import ProjectNotes from '@/pages/ProjectNotes';
 import ProjectFiles from '@/pages/ProjectFiles';
 import ProjectContinuousDeployment from '@/pages/ProjectContinuousDeployment';
 import JMeterTestCreator from '@/pages/JMeterTestCreator';
+import { HERRAMIENTAS } from '@/config/tools';
+import { recordVisit } from '@u/recent';
 
 const basename = import.meta.env.VITE_BASE_URL;
 
@@ -35,6 +37,12 @@ const ROUTES = [
 const Layout = () => {
     const location = useLocation();
     const isNotFound = !ROUTES.some((route) => matchPath(route.path, location.pathname));
+
+    // Accesos recientes del Inicio: las herramientas autónomas; los proyectos los registra ProjectHeader
+    useEffect(() => {
+        const tool = HERRAMIENTAS.find((h) => h.to === location.pathname && h.to !== '/projects');
+        if (tool) recordVisit({ key: `herramienta:${tool.to}`, type: 'herramienta', to: tool.to, label: tool.title });
+    }, [location.pathname]);
 
     return (
         <>

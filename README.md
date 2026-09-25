@@ -2,7 +2,7 @@
 
 Aplicación web interna de la Unidad de Desarrollo de Software (UDS · DSI) que reúne herramientas de administración y soporte técnico:
 
-- **Proyectos**: equipo (coordinador y desarrolladores), revisiones técnicas (observación general obligatoria y checklist opcional) con bitácora de seguimiento y exportación a Excel, notas, archivos adjuntos y generación de pipelines de despliegue continuo (CD). Un proyecto finalizado queda en solo lectura.
+- **Proyectos**: equipo (coordinador y desarrolladores), revisiones técnicas (observación general obligatoria y checklist opcional) con bitácora de seguimiento y exportación a Excel, notas, archivos adjuntos y generación de pipelines de despliegue continuo (CD). Un proyecto finalizado queda en solo lectura. El Inicio muestra qué proyectos activos necesitan revisión y los accesos recientes.
 - **Pruebas JMeter**: arma planes de carga (hilos, peticiones HTTP, CSV, temporizadores, listeners, assertions), importa rutas Laravel o un `.jmx` existente y descarga el resultado.
 - **Visor PHPStan**: carga el reporte JSON de PHPStan, lo agrupa por archivo, lo filtra y lo exporta a Excel.
 - **Solicitud de servidores**: completa la plantilla DOCX de solicitud de máquinas virtuales UPT.
@@ -88,7 +88,8 @@ src/
     project/               ProjectHeader (migas, selector de proyecto, pestañas), tabla y selector
   services/                Llamadas a la API, un módulo por recurso
   hooks/                   useProjects, useTheme, useJMeterGenerator
-  utils/                   Estados y frecuencia de revisiones, HTML seguro, búsqueda sin tildes, exportación Excel
+  config/                  Catálogo de herramientas y valores por defecto de CD
+  utils/                   Estados, frecuencia y vigencia de revisiones, accesos recientes, HTML seguro, búsqueda sin tildes, exportación Excel
   assets/                  favicon.svg y templates/ (plantilla DOCX de solicitud de servidores)
   styles/                  base.css y bootstrap-bridge.css del sistema visual
   api/
@@ -119,7 +120,7 @@ Todas las rutas cuelgan de `/tools/api`. Las marcadas con ● rechazan cambios e
 | GET | `/users` | Lista usuarios |
 | POST | `/users` | Crea usuario `{ name }` |
 | PUT | `/users/:id` | Renombra usuario `{ name }` |
-| GET | `/projects?status=active\|finished` | Lista proyectos con desarrolladores (por defecto activos) |
+| GET | `/projects?status=active\|finished` | Lista proyectos con desarrolladores, fecha de la última revisión (`last_review_at`) y total de revisiones (`review_count`); por defecto activos |
 | GET | `/projects/:id` | Detalle con desarrolladores |
 | POST | `/projects` | Crea `{ name, code, coordinator_id, developer_ids[] }` |
 | PUT | `/projects/:id` ● | Actualiza y reemplaza desarrolladores |

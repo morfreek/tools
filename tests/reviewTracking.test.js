@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { countStatuses, sortReviews, reviewCadence } from '../src/utils/reviewTracking.js';
+import { countStatuses, sortReviews, reviewCadence, reviewFreshness, sortByFreshness } from '../src/utils/reviewTracking.js';
 
 const review = (id, applied_at, statuses = {}) => ({
   id, applied_at,
@@ -29,5 +29,23 @@ describe('reviewTracking', () => {
   it('con una sola revisión no hay promedio y sin revisiones no hay frecuencia', () => {
     expect(reviewCadence([review(1, '2026-01-01')], new Date(2026, 0, 1))).toEqual({ daysSinceLast: 0, averageDays: null });
     expect(reviewCadence([])).toBeNull();
+  });
+
+  it('clasifica la vigencia de la última revisión según los umbrales', () => {
+    const today = new Date(2026, 8, 25);
+    expect(reviewFreshness(null, today)).toEqual({ estado: 'sin-revisiones', days: null });
+    expect(reviewFreshness('2026-09-11', today)).toEqual({ estado: 'al-dia', days: 14 });
+    expect(reviewFreshness('2026-09-10', today)).toEqual({ estado: 'atencion', days: 15 });
+    expect(reviewFreshness('2026-08-26', today)).toEqual({ estado: 'atencion', days: 30 });
+    expect(reviewFreshness('2026-08-25', today)).toEqual({ estado: 'atrasado', days: 31 });
+  });
+
+  it('ordena proyectos del más urgente al más reciente', () => {
+    const projects = [
+      { name: 'B', last_review_at: '2026-09-20' },
+      { name: 'C', last_review_at: null },
+      { name: 'A', last_review_at: '2026-06-30' },
+    ];
+    expect(sortByFreshness(projects).map((p) => p.name)).toEqual(['C', 'A', 'B']);
   });
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { FaPlus, FaFileExcel } from 'react-icons/fa';
 import { Button, Card } from 'react-bootstrap';
 import { STATUS_OPTIONS } from '@u/Constants';
@@ -22,11 +22,21 @@ export default function ProjectReviews() {
     const [newReviewVisible, setNewReviewVisible] = useState(false);
     const [form, setForm] = useState({ applied_at: '', results: [] });
     const [review, setReview] = useState(null);
+    const [loaded, setLoaded] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
-        fetchReviews();
-        fetchChecklist();
+        Promise.all([fetchReviews(), fetchChecklist()])
+            .then(() => setLoaded(true))
+            .catch(() => showToast('error', 'No se pudieron cargar las revisiones'));
     }, []);
+
+    // ?nueva=1 (desde el panel de trabajo del Inicio) abre la nueva revisión al terminar de cargar
+    useEffect(() => {
+        if (!loaded || searchParams.get('nueva') !== '1') return;
+        setSearchParams({}, { replace: true });
+        startNewReview();
+    }, [loaded, searchParams]);
 
     const fetchReviews = async () => {
         setReviews(await listReviews(id));

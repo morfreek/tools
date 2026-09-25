@@ -7,6 +7,7 @@ import ProjectModal from '@c/modal/ProjectModal';
 import ProjectSwitcher from '@c/project/ProjectSwitcher';
 import { getProject } from '@/services/projects.service';
 import { listUsers } from '@/services/users.service';
+import { recordVisit } from '@u/recent';
 
 // Secciones de /projects/:id/<path>; el orden es el de las pestañas
 export const PROJECT_SECTIONS = [
@@ -43,6 +44,18 @@ export default function ProjectHeader({ projectId }) {
         setProject(null);
         load();
     }, [load]);
+
+    // Accesos recientes del Inicio: el proyecto con la última sección visitada
+    useEffect(() => {
+        if (!project) return;
+        recordVisit({
+            key: `proyecto:${project.id}`,
+            type: 'proyecto',
+            to: `/projects/${project.id}/${section.path}`,
+            label: project.name,
+            detail: `${project.code} · ${section.label}`,
+        });
+    }, [project, section.path, section.label]);
 
     const coordinator = users.find((u) => u.id === project?.coordinator_id)?.name;
     const team = (project?.developers || []).map((d) => d.name);
