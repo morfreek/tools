@@ -23,7 +23,7 @@ const Preview = ({ show, onClose, jmx, onDownload, onCopyXml }) => (
             <Button variant="outline-secondary" size="sm" onClick={onCopyXml}>
                 Copiar XML
             </Button>
-            <Button variant="success" size="sm" onClick={onDownload}>
+            <Button size="sm" onClick={onDownload}>
                 Descargar .jmx
             </Button>
         </Modal.Footer>

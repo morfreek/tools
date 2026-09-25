@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Card } from 'react-bootstrap';
-import ProjectInfoCard from '@c/info/ProjectInfoCard';
+import { Card } from 'react-bootstrap';
+import ProjectPageLayout from '@c/layout/ProjectPageLayout';
 import ProjectNoteList from '@c/note/ProjectNoteList';
-import Breadcrumb from '@c/Breadcrumb';
 
 export default function ProjectNotes() {
     const { id } = useParams();
@@ -14,14 +13,7 @@ export default function ProjectNotes() {
     };
 
     return (
-        <Container fluid className="mt-4">
-            <Breadcrumb />
-
-            <ProjectInfoCard
-                id={id}
-                onNoteAdded={handleNoteAdded}
-            />
-
+        <ProjectPageLayout onNoteAdded={handleNoteAdded}>
             <Card
                 style={{
                     height: 'calc(100vh - 245px)'
@@ -39,6 +31,6 @@ export default function ProjectNotes() {
                     refreshKey={notesRefreshKey}
                 />
             </Card>
-        </Container>
+        </ProjectPageLayout>
     );
 }

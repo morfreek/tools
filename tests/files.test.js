@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
-import { mockDb, resetMocks, setupTestServer, getHttpClient } from './setup.js';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
+import { mockDb, resetMocks, setupTestServer, teardownTestServer, getHttpClient } from './setup.js';
 import FormData from 'form-data';
 
 describe('Files Endpoints', () => {
@@ -9,6 +9,10 @@ describe('Files Endpoints', () => {
     await setupTestServer();
     httpClient = await getHttpClient();
   }, 30000);
+
+  afterAll(async () => {
+    await teardownTestServer();
+  });
 
   beforeEach(() => {
     resetMocks();
@@ -87,5 +91,34 @@ describe('Files Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.data).toEqual({ message: 'Archivo eliminado correctamente' });
     });
+  });
+
+  describe('GET /tools/api/projects/:id/files/:fileId/preview', () => {
+    it('debe entregar la imagen con su tipo MIME', async () => {
+      mockDb.get.mockResolvedValue({ filename: 'logo.png', file_data: Buffer.from('png'), mime_type: 'image/png' });
+
+      const response = await httpClient.get('/tools/api/projects/1/files/1/preview');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toBe('image/png');
+      expect(mockDb.get.mock.calls[0][0]).toContain("mime_type LIKE 'image/%'");
+    });
+
+    it('debe retornar 404 si el archivo no es una imagen', async () => {
+      mockDb.get.mockResolvedValue(undefined);
+
+      const response = await httpClient.get('/tools/api/projects/1/files/2/preview');
+
+      expect(response.status).toBe(404);
+      expect(response.data).toEqual({ error: 'Imagen no encontrada' });
+    });
+  });
+
+  it('debe codificar nombres de archivo en Content-Disposition', async () => {
+    mockDb.get.mockResolvedValue({ filename: 'informe "final".txt', file_data: Buffer.from('x'), mime_type: 'text/plain' });
+
+    const response = await httpClient.get('/tools/api/projects/1/files/1/download');
+
+    expect(response.headers['content-disposition']).toBe('attachment; filename="informe \\"final\\".txt"');
   });
 });

@@ -1,0 +1,225 @@
+/* =====================================================================
+   estilo-personal · bootstrap-bridge.css
+   Tiñe Bootstrap 5.3 (y React Bootstrap) con los tokens de base.css.
+
+   Orden de carga obligatorio:  bootstrap.min.css → base.css → este archivo.
+   Así un solo cambio de token (o de tema) se propaga a botones, campos,
+   tablas, modales, pestañas y toasts, también en modo oscuro.
+   ===================================================================== */
+
+:root {
+  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bs-body-font-size: 15px;
+  --bs-body-line-height: 1.5;
+  --bs-font-monospace: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bs-body-bg: var(--panel);          /* fondo de componentes; el body usa --fondo */
+  --bs-body-color: var(--texto);
+  --bs-emphasis-color: var(--texto);
+  --bs-secondary-color: var(--suave);
+  --bs-tertiary-bg: var(--fondo);
+  --bs-border-color: var(--borde);
+  --bs-border-radius: var(--radio-control);
+  --bs-border-radius-sm: 6px;
+  --bs-border-radius-lg: var(--radio);
+  --bs-link-color: var(--acento);
+  --bs-link-hover-color: var(--acento);
+  --bs-code-color: inherit;
+  /* react-toastify, si se usa */
+  --toastify-color-light: var(--panel);
+  --toastify-text-color-light: var(--texto);
+}
+
+body { background: var(--fondo); }
+a, .btn-link { color: var(--acento); }
+.text-muted, .text-secondary { color: var(--suave) !important; }
+.text-danger { color: var(--rojo) !important; }
+
+/* ------------------------------------------------------------ controles */
+.form-control, .form-select { background-color: var(--fondo); color: var(--texto); border-color: var(--borde); }
+.form-control::placeholder { color: var(--suave); opacity: .8; }
+.form-control:disabled, .form-select:disabled { background-color: var(--panel); opacity: .7; }
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+  background-color: var(--fondo);
+  color: var(--texto);
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 22%, transparent);
+}
+.form-check-input { background-color: var(--fondo); border-color: var(--borde); }
+.form-check-input:checked { background-color: var(--acento); border-color: var(--acento); }
+.input-group-text { background: var(--panel); color: var(--suave); border-color: var(--borde); font-size: 13px; }
+.form-text { color: var(--suave); }
+.form-label { font-size: 13px; font-weight: 600; }
+
+/* -------------------------------------------------------------- botones */
+.btn { --bs-btn-font-size: 14px; --bs-btn-font-weight: 500; }
+.btn-sm { --bs-btn-font-size: 13px; --bs-btn-padding-y: 5px; --bs-btn-padding-x: 11px; }
+.btn-primary {
+  --bs-btn-bg: var(--acento);
+  --bs-btn-border-color: var(--acento);
+  --bs-btn-color: var(--acento-texto);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--acento) 88%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--acento) 88%, #000);
+  --bs-btn-hover-color: var(--acento-texto);
+  --bs-btn-active-bg: color-mix(in srgb, var(--acento) 80%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--acento) 80%, #000);
+  --bs-btn-active-color: var(--acento-texto);
+  --bs-btn-disabled-bg: var(--acento);
+  --bs-btn-disabled-border-color: var(--acento);
+  --bs-btn-disabled-color: var(--acento-texto);
+  font-weight: 600;
+}
+/* Acción destructiva (p. ej. "Eliminar" en un diálogo de confirmación) */
+.btn-danger {
+  --bs-btn-bg: var(--rojo);
+  --bs-btn-border-color: var(--rojo);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: color-mix(in srgb, var(--rojo) 88%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--rojo) 88%, #000);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: color-mix(in srgb, var(--rojo) 80%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--rojo) 80%, #000);
+  --bs-btn-active-color: #fff;
+  font-weight: 600;
+}
+/* Secundarios con el aspecto de los botones de la cabecera */
+.btn-outline-secondary, .btn-secondary {
+  --bs-btn-bg: var(--fondo);
+  --bs-btn-color: var(--texto);
+  --bs-btn-border-color: var(--borde);
+  --bs-btn-hover-bg: var(--panel);
+  --bs-btn-hover-color: var(--texto);
+  --bs-btn-hover-border-color: var(--suave);
+  --bs-btn-active-bg: var(--panel);
+  --bs-btn-active-color: var(--acento);
+  --bs-btn-active-border-color: var(--acento);
+  --bs-btn-disabled-color: var(--suave);
+  --bs-btn-disabled-bg: var(--fondo);
+  --bs-btn-disabled-border-color: var(--borde);
+}
+/* .btn-secondary = opción seleccionada dentro de un ButtonGroup */
+.btn-secondary { --bs-btn-bg: var(--panel); --bs-btn-color: var(--acento); --bs-btn-border-color: var(--acento); }
+.btn-link {
+  --bs-btn-color: var(--acento);
+  --bs-btn-hover-color: var(--acento);
+  --bs-btn-active-color: var(--acento);
+  --bs-btn-disabled-color: var(--suave);
+  text-decoration: none;
+}
+.btn-close { filter: var(--cierre-filtro); }
+
+/* Acciones de fila con color distintivo: <Button variant="link" size="sm" className="accion accion-editar">
+   probar = verificación (verde), consultar = herramienta aparte (violeta),
+   editar = acción habitual (acento), eliminar = destructiva (rojo). */
+.accion {
+  --accion-color: var(--suave);
+  --bs-btn-color: var(--accion-color);
+  --bs-btn-hover-color: var(--accion-color);
+  --bs-btn-active-color: var(--accion-color);
+  --bs-btn-disabled-color: var(--suave);
+  --bs-btn-padding-x: 7px;
+  --bs-btn-border-radius: 6px;
+  color: var(--accion-color); /* gana a `a, .btn-link { color: var(--acento) }`, que fija el color directo */
+}
+.accion:hover:not(:disabled), .accion:focus-visible {
+  background: color-mix(in srgb, var(--accion-color) 12%, transparent);
+}
+.accion:disabled { color: var(--suave); opacity: .45; }
+.accion-probar { --accion-color: var(--ok); }
+.accion-consultar { --accion-color: var(--violeta); }
+.accion-editar { --accion-color: var(--acento); }
+.accion-eliminar { --accion-color: var(--rojo); }
+
+/* ------------------------------------------------------ badges y avisos */
+/* <Badge bg="success|warning|danger|primary|secondary"> se ven como píldoras con borde */
+.badge {
+  padding: 2px 8px;
+  border: 1px solid var(--borde); border-radius: 999px;
+  background: transparent !important;
+  color: var(--suave) !important;
+  font-size: 11px; font-weight: 500;
+}
+.badge.bg-primary, .badge.bg-info { border-color: var(--acento); color: var(--acento) !important; }
+.badge.bg-success { border-color: var(--ok); color: var(--ok) !important; }
+.badge.bg-warning { border-color: var(--ambar); color: var(--ambar) !important; }
+.badge.bg-danger { border-color: var(--rojo); color: var(--rojo) !important; }
+
+/* <Alert variant="..."> como .aviso: borde de color, fondo transparente */
+.alert {
+  --bs-alert-bg: transparent;
+  --bs-alert-padding-y: 9px;
+  --bs-alert-padding-x: 12px;
+  --bs-alert-border-radius: var(--radio-control);
+  font-size: 13px;
+}
+.alert-warning { --bs-alert-color: var(--ambar); --bs-alert-border-color: var(--ambar); }
+.alert-danger { --bs-alert-color: var(--rojo); --bs-alert-border-color: var(--rojo); }
+.alert-success { --bs-alert-color: var(--ok); --bs-alert-border-color: var(--ok); }
+.alert-info, .alert-primary { --bs-alert-color: var(--acento); --bs-alert-border-color: var(--acento); }
+
+/* ------------------------------------------------ paneles, tablas, etc. */
+.card {
+  --bs-card-bg: var(--panel);
+  --bs-card-border-color: var(--borde);
+  --bs-card-border-radius: var(--radio);
+  --bs-card-inner-border-radius: calc(var(--radio) - 1px);
+  --bs-card-cap-bg: transparent;
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--texto);
+  --bs-table-border-color: var(--borde);
+  --bs-table-hover-bg: color-mix(in srgb, var(--acento) 6%, transparent);
+  --bs-table-hover-color: var(--texto);
+  font-size: 13px;
+}
+.table > :not(caption) > * > * { padding: 9px 10px; }
+.table-sm > :not(caption) > * > * { padding: 5px 8px; }
+.table th { font-size: 12px; color: var(--suave); font-weight: 600; }
+.panel-tabla .table { margin-bottom: 0; }
+.panel-tabla .table tbody tr:last-child td { border-bottom: 0; }
+.table th[role="button"] { user-select: none; cursor: pointer; }
+.table th[role="button"]:hover { color: var(--texto); }
+.table tr.inactivo { opacity: .55; }
+
+.cabecera .nav-underline {
+  --bs-nav-link-color: var(--suave);
+  --bs-nav-link-hover-color: var(--texto);
+  --bs-nav-underline-link-active-color: var(--acento);
+  --bs-nav-link-font-size: 13px;
+  gap: 14px;
+}
+.nav-tabs {
+  --bs-nav-tabs-border-color: var(--borde);
+  --bs-nav-tabs-link-active-bg: var(--panel);
+  --bs-nav-tabs-link-active-color: var(--acento);
+  --bs-nav-tabs-link-active-border-color: var(--borde) var(--borde) var(--panel);
+  --bs-nav-tabs-link-hover-border-color: transparent;
+  --bs-nav-link-color: var(--suave);
+  --bs-nav-link-hover-color: var(--texto);
+  --bs-nav-link-font-size: 13px;
+}
+
+.modal {
+  --bs-modal-bg: var(--panel);
+  --bs-modal-color: var(--texto);
+  --bs-modal-border-color: var(--borde);
+  --bs-modal-border-radius: var(--radio);
+  --bs-modal-inner-border-radius: calc(var(--radio) - 1px);
+  --bs-modal-header-border-color: var(--borde);
+  --bs-modal-footer-border-color: var(--borde);
+}
+.modal-title { font-size: 16px; font-weight: 600; }
+
+.breadcrumb {
+  --bs-breadcrumb-divider-color: var(--suave);
+  --bs-breadcrumb-item-active-color: var(--texto);
+}
+.dropdown-menu {
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--texto);
+  --bs-dropdown-border-color: var(--borde);
+  --bs-dropdown-link-color: var(--texto);
+  --bs-dropdown-link-hover-bg: var(--fondo);
+  --bs-dropdown-link-active-bg: var(--acento);
+}

@@ -146,7 +146,7 @@ const CsvDataTab = ({ value, onChange }) => {
                             </Col>
                         </Row>
 
-                        <div className="mt-3 p-3 bg-light rounded">
+                        <div className="mt-3 p-3 superficie rounded">
                             <p className="text-muted small mb-1">
                                 <strong>Uso:</strong> En tus peticiones usa las variables como {'{username}'}, {'{password}'}, etc. 
                                 JMeter reemplazará estos valores con datos del CSV.

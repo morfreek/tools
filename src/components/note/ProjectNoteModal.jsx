@@ -4,15 +4,15 @@ import { Modal, Button } from 'react-bootstrap';
 import Editor from 'react-simple-wysiwyg';
 import { FaSave, FaBan } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
-import { useConfirm } from '@c/ConfirmContext';
-import api from '@/api';
+import { useDialog } from '@c/DialogProvider';
+import { createNote, updateNote } from '@/services/notes.service';
 
 export default function ProjectNoteModal({ show, onClose, onSaved, projectId, note }) {
     const [content, setContent] = useState(note?.detail || '');
     const [loading, setLoading] = useState(false);
     const [initialContent] = useState(note?.detail || '');
     const { showToast } = useToast();
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
 
     useEffect(() => {
         setContent(note?.detail || '');
@@ -27,15 +27,9 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
         setLoading(true);
         try {
             if (note) {
-                await api.put(`/projects/${projectId}/notes`, {
-                    noteId: note.id,
-                    detail: content
-                });
+                await updateNote(projectId, note.id, content);
             } else {
-                await api.post(`/projects/${projectId}/notes`, {
-                    detail: content,
-                    created_at: new Date().toISOString()
-                });
+                await createNote(projectId, content);
             }
             showToast('success', 'Nota guardada correctamente.');
             await onSaved();
@@ -52,14 +46,13 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
         const hasUnsavedChanges = content !== initialContent && content.trim() !== '';
         
         if (hasUnsavedChanges) {
-            showConfirm({
-                title: "Confirmar cierre",
-                message: "Hay cambios sin guardar. ¿Desea cerrar y perder los cambios?",
-                confirmText: "Aceptar",
-                cancelText: "Cerrar",
-                confirmButtonClass: "btn-danger",
-                onConfirm: () => onClose()
-            });
+            dialog.confirm({
+                title: 'Descartar cambios',
+                message: 'La nota tiene cambios sin guardar. ¿Cerrar y descartarlos?',
+                acceptText: 'Descartar',
+                cancelText: 'Seguir editando',
+                danger: true,
+            }).then((ok) => ok && onClose());
         } else {
             onClose();
         }

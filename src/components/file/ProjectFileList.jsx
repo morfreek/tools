@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaDownload, FaTrash, FaPlus, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
-import { ListGroup, Button, Placeholder, ButtonGroup, Image, Offcanvas } from 'react-bootstrap';
+import { ListGroup, Button, Placeholder, Image, Offcanvas } from 'react-bootstrap';
 import { useToast } from '@c/ToastContext';
-import { useConfirm } from '@c/ConfirmContext';
+import { useDialog } from '@c/DialogProvider';
 import ProjectFileUploader from './ProjectFileUploader';
-import api from '@/api';
+import { listFiles, downloadFile, deleteFile, filePreviewUrl } from '@/services/files.service';
 
 // Función auxiliar para formatear el tamaño del archivo
 const formatFileSize = (bytes) => {
@@ -31,11 +31,10 @@ export default function ProjectFileList({
     show,
     onClose,
     className = '',
-    containerStyle = {},
     refreshKey
 }) {
     const { showToast } = useToast();
-    const { showConfirm } = useConfirm();
+    const dialog = useDialog();
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showUploader, setShowUploader] = useState(false);
@@ -43,8 +42,8 @@ export default function ProjectFileList({
     const fetchFiles = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/projects/${projectId}/files`);
-            setFiles(response.data.sort((a, b) =>
+            const response = await listFiles(projectId);
+            setFiles(response.sort((a, b) =>
                 new Date(b.created_at) - new Date(a.created_at)
             ));
         } catch (err) {
@@ -70,10 +69,8 @@ export default function ProjectFileList({
 
     const handleDownload = async (fileId, filename) => {
         try {
-            const response = await api.get(`/projects/${projectId}/files/${fileId}/download`, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const blob = await downloadFile(projectId, fileId);
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', filename);
@@ -86,23 +83,22 @@ export default function ProjectFileList({
         }
     };
 
-    const handleDelete = (fileId) => {
-        showConfirm({
-            title: "Eliminar Archivo",
-            message: "¿Estás seguro de eliminar este archivo? Esta acción no se puede deshacer.",
-            confirmText: "Eliminar",
-            cancelText: "Cancelar",
-            onConfirm: async () => {
-                try {
-                    await api.delete(`/projects/${projectId}/files/${fileId}`);
-                    showToast('success', 'Archivo eliminado correctamente');
-                    fetchFiles();
-                } catch (err) {
-                    console.error(err);
-                    showToast('error', 'Error al eliminar el archivo');
-                }
-            }
+    const handleDelete = async (file) => {
+        const ok = await dialog.confirm({
+            title: 'Eliminar archivo',
+            message: `¿Eliminar el archivo "${file.filename}"? Esta acción no se puede deshacer.`,
+            acceptText: 'Eliminar',
+            danger: true,
         });
+        if (!ok) return;
+
+        try {
+            await deleteFile(projectId, file.id);
+            showToast('success', `Archivo "${file.filename}" eliminado`);
+            fetchFiles();
+        } catch {
+            showToast('error', 'Error al eliminar el archivo');
+        }
     };
 
     if (!show) return null;
@@ -164,32 +160,32 @@ export default function ProjectFileList({
                                                     <div>Subido por: {file.uploaded_by}</div>
                                                 )}
                                             </div>
-                                            <ButtonGroup>
+                                            <div className="text-nowrap">
                                                 <Button
-                                                    variant="outline-primary"
+                                                    variant="link"
                                                     size="sm"
-                                                    className="p-1 d-inline-flex align-items-center"
+                                                    className="accion accion-editar"
                                                     onClick={() => handleDownload(file.id, file.filename)}
                                                     title="Descargar archivo"
                                                 >
                                                     <FaDownload />
                                                 </Button>
                                                 <Button
-                                                    variant="outline-danger"
+                                                    variant="link"
                                                     size="sm"
-                                                    className="p-1 d-inline-flex align-items-center"
-                                                    onClick={() => handleDelete(file.id)}
+                                                    className="accion accion-eliminar"
+                                                    onClick={() => handleDelete(file)}
                                                     title="Eliminar archivo"
                                                 >
                                                     <FaTrash />
                                                 </Button>
-                                            </ButtonGroup>
+                                            </div>
                                         </div>
                                         {file.mime_type.startsWith('image/') && (
                                             <div className="mt-2">
                                                 <Image
-                                                    src={`${import.meta.env.VITE_API_URL}/projects/${projectId}/files/${file.id}/preview`}
-                                                    alt={file.name}
+                                                    src={filePreviewUrl(projectId, file.id)}
+                                                    alt={file.filename}
                                                     thumbnail
                                                     style={{ maxHeight: '100px' }}
                                                 />

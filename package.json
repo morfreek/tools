@@ -3,30 +3,32 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "api": "node src/api/server.js",
+    "api:dev": "node --watch src/api/server.js",
     "test": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest",
     "test:watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --watch",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --coverage",
     "test:debug": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --inspect-brk=0.0.0.0:9229' jest --runInBand --no-cache",
     "test:debug-watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --inspect-brk=0.0.0.0:9229' jest --runInBand --no-cache --watch",
-    "test:verbose": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --verbose --no-coverage"
+    "test:verbose": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --verbose --no-coverage",
+    "validate": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "axios": "^1.9.0",
-    "body-parser": "^2.2.0",
     "bootstrap": "^5.3.6",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "docxtemplater": "^3.42.0",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
-    "file-saver": "^2.0.5",
-    "moment": "^2.30.1",
     "multer": "^2.0.1",
     "pizzip": "^3.1.4",
     "react": "^19.1.0",
@@ -41,16 +43,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@jest/globals": "^29.7.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "form-data": "^4.0.6",
     "globals": "^16.0.0",
-    "vite": "^6.3.5",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3",
-    "@jest/globals": "^29.7.0"
+    "vite": "^6.3.5"
   }
 }

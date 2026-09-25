@@ -1,27 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useDialog } from '@c/DialogProvider';
 import { Modal, Button, ListGroup, Spinner } from 'react-bootstrap';
 import { FaTrash } from 'react-icons/fa';
 
 export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelete, loading = false }) {
-    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-    const [configToDelete, setConfigToDelete] = useState(null);
+    const dialog = useDialog();
 
-    const handleDeleteClick = (configName) => {
-        setConfigToDelete(configName);
-        setShowConfirmDelete(true);
-    };
-
-    const handleConfirmDelete = () => {
-        if (configToDelete) {
-            onDelete(configToDelete);
-        }
-        setShowConfirmDelete(false);
-        setConfigToDelete(null);
-    };
-
-    const handleCancelDelete = () => {
-        setShowConfirmDelete(false);
-        setConfigToDelete(null);
+    const handleDeleteClick = async (configName) => {
+        const ok = await dialog.confirm({
+            title: 'Eliminar configuración',
+            message: `¿Eliminar la configuración "${configName}"? Esta acción no se puede deshacer.`,
+            acceptText: 'Eliminar',
+            danger: true,
+        });
+        if (ok) onDelete(configName);
     };
 
     return (
@@ -80,24 +72,6 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                 </Modal.Footer>
             </Modal>
 
-            {/* Modal de confirmación de eliminación */}
-            <Modal show={showConfirmDelete} onHide={handleCancelDelete} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Eliminación</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <p>¿Estás seguro de que deseas eliminar la configuración "{configToDelete}"?</p>
-                    <p className="text-muted">Esta acción no se puede deshacer.</p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCancelDelete} size="sm">
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={handleConfirmDelete} size="sm">
-                        Eliminar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </>
     );
 }

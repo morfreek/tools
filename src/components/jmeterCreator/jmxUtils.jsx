@@ -537,8 +537,7 @@ export const buildSampler = (req, base, customPort = '', customPrefix = '') => {
     const assertions = buildAssertions(req);
     
     const finalPort = customPort || base.port || '';
-  
-    console.log(params);
+
 
     // Añadir Content-Type por defecto si hay cuerpo raw y no está definido
     if (hasRawBody && !headers.some(h => (h.name || '').toLowerCase() === 'content-type')) {

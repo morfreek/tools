@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Button, Form, ListGroup } from 'react-bootstrap';
 import { FaSave, FaBan } from 'react-icons/fa';
-import api from '@/api';
+import { uploadFiles } from '@/services/files.service';
 import { useToast } from '@c/ToastContext';
 
 const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => {
@@ -23,17 +23,8 @@ const ProjectFileUploader = ({ projectId, show, onClose, onUploadComplete }) => 
     const handleUpload = async () => {
         if (!selectedFiles.length) return;
 
-        const formData = new FormData();
-        selectedFiles.forEach(file => {
-            formData.append('files[]', file);
-        });
-
         try {
-            await api.post(`/projects/${projectId}/files`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            await uploadFiles(projectId, selectedFiles);
             showToast('success', 'Archivos subidos correctamente');
             setSelectedFiles([]);
             if (fileInput.current) fileInput.current.value = '';

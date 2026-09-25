@@ -8,19 +8,19 @@ const SshInstructionsModal = ({ show, onHide }) => (
         </Modal.Header>
         <Modal.Body>
             <h6>1. Generar la clave SSH en el servidor:</h6>
-            <pre className="bg-light p-2 rounded">
+            <pre className="superficie p-2 rounded">
                 {`$ ssh-keygen -t rsa -b 4096 -C "deploy-key"
 # Presionar Enter para aceptar ubicación por defecto
 # No ingresar passphrase (dejar vacío)`}
             </pre>
 
             <h6 className="mt-3">2. Mostrar la clave privada:</h6>
-            <pre className="bg-light p-2 rounded">
+            <pre className="superficie p-2 rounded">
                 {`$ cat ~/.ssh/id_rsa`}
             </pre>
 
             <h6 className="mt-3">3. Copiar la clave pública al archivo authorized_keys:</h6>
-            <pre className="bg-light p-2 rounded">
+            <pre className="superficie p-2 rounded">
                 {`$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 $ chmod 600 ~/.ssh/authorized_keys`}
             </pre>

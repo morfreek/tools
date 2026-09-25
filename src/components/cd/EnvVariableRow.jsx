@@ -31,7 +31,7 @@ export default function EnvVariableRow({
                     type="text"
                     value={envKey}
                     readOnly
-                    className="bg-light"
+                    className="superficie"
                 />
             </Col>
             <Col md={6}>
@@ -91,7 +91,7 @@ export default function EnvVariableRow({
                                 Base64
                             </Badge>
                         ) : (
-                            <Badge bg="light" text="muted" className="small">
+                            <Badge bg="secondary" className="small">
                                 Texto
                             </Badge>
                         )}

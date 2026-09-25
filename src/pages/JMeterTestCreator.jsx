@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Container, Alert, Toast, ToastContainer } from 'react-bootstrap';
-import { FaInfoCircle, FaLightbulb } from 'react-icons/fa';
+import { Alert } from 'react-bootstrap';
+import { useToast } from '@c/ToastContext';
+import { FaLightbulb } from 'react-icons/fa';
 import TabNavigation from '@c/jmeterCreator/TabNavigation';
 import Preview from '@c/jmeterCreator/Preview';
 import { buildJmx, createDefaultRequest, parseJmxFile } from '@c/jmeterCreator/jmxUtils';
@@ -40,7 +41,7 @@ const JMeterTestCreator = () => {
     });
     const [requests, setRequests] = useState([]);
     const [showPreview, setShowPreview] = useState(false);
-    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
+    const { showToast } = useToast();
 
     // Sanea cada request removiendo o vaciando secciones con switch desactivado.
     const sanitizeRequest = (req) => {
@@ -111,7 +112,7 @@ const JMeterTestCreator = () => {
 
     const handleLoadJmx = async (file) => {
         try {
-            setToast({ show: true, message: 'Cargando archivo JMX...', variant: 'info' });
+            showToast('info', 'Cargando archivo JMX...');
             
             const config = await parseJmxFile(file);
             
@@ -121,26 +122,16 @@ const JMeterTestCreator = () => {
             // Actualizar requests
             setRequests(config.requests);
             
-            setToast({ 
-                show: true, 
-                message: `Archivo JMX cargado exitosamente. Se encontraron ${config.requests.length} peticiones HTTP.`, 
-                variant: 'success' 
-            });
+            showToast('success', `Archivo JMX cargado. Se encontraron ${config.requests.length} peticiones HTTP.`);
         } catch (error) {
-            console.error('Error al cargar JMX:', error);
-            setToast({ 
-                show: true, 
-                message: `Error al cargar el archivo: ${error.message}`, 
-                variant: 'danger' 
-            });
+            showToast('error', `Error al cargar el archivo: ${error.message}`);
         }
     };
 
     return (
-        <Container fluid className="mt-4">
-            <div className="d-flex align-items-center gap-2 mb-3">
-                <h3 className="mb-0">JMeter Test Creator</h3>
-                <FaInfoCircle className="text-muted" style={{ fontSize: '1.25rem' }} />
+        <>
+            <div className="titulo-seccion">
+                <h2>Pruebas de carga JMeter <span className="sub">{requests.length} peticiones HTTP</span></h2>
             </div>
             
             <Alert variant="info" className="mb-4">
@@ -153,7 +144,7 @@ const JMeterTestCreator = () => {
                 </p>
                 <ol className="mb-0 small">
                     <li>Configura <strong>General</strong>: nombre del plan y URL base</li>
-                    <li>Ajusta <strong>Threads</strong>: usuarios concurrentes y duración</li>
+                    <li>Ajusta <strong>Hilos</strong>: usuarios concurrentes y duración</li>
                     <li>Añade <strong>Peticiones HTTP</strong> con headers y parámetros</li>
                     <li>Opcional: configura <strong>CSV</strong>, <strong>Temporizadores</strong> y <strong>Listeners</strong></li>
                     <li>Genera y descarga el archivo <strong>.jmx</strong> completo</li>
@@ -178,26 +169,11 @@ const JMeterTestCreator = () => {
                 onClose={() => setShowPreview(false)}
                 jmx={jmx}
                 onDownload={downloadJmx}
-                onCopyXml={() => navigator.clipboard.writeText(jmx)}
+                onCopyXml={() => navigator.clipboard.writeText(jmx)
+                    .then(() => showToast('success', 'XML copiado al portapapeles'))
+                    .catch(() => showToast('error', 'No se pudo copiar el XML'))}
             />
-
-            <ToastContainer position="top-end" className="p-3">
-                <Toast 
-                    show={toast.show} 
-                    onClose={() => setToast({ ...toast, show: false })}
-                    delay={5000}
-                    autohide
-                    bg={toast.variant}
-                >
-                    <Toast.Header>
-                        <strong className="me-auto">JMeter Test Creator</strong>
-                    </Toast.Header>
-                    <Toast.Body className="text-white">
-                        {toast.message}
-                    </Toast.Body>
-                </Toast>
-            </ToastContainer>
-        </Container>
+        </>
     );
 };
 

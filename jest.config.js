@@ -1,6 +1,5 @@
 export default {
   testEnvironment: 'node',
-  globalTeardown: './tests/globalTeardown.js',
   preset: null,
   transform: {},
   moduleNameMapper: {
@@ -19,8 +18,6 @@ export default {
   verbose: true,
   forceExit: true,
   detectOpenHandles: true,
-  // Configuración para debugging
-  runInBand: true,
   detectLeaks: false,
   maxWorkers: 1
 };

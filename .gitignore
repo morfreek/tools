@@ -24,7 +24,8 @@ dist-ssr
 *.sw?
 
 *.sqlite
+*.sqlite.bak*
 .env
 
-*.yml
+coverage
 public/data/

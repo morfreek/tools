@@ -1,4 +1,4 @@
-import { Row, Col, Card, Badge, Button, ButtonGroup } from 'react-bootstrap';
+import { Card, Button } from 'react-bootstrap';
 import { FaEye, FaTrash } from 'react-icons/fa';
 import StatusBadge from '@c/StatusBadge';
 
@@ -10,57 +10,55 @@ const getStatusMetrics = (results) => {
     return counts;
 };
 
+// applied_at es una fecha sin hora (YYYY-MM-DD); se interpreta en hora local
+const formatDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CL', {
+    day: '2-digit', month: 'short', year: 'numeric',
+});
+
 export default function ReviewCards({ reviews, startReview, deleteReview }) {
     return (
-        <Row>
+        <div className="rejilla">
             {reviews.map(review => {
                 const metrics = getStatusMetrics(review.results);
                 const total = review.results.length;
                 return (
-                    <Col key={review.id} md={4} className="mb-4">
-                        <Card className="h-100 shadow-sm position-relative">
-                            <Button
-                                variant="link"
-                                size="sm"
-                                className="position-absolute p-1 text-danger"
-                                style={{ 
-                                    top: '8px', 
-                                    right: '8px', 
-                                    zIndex: 1,
-                                    border: 'none',
-                                    fontSize: '0.75rem',
-                                    opacity: 0.7
-                                }}
-                                onClick={() => deleteReview(review.id)}
-                                onMouseEnter={(e) => e.target.style.opacity = '1'}
-                                onMouseLeave={(e) => e.target.style.opacity = '0.7'}
-                            >
-                                <FaTrash />
-                            </Button>
-                            <Card.Body>
-                                <Card.Title>Revisión: {review.applied_at}</Card.Title>
-                                <div className="mb-3">
-                                    {Object.entries(metrics).map(([status, count]) => (
-                                        <StatusBadge
-                                            key={status}
-                                            status={status}
-                                            text={`: ${count} (${((count / total) * 100).toFixed(1)}%)`}
-                                        />
-                                    ))}
-                                </div>
+                    <Card key={review.id} className="h-100">
+                        <Card.Body className="d-flex flex-column">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                                <Card.Title as="h2" className="h6 fw-semibold mb-0">Revisión del {formatDate(review.applied_at)}</Card.Title>
                                 <Button
-                                    variant="primary"
+                                    variant="link"
+                                    size="sm"
+                                    className="accion accion-eliminar"
+                                    title="Eliminar revisión"
+                                    onClick={() => deleteReview(review.id)}
+                                >
+                                    <FaTrash />
+                                </Button>
+                            </div>
+                            <div className="d-flex flex-wrap gap-1 mb-3">
+                                {Object.entries(metrics).map(([status, count]) => (
+                                    <StatusBadge
+                                        key={status}
+                                        status={status}
+                                        text={`: ${count} (${((count / total) * 100).toFixed(1)}%)`}
+                                    />
+                                ))}
+                            </div>
+                            <div className="mt-auto">
+                                <Button
+                                    variant="outline-secondary"
                                     size="sm"
                                     className="d-inline-flex align-items-center"
                                     onClick={() => startReview(review)}
                                 >
-                                    <FaEye className="me-2" />Ver Detalle
+                                    <FaEye className="me-2" />Ver detalle
                                 </Button>
-                            </Card.Body>
-                        </Card>
-                    </Col>
+                            </div>
+                        </Card.Body>
+                    </Card>
                 );
             })}
-        </Row>
+        </div>
     );
 }

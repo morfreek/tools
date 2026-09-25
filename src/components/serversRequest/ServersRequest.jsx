@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
-import { Container, Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
+import { Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
 
 const ServersRequest = () => {
     const [templateLoaded, setTemplateLoaded] = useState(false);
@@ -35,7 +35,7 @@ const ServersRequest = () => {
     const [radioGroups, setRadioGroups] = useState({
         'tipo_ambiente': '', // testing, desarrollo, produccion, integracion
         'ip_publica': '', // si, no
-        // NUEVO: configuración de recursos y sistema operativo
+        // Configuración de recursos y sistema operativo
         'configuracion_recursos': '', // baja, media, alta
         'sistema_operativo': '' // windows, linux
     });
@@ -45,7 +45,7 @@ const ServersRequest = () => {
     const [customFields, setCustomFields] = useState([]);
     const [newFieldName, setNewFieldName] = useState('');
 
-    // NUEVO: opciones de instalación y selección múltiple
+    // Opciones de instalación y selección múltiple
     const INSTALL_OPTIONS = [
         {
             group: 'PHP',
@@ -74,7 +74,7 @@ const ServersRequest = () => {
                 { value: 'estructura_base_devel', label: 'Estructura base devel (https://sandbox.ucsc.cl/desarrollo/common/environment-config/base-devel)' }
             ]
         },
-        // NUEVO: Base de datos
+        // Base de datos
         {
             group: 'Base de datos',
             options: [
@@ -243,7 +243,8 @@ const ServersRequest = () => {
 
         // Intentar crear el documento con Docxtemplater
         try {
-            const doc = new Docxtemplater(zip, {
+            // Solo valida que la plantilla sea procesable
+            new Docxtemplater(zip, {
                 paragraphLoop: true,
                 linebreaks: true,
                 errorLogging: true,
@@ -326,7 +327,7 @@ const ServersRequest = () => {
                     instalacionChecks[`instalacion_${opt.value}_checked`] = sel ? 'X' : '';
                 });
             });
-            // NUEVO: fusionar texto libre + selecciones al campo "instalacion"
+            // Fusionar texto libre + selecciones al campo "instalacion"
             const mergedInstalacion = [String(formData.instalacion || '').trim(), instalacionBullets]
                 .filter(Boolean)
                 .join('\n');
@@ -359,10 +360,9 @@ const ServersRequest = () => {
                 instalacion_bullets: instalacionBullets,
                 instalacion_count: selectedInstalaciones.length,
                 ...instalacionChecks,
-                // NUEVO: sobrescribir "instalacion" con el merge
+                // Sobrescribir "instalacion" con el merge
                 instalacion: mergedInstalacion
             };
-            console.log(templateData)
 
             try {
                 doc.render(templateData);
@@ -486,7 +486,6 @@ const ServersRequest = () => {
                 { value: 'si', label: 'Si' },
                 { value: 'no', label: 'No' }
             ],
-            // NUEVO
             'configuracion_recursos': [
                 { value: 'baja', label: 'Baja' },
                 { value: 'media', label: 'Media' },
@@ -505,7 +504,6 @@ const ServersRequest = () => {
         const groupLabelMap = {
             'tipo_ambiente': 'Tipo de ambiente',
             'ip_publica': 'IP Pública',
-            // NUEVO
             'configuracion_recursos': 'Configuración de recursos',
             'sistema_operativo': 'Sistema operativo a utilizar'
         };
@@ -516,10 +514,12 @@ const ServersRequest = () => {
     const predefinedFields = Object.keys(formData).filter(key => !customFields.includes(key));
 
     return (
-        <Container fluid className="mt-4">
+        <>
+            <div className="titulo-seccion">
+                <h2>Solicitud de servidores <span className="sub">Máquinas virtuales UPT</span></h2>
+            </div>
             <Row className="mb-3">
                 <Col>
-                    <h3>Crear solicitud máquinas UPT</h3>
 
                     {/* Estado de la plantilla */}
                     <Card className="mb-4">
@@ -539,42 +539,12 @@ const ServersRequest = () => {
                             ) : templateError ? (
                                 <Alert variant="danger" className="mb-3">
                                     <strong>✗ Error al cargar plantilla:</strong>
-                                    <div className="mt-2 p-2 bg-light rounded">
+                                    <div className="mt-2 p-2 superficie rounded">
                                         <small className="text-danger">{templateError}</small>
                                     </div>
                                     <div className="mt-3">
-                                        <Button variant="outline-danger" size="sm" onClick={reloadTemplate} className="me-2">
+                                        <Button variant="outline-danger" size="sm" onClick={reloadTemplate}>
                                             Intentar recargar
-                                        </Button>
-                                        <Button 
-                                            variant="outline-info" 
-                                            size="sm" 
-                                            onClick={() => {
-                                                const debugInfo = {
-                                                    templateBuffer: templateBuffer ? `${templateBuffer.byteLength} bytes` : 'null',
-                                                    templateLoaded,
-                                                    templateError,
-                                                    templateSource,
-                                                    baseUrl: import.meta.env.VITE_BASE_URL,
-                                                    entorno: import.meta.env.MODE
-                                                };
-                                                
-                                                if (templateBuffer) {
-                                                    const uint8Array = new Uint8Array(templateBuffer);
-                                                    const firstBytes = Array.from(uint8Array.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-                                                    const textSample = new TextDecoder().decode(uint8Array.slice(0, 100));
-                                                    debugInfo.bufferInfo = {
-                                                        tamaño: templateBuffer.byteLength,
-                                                        primeros8Bytes: firstBytes,
-                                                        muestraTexto: textSample
-                                                    };
-                                                }
-                                                
-                                                console.log('=== INFORMACIÓN DE DEBUGGING ===', debugInfo);
-                                                alert('Revisa la consola del navegador para ver la información de debugging');
-                                            }}
-                                        >
-                                            Debug Info
                                         </Button>
                                     </div>
                                 </Alert>
@@ -719,7 +689,7 @@ const ServersRequest = () => {
                                                             onChange={(e) => handleInputChange(key, e.target.value)}
                                                             placeholder={`Ingresa ${getFieldLabel(key).toLowerCase()}`}
                                                         />
-                                                        {/* NUEVO: selector múltiple de tecnologías */}
+                                                        {/* Selector múltiple de tecnologías */}
                                                         <Form.Label className="mt-2">Seleccionar tecnologías:</Form.Label>
                                                         <Form.Select
                                                             multiple
@@ -819,7 +789,7 @@ const ServersRequest = () => {
                                         {customFields.length > 0 && (
                                             <div className="mt-3">
                                                 <small className="text-muted">Campos personalizados: </small>
-                                                {customFields.map((field, index) => (
+                                                {customFields.map((field) => (
                                                     <Badge key={field} bg="secondary" className="me-1">
                                                         {field}
                                                     </Badge>
@@ -835,7 +805,7 @@ const ServersRequest = () => {
                                         <h6 className="mb-0">Ejemplo de variables para "Tipo de ambiente"</h6>
                                     </Card.Header>
                                     <Card.Body>
-                                        <Alert variant="light" className="mb-0">
+                                        <Alert variant="secondary" className="mb-0">
                                             <small>
                                                 <strong>En tu plantilla Word puedes usar:</strong><br/>
                                                 Tipo de ambiente: Testing {'{tipo_ambiente_testing}'} Desarrollo {'{tipo_ambiente_desarrollo}'} Producción {'{tipo_ambiente_produccion}'} Integración {'{tipo_ambiente_integracion}'}<br/>
@@ -865,12 +835,12 @@ const ServersRequest = () => {
                             onClick={generateDocument}
                             disabled={!templateLoaded || isGenerating}
                         >
-                            {isGenerating ? 'Generando...' : 'Generar Documento'}
+                            {isGenerating ? 'Generando…' : 'Generar documento'}
                         </Button>
                     </div>
                 </Col>
             </Row>
-        </Container>
+        </>
     );
 };
 

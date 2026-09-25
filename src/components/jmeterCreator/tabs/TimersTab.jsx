@@ -91,7 +91,7 @@ const TimersTab = ({ value, onChange }) => {
                                 </Form.Group>
                             </Col>
                         </Row>
-                        <div className="mt-2 p-2 bg-light rounded small">
+                        <div className="mt-2 p-2 superficie rounded small">
                             <strong>Configuración:</strong> Entre {getTimerConfig('uniform').delay || 1000}ms y {(getTimerConfig('uniform').delay || 1000) + (getTimerConfig('uniform').range || 500)}ms
                         </div>
                     </Card.Body>
@@ -134,7 +134,7 @@ const TimersTab = ({ value, onChange }) => {
                                 </Form.Group>
                             </Col>
                         </Row>
-                        <div className="mt-2 p-2 bg-light rounded small">
+                        <div className="mt-2 p-2 superficie rounded small">
                             <strong>Configuración:</strong> {getTimerConfig('constant').delay || 1000}ms fijo
                         </div>
                     </Card.Body>
@@ -198,7 +198,7 @@ const TimersTab = ({ value, onChange }) => {
                                 </Form.Group>
                             </Col>
                         </Row>
-                        <div className="mt-2 p-2 bg-light rounded small">
+                        <div className="mt-2 p-2 superficie rounded small">
                             <strong>Configuración:</strong> Distribución gaussiana con media {getTimerConfig('gaussian').delay || 1000}ms y desviación {getTimerConfig('gaussian').deviation || 500}ms
                         </div>
                     </Card.Body>
@@ -264,7 +264,7 @@ const TimersTab = ({ value, onChange }) => {
                                 </Form.Group>
                             </Col>
                         </Row>
-                        <div className="mt-2 p-2 bg-light rounded small">
+                        <div className="mt-2 p-2 superficie rounded small">
                             <strong>Configuración:</strong> {getTimerConfig('constantThroughput').target || 1000} peticiones/minuto ({getTimerConfig('constantThroughput').calculation || 'this thread only'})
                         </div>
                     </Card.Body>
@@ -328,7 +328,7 @@ const TimersTab = ({ value, onChange }) => {
                                 </Form.Group>
                             </Col>
                         </Row>
-                        <div className="mt-2 p-2 bg-light rounded small">
+                        <div className="mt-2 p-2 superficie rounded small">
                             <strong>Configuración:</strong> Distribución de Poisson con delay base {getTimerConfig('poisson').delay || 1000}ms y lambda {getTimerConfig('poisson').lambda || 500}ms
                         </div>
                     </Card.Body>
