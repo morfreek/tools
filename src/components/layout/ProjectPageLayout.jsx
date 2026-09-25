@@ -3,13 +3,13 @@ import { useParams } from 'react-router-dom';
 import ProjectHeader from '@c/project/ProjectHeader';
 
 // Estructura común de las páginas /projects/:id/*: cabecera del proyecto (migas,
-// ficha, acciones y pestañas) y el contenido de la sección
-export default function ProjectPageLayout({ actions, children }) {
+// ficha y pestañas) y el contenido de la sección, que trae sus propias acciones
+export default function ProjectPageLayout({ children }) {
     const { id } = useParams();
 
     return (
         <>
-            <ProjectHeader projectId={id} actions={actions} />
+            <ProjectHeader projectId={id} />
             {children}
         </>
     );

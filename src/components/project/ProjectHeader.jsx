@@ -18,8 +18,9 @@ export const PROJECT_SECTIONS = [
 ];
 
 // Panel superior de las páginas de proyecto: migas con selector de proyecto,
-// ficha resumida, acciones de la sección y pestañas entre secciones.
-export default function ProjectHeader({ projectId, actions }) {
+// ficha resumida, editar proyecto y pestañas entre secciones. Las acciones de
+// cada sección van en su propio panel, no aquí.
+export default function ProjectHeader({ projectId }) {
     const { showToast } = useToast();
     const location = useLocation();
     const [project, setProject] = useState(null);
@@ -82,7 +83,6 @@ export default function ProjectHeader({ projectId, actions }) {
                     )}
                 </div>
                 <div className="d-flex align-items-center gap-2">
-                    {actions}
                     {project && !finished && (
                         <Button variant="link" size="sm" className="accion accion-editar" title="Editar proyecto" onClick={openEdit}>
                             <FaEdit />
