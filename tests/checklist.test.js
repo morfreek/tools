@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
-import { mockDb, resetMocks, mockChecklist, setupTestServer, getHttpClient } from './setup.js';
+import { mockDb, resetMocks, setupTestServer, getHttpClient } from './setup.js';
 
 describe('Checklist Endpoint', () => {
   let httpClient;

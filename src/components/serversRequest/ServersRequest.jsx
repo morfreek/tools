@@ -243,7 +243,8 @@ const ServersRequest = () => {
 
         // Intentar crear el documento con Docxtemplater
         try {
-            const doc = new Docxtemplater(zip, {
+            // Solo valida que la plantilla sea procesable
+            new Docxtemplater(zip, {
                 paragraphLoop: true,
                 linebreaks: true,
                 errorLogging: true,
@@ -786,7 +787,7 @@ const ServersRequest = () => {
                                         {customFields.length > 0 && (
                                             <div className="mt-3">
                                                 <small className="text-muted">Campos personalizados: </small>
-                                                {customFields.map((field, index) => (
+                                                {customFields.map((field) => (
                                                     <Badge key={field} bg="secondary" className="me-1">
                                                         {field}
                                                     </Badge>

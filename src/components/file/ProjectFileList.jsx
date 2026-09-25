@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FaDownload, FaTrash, FaPlus, FaFile, FaImage, FaRegFilePdf, FaFileWord, FaFileExcel } from 'react-icons/fa';
@@ -31,7 +31,6 @@ export default function ProjectFileList({
     show,
     onClose,
     className = '',
-    containerStyle = {},
     refreshKey
 }) {
     const { showToast } = useToast();

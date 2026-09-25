@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import axios from 'axios';
-import { startTestServer, stopTestServer, getServerUrl } from './test-server.js';
+import { startTestServer, stopTestServer } from './test-server.js';
 
 // Mock de la base de datos
 export const mockDb = {

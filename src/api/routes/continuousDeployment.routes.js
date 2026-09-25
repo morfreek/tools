@@ -12,16 +12,11 @@ const getConfigPath = (projectId) => {
 
 const ensureConfigFile = async (projectId) => {
     const configPath = getConfigPath(projectId);
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     try {
-        await fs.mkdir(path.dirname(configPath), { recursive: true });
-        try {
-            await fs.access(configPath);
-        } catch {
-            await fs.writeFile(configPath, JSON.stringify({ configs: [] }));
-        }
-    } catch (err) {
-        // console.error('Error ensuring config file:', err);
-        throw err;
+        await fs.access(configPath);
+    } catch {
+        await fs.writeFile(configPath, JSON.stringify({ configs: [] }));
     }
 };
 

@@ -3,18 +3,23 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "api": "node src/api/server.js",
+    "api:dev": "node --watch src/api/server.js",
     "test": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest",
     "test:watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --watch",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --coverage",
     "test:debug": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --inspect-brk=0.0.0.0:9229' jest --runInBand --no-cache",
     "test:debug-watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --inspect-brk=0.0.0.0:9229' jest --runInBand --no-cache --watch",
-    "test:verbose": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --verbose --no-coverage"
+    "test:verbose": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --verbose --no-coverage",
+    "validate": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "axios": "^1.9.0",

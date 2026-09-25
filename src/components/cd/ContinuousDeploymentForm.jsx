@@ -132,7 +132,7 @@ export default function ContinuousDeploymentForm({ projectId }) {
             return;
         }
 
-        if (config.deploy.env.hasOwnProperty(newEnvKey)) {
+        if (Object.hasOwn(config.deploy.env, newEnvKey)) {
             showToast('error', 'La variable ya existe');
             return;
         }

@@ -202,8 +202,8 @@ export default function ProjectReviews() {
         });
 
         // Aplicar estilos a todas las celdas
-        worksheet.eachRow((row, rowNumber) => {
-            row.eachCell((cell, colNumber) => {
+        worksheet.eachRow((row) => {
+            row.eachCell((cell) => {
                 // Bordes para todas las celdas
                 cell.border = {
                     top: { style: 'thin' },

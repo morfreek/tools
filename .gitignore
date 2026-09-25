@@ -26,5 +26,8 @@ dist-ssr
 *.sqlite
 .env
 
-*.yml
+# Plantillas CD locales (no son parte de la app)
+/cd*.yml
+
+coverage
 public/data/

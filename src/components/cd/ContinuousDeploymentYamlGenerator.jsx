@@ -72,15 +72,15 @@ stages:${isNodeEnabled ? '\n  - build_frontend' : ''}
 
 .deploy_env_vars: &deploy_env_vars |
   function update_env() {
-    local key="\$1"
-    local value="\$2"
-    awk -v k="\$key" -v v="\$value" '
+    local key="$1"
+    local value="$2"
+    awk -v k="$key" -v v="$value" '
       BEGIN{updated=0}
       $0 ~ "^"k"=" {
-        print k"=\\\""v"\\\""; updated=1; next
+        print k"=\\""v"\\""; updated=1; next
       }
       {print}
-      END{ if(!updated) print k"=\\\""v"\\\"" }
+      END{ if(!updated) print k"=\\""v"\\"" }
     ' .env > .env.tmp && mv .env.tmp .env
   }`;
 
