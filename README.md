@@ -138,7 +138,7 @@ Todas las rutas cuelgan de `/tools/api`. Las marcadas con ● rechazan cambios e
 
 ## Acceso
 
-Las rutas de Proyectos piden usuario y contraseña, pero la verificación ocurre **solo en el navegador** (`SessionContext`) y la API no exige autenticación. Sirve como barrera visual en la red interna, no como control de seguridad. Implementar autenticación real en la API es la deuda principal (ver `CONTEXTO_PROYECTO.md`).
+Las rutas de Proyectos piden usuario y contraseña, pero la verificación ocurre **solo en el navegador** (`SessionContext`) y la API no exige autenticación. Sirve como barrera visual en la red interna, no como control de seguridad. Implementar autenticación real en la API es la deuda principal (ver [Deuda conocida](#deuda-conocida)).
 
 ## Pruebas y CI
 
@@ -155,6 +155,16 @@ La interfaz usa la skill `estilo-personal`:
 - Hay tres temas (automático, claro y oscuro), que se rotan con el botón **Tema** y se recuerdan en `localStorage` (`tools:tema`).
 - Las confirmaciones usan `useDialog()` y los avisos, `useToast()`. No se usan `alert`, `confirm` ni `prompt` del navegador.
 - Todo color nuevo se define como token, con su valor claro y oscuro.
+
+## Deuda conocida
+
+En orden de prioridad, que es también la secuencia de mejora recomendada:
+
+1. **Autenticación real en la API**: hoy las credenciales están fijas en el frontend y cualquiera que llame a la API puede modificar datos.
+2. **Componentes grandes sin pruebas**: `ServersRequest.jsx`, `jmxUtils.jsx`, `RequestsTab.jsx` y `ContinuousDeploymentForm.jsx` (700 a 870 líneas cada uno) mezclan estado, lógica y UI. Extraer la lógica pura y probarla antes de dividirlos.
+3. **Pruebas de frontend** (Vitest + Testing Library), empezando por los flujos de Proyectos.
+4. **SQLite**: no hay migraciones formales. Además, una escritura suelta que llegue durante una transacción queda dentro de ella, porque la conexión es compartida (aceptable con el uso interno actual). Los archivos de hasta 10 MB se cargan completos en memoria y se guardan como BLOB.
+5. **Bundle de más de 500 kB**: dividirlo por ruta con `React.lazy` (JMeter, PHPStan y solicitud de servidores).
 
 ## Despliegue
 
