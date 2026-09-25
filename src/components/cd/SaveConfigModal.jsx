@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function SaveConfigModal({ show, onHide, onSave, loading = false, defaultName = '' }) {
     const [configName, setConfigName] = useState('');
@@ -33,16 +34,9 @@ export default function SaveConfigModal({ show, onHide, onSave, loading = false,
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide} disabled={loading} size="sm">
-                    Cancelar
-                </Button>
-                <Button 
-                    variant="primary" 
-                    onClick={handleSave} 
-                    disabled={!configName.trim() || loading}
-                    size="sm"
-                >
-                    {loading ? 'Guardando...' : 'Guardar'}
+                <CancelButton onClick={onHide} disabled={loading} />
+                <Button size="sm" onClick={handleSave} disabled={!configName.trim() || loading}>
+                    {loading ? 'Guardando…' : 'Guardar'}
                 </Button>
             </Modal.Footer>
         </Modal>

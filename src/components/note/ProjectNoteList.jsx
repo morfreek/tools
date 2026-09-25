@@ -4,7 +4,6 @@ import { es } from 'date-fns/locale';
 import { FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
 import {
     Button,
-    ButtonGroup,
     Placeholder,
     Container,
     Card,
@@ -126,12 +125,11 @@ export default function ProjectNoteList({
                         <Card.Title className="h5 mb-0">Notas del proyecto</Card.Title>
                         <div className="d-flex align-items-center gap-2">
                             <Button
-                                variant="outline-success"
                                 size="sm"
                                 className="d-inline-flex align-items-center"
                                 onClick={() => setShowCreateModal(true)}
                             >
-                                <FaPlus className="me-1" /> Nueva Nota
+                                <FaPlus className="me-1" /> Nueva nota
                             </Button>
                             {typeof onClose === 'function' && (
                                 <CloseButton onClick={onClose} />
@@ -146,24 +144,26 @@ export default function ProjectNoteList({
                                         "d 'de' MMMM 'de' yyyy, HH:mm",
                                         { locale: es })}
                                 </small>
-                                <ButtonGroup>
+                                <div className="text-nowrap">
                                     <Button
-                                        className="d-inline-flex align-items-center"
-                                        variant="outline-primary"
+                                        variant="link"
                                         size="sm"
+                                        className="accion accion-editar"
+                                        title="Editar nota"
                                         onClick={() => handleEdit(notes[currentNoteIndex])}
                                     >
                                         <FaEdit />
                                     </Button>
                                     <Button
-                                        className="d-inline-flex align-items-center"
-                                        variant="outline-danger"
+                                        variant="link"
                                         size="sm"
+                                        className="accion accion-eliminar"
+                                        title="Eliminar nota"
                                         onClick={() => handleDelete(notes[currentNoteIndex].id)}
                                     >
                                         <FaTrash />
                                     </Button>
-                                </ButtonGroup>
+                                </div>
                             </div>
                         </Container>
                     )}

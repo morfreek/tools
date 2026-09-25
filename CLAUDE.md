@@ -15,6 +15,7 @@ Ya aplicado. Reutilizar antes de crear:
 - `src/index.css` contiene lo específico de tools: `.toast-aviso`, `.aviso-info`, `.superficie` (en lugar de `bg-light`), `.fondo-panel` (en lugar de `bg-white`), `.codigo`/`.codigo-preview`, `.velo`, `.pestanas-plan`, `.phpstan-tabla`, `a.tarjeta` clicable, y el teñido con tokens de variantes de Bootstrap que el puente no cubre (`outline-*`, `success`, `info`, `warning`, list-group, accordion).
 - Tema: `useTheme` (`src/hooks/useTheme.jsx`), clave `tools:tema`; el script anti-destello está en `index.html`.
 - Diálogos: `useDialog()` (`src/components/DialogProvider.jsx`), nunca `alert/confirm/prompt`. Avisos: `useToast()`.
+- Pies de modales: Cancelar/Cerrar con `CancelButton` (`src/components/ui/`, enlace `size="sm"` como Salir) a la izquierda; acción principal `Button size="sm"` (primary, o `danger` si destruye) a la derecha, con verbo + objeto ("Crear nota", "Guardar revisión"); acciones intermedias en `outline-secondary`. Sin íconos en esos botones. Acciones de fila con solo ícono: `variant="link"` + `accion accion-editar|eliminar` y `title`.
 - Estructura: `Cabecera` (`src/components/layout/`), `<main className="contenido">` en `App.jsx`; las páginas de `/projects/:id/*` usan `ProjectPageLayout`.
 
 ## Node: usar la versión 22

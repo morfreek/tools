@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import Editor from 'react-simple-wysiwyg';
-import { FaSave, FaBan } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
 import { useDialog } from '@c/DialogProvider';
 import { createNote, updateNote } from '@/services/notes.service';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function ProjectNoteModal({ show, onClose, onSaved, projectId, note }) {
     const [content, setContent] = useState(note?.detail || '');
@@ -72,25 +72,9 @@ export default function ProjectNoteModal({ show, onClose, onSaved, projectId, no
                 />
             </Modal.Body>
             <Modal.Footer>
-                <Button
-                    variant="success"
-                    size="sm"
-                    className="d-inline-flex align-items-center"
-                    onClick={handleSave}
-                    disabled={loading}
-                >
-                    <FaSave className="me-2" />
-                    {note ? 'Actualizar' : 'Crear'}
-                </Button>
-                <Button
-                    variant="danger"
-                    size="sm"
-                    className="d-inline-flex align-items-center"
-                    onClick={handleClose}
-                    disabled={loading}
-                >
-                    <FaBan className="me-2" />
-                    Cancelar
+                <CancelButton onClick={handleClose} disabled={loading} />
+                <Button size="sm" onClick={handleSave} disabled={loading}>
+                    {loading ? 'Guardando…' : note ? 'Actualizar nota' : 'Crear nota'}
                 </Button>
             </Modal.Footer>
         </Modal>

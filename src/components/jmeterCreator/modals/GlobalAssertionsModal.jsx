@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Card, Row, Col, Alert, Badge } from 'react-bootstrap';
 import { FaCheckCircle, FaPlus, FaTimes, FaInfoCircle } from 'react-icons/fa';
+import CancelButton from '@c/ui/CancelButton';
 
 const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
     const [responseAssertions, setResponseAssertions] = useState([]);
@@ -235,8 +236,10 @@ const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
                                                     </Col>
                                                     <Col md={1}>
                                                         <Button
+                                                            variant="link"
                                                             size="sm"
-                                                            variant="outline-danger"
+                                                            className="accion accion-eliminar"
+                                                            title="Quitar assertion"
                                                             onClick={() => removeResponseAssertion(assertion.id)}
                                                         >
                                                             <FaTimes size={10} />
@@ -323,8 +326,10 @@ const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
                                                     </Col>
                                                     <Col md={2}>
                                                         <Button
+                                                            variant="link"
                                                             size="sm"
-                                                            variant="outline-danger"
+                                                            className="accion accion-eliminar"
+                                                            title="Quitar assertion"
                                                             onClick={() => removeJsonAssertion(assertion.id)}
                                                         >
                                                             <FaTimes size={10} />
@@ -348,28 +353,16 @@ const GlobalAssertionsModal = ({ show, onHide, onApply, requestsCount }) => {
             </Modal.Body>
             
             <Modal.Footer>
-                <div className="d-flex justify-content-between align-items-center w-100">
-                    <div>
-                        {totalAssertions > 0 && (
-                            <Badge bg="success" className="d-flex align-items-center gap-1">
-                                <FaCheckCircle size={12} />
-                                {totalAssertions} assertions configuradas
-                            </Badge>
-                        )}
-                    </div>
-                    <div className="d-flex gap-2">
-                        <Button variant="secondary" onClick={onHide}>
-                            Cancelar
-                        </Button>
-                        <Button 
-                            variant="primary" 
-                            onClick={handleApply}
-                            disabled={totalAssertions === 0}
-                        >
-                            Aplicar a {requestsCount} peticiones
-                        </Button>
-                    </div>
-                </div>
+                {totalAssertions > 0 && (
+                    <Badge bg="success" className="d-flex align-items-center gap-1 me-auto">
+                        <FaCheckCircle size={12} />
+                        {totalAssertions} assertions configuradas
+                    </Badge>
+                )}
+                <CancelButton onClick={onHide} />
+                <Button size="sm" onClick={handleApply} disabled={totalAssertions === 0}>
+                    Aplicar a {requestsCount} peticiones
+                </Button>
             </Modal.Footer>
         </Modal>
     );

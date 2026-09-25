@@ -102,10 +102,11 @@ export default function EnvVariableRow({
                 <div className="pt-1">
                     {canRemove ? (
                         <Button
+                            variant="link"
                             size="sm"
-                            variant="outline-danger"
+                            className="accion accion-eliminar"
+                            title="Eliminar variable"
                             onClick={() => onRemove(envKey)}
-                            className="d-inline-flex align-items-center justify-content-center"
                             style={{ width: '31px', height: '31px' }}
                         >
                             <FaTrash />

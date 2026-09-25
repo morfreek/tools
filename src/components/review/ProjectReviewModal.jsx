@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Accordion, Row, Col } from 'react-bootstrap';
-import { FaSave, FaBan } from 'react-icons/fa';
 import Editor from 'react-simple-wysiwyg';
 import { STATUS_OPTIONS } from '@u/Constants';
 import { useDialog } from '@c/DialogProvider';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function ProjectReviewModal({ visible, checklist, form, setForm, onClose, onSave }) {
     const [initialForm, setInitialForm] = useState(null);
@@ -155,26 +155,12 @@ export default function ProjectReviewModal({ visible, checklist, form, setForm, 
             <Modal.Footer>
                 {hasChanges && (
                     <small className="text-warning me-auto">
-                        * Hay cambios sin guardar
+                        Hay cambios sin guardar
                     </small>
                 )}
-                <Button
-                    variant="success"
-                    size="sm"
-                    className="d-inline-flex align-items-center"
-                    onClick={onSave}
-                >
-                    <FaSave className="me-2" />
-                    Guardar Revisión
-                </Button>
-                <Button
-                    variant="danger"
-                    size="sm"
-                    className="d-inline-flex align-items-center"
-                    onClick={handleClose}
-                >
-                    <FaBan className="me-2" />
-                    Cancelar
+                <CancelButton onClick={handleClose} />
+                <Button size="sm" onClick={onSave}>
+                    Guardar revisión
                 </Button>
             </Modal.Footer>
         </Modal>

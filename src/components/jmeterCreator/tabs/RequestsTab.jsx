@@ -694,8 +694,10 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                                             </Col>
                                                             <Col md={1}>
                                                                 <Button
+                                                                    variant="link"
                                                                     size="sm"
-                                                                    variant="outline-danger"
+                                                                    className="accion accion-eliminar"
+                                                                    title="Quitar assertion"
                                                                     onClick={() => handlers.removeResponseAssertion(assertion.id)}
                                                                 >
                                                                     <FaTimes size={10} />
@@ -774,8 +776,10 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                                                             </Col>
                                                             <Col md={2}>
                                                                 <Button
+                                                                    variant="link"
                                                                     size="sm"
-                                                                    variant="outline-danger"
+                                                                    className="accion accion-eliminar"
+                                                                    title="Quitar assertion"
                                                                     onClick={() => handlers.removeJsonAssertion(assertion.id)}
                                                                 >
                                                                     <FaTimes size={10} />
@@ -825,7 +829,7 @@ const RequestCard = memo(({ req, index, handlers, renderTooltip, tooltipProps })
                     </Alert>
                 </Modal.Body>
                 <Modal.Footer className="pt-1 pb-2">
-                    <Button variant="danger" size="sm" onClick={() => setShowJsonHelp(false)}>
+                    <Button size="sm" onClick={() => setShowJsonHelp(false)}>
                         Entendido
                     </Button>
                 </Modal.Footer>

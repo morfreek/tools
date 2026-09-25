@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import CancelButton from '@c/ui/CancelButton';
 
 const Preview = ({ show, onClose, jmx, onDownload, onCopyXml }) => (
     <Modal show={show} onHide={onClose} fullscreen scrollable>
@@ -17,9 +18,7 @@ const Preview = ({ show, onClose, jmx, onDownload, onCopyXml }) => (
             />
         </Modal.Body>
         <Modal.Footer>
-            <Button variant="secondary" size="sm" onClick={onClose}>
-                Cerrar
-            </Button>
+            <CancelButton onClick={onClose}>Cerrar</CancelButton>
             <Button variant="outline-secondary" size="sm" onClick={onCopyXml}>
                 Copiar XML
             </Button>

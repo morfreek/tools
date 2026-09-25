@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
-import { FaUpload, FaFileUpload } from 'react-icons/fa';
+import { FaFileUpload } from 'react-icons/fa';
+import CancelButton from '@c/ui/CancelButton';
 
 export default function LoadEnvModal({ show, onHide, onLoadEnvVariables }) {
     const [envContent, setEnvContent] = useState('');
@@ -150,17 +151,9 @@ DB_DATABASE=mi_base_datos`}
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={handleClose} size="sm">
-                    Cancelar
-                </Button>
-                <Button 
-                    variant="primary" 
-                    onClick={handleLoad} 
-                    size="sm"
-                    disabled={!envContent.trim()}
-                >
-                    <FaUpload className="me-1" />
-                    Cargar Variables
+                <CancelButton onClick={handleClose} />
+                <Button size="sm" onClick={handleLoad} disabled={!envContent.trim()}>
+                    Cargar variables
                 </Button>
             </Modal.Footer>
         </Modal>

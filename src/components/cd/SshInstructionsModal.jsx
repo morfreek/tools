@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
+import CancelButton from '@c/ui/CancelButton';
 
 const SshInstructionsModal = ({ show, onHide }) => (
     <Modal show={show} onHide={onHide} size="xl" fullscreen="xl-down">
@@ -31,9 +32,7 @@ $ chmod 600 ~/.ssh/authorized_keys`}
             </div>
         </Modal.Body>
         <Modal.Footer>
-            <Button variant="secondary" size="sm" onClick={onHide}>
-                Cerrar
-            </Button>
+            <CancelButton onClick={onHide}>Cerrar</CancelButton>
         </Modal.Footer>
     </Modal>
 );

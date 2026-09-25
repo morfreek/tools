@@ -3,6 +3,7 @@ import { Modal, Button, Form, Dropdown } from 'react-bootstrap';
 import { FaChevronDown } from 'react-icons/fa';
 import { useToast } from '@c/ToastContext';
 import { saveProject } from '@/services/projects.service';
+import CancelButton from '@c/ui/CancelButton';
 
 const EMPTY_PROJECT = {
     id: null,
@@ -134,11 +135,9 @@ export default function ProjectModal({ show, onClose, onSaved, formData: initial
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button variant="link" className="text-secondary" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit">
-                        {editing ? 'Actualizar' : 'Crear'}
+                    <CancelButton onClick={onClose} />
+                    <Button type="submit" size="sm">
+                        {editing ? 'Actualizar proyecto' : 'Crear proyecto'}
                     </Button>
                 </Modal.Footer>
             </Form>
