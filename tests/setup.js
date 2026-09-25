@@ -15,12 +15,17 @@ jest.unstable_mockModule('../src/api/db.js', () => ({
   openDb: jest.fn(() => Promise.resolve(mockDb))
 }));
 
-// Helper para resetear mocks
+// Proyecto activo: respuesta por defecto de la consulta de validateActiveProject
+export const ACTIVE_PROJECT = { termination_date: null };
+
+// Helper para resetear mocks. mockReset descarta también las implementaciones,
+// para que un mockRejectedValue de un test no se filtre al siguiente.
+// db.get responde por defecto un proyecto activo; cada test puede sobrescribirlo.
 export const resetMocks = () => {
-  mockDb.all.mockClear();
-  mockDb.get.mockClear();
-  mockDb.run.mockClear();
-  mockDb.exec.mockClear();
+  mockDb.all.mockReset();
+  mockDb.get.mockReset().mockResolvedValue(ACTIVE_PROJECT);
+  mockDb.run.mockReset();
+  mockDb.exec.mockReset();
 };
 
 // Helper para resetear mocks del sistema de archivos
@@ -31,76 +36,24 @@ export const resetFsMocks = (mockFs) => {
   if (mockFs.access) mockFs.access.mockClear();
 };
 
-// Cliente HTTP para tests
-export let httpClient;
+// Cliente HTTP para tests. validateStatus acepta cualquier código para
+// que cada test verifique el status esperado.
+export let httpClient = null;
 
-// Variable global para controlar el servidor
-let serverInstance = null;
-let serverStartPromise = null;
-let setupCount = 0;
-
-// Setup global para todos los tests
+// Cada suite levanta su servidor en beforeAll y lo cierra en afterAll
 export const setupTestServer = async () => {
-  setupCount++;
-  
-  // Si ya hay un servidor iniciándose, esperar a que termine
-  if (serverStartPromise) {
-    await serverStartPromise;
-    return;
-  }
-
-  // Si ya hay un servidor activo, solo crear el cliente
-  if (serverInstance) {
-    if (!httpClient) {
-      httpClient = axios.create({
-        baseURL: serverInstance,
-        timeout: 10000,
-        validateStatus: () => true
-      });
-    }
-    return;
-  }
-
-  // Iniciar servidor solo si no existe
-  serverStartPromise = startTestServer();
-  try {
-    serverInstance = await serverStartPromise;
-    httpClient = axios.create({
-      baseURL: serverInstance,
-      timeout: 10000,
-      validateStatus: () => true
-    });
-  } finally {
-    serverStartPromise = null;
-  }
+  const baseURL = await startTestServer();
+  httpClient = axios.create({ baseURL, timeout: 10000, validateStatus: () => true });
 };
 
 export const teardownTestServer = async () => {
-  setupCount--;
-  // Solo cerrar cuando no haya más test suites activos
-  if (setupCount <= 0 && serverInstance) {
-    await stopTestServer();
-    serverInstance = null;
-    httpClient = null;
-    setupCount = 0;
-  }
+  await stopTestServer();
+  httpClient = null;
 };
 
-// Función para obtener el cliente HTTP (crear si no existe)
 export const getHttpClient = async () => {
-  if (!httpClient) {
-    await setupTestServer();
-  }
+  if (!httpClient) await setupTestServer();
   return httpClient;
-};
-
-// Global teardown para Jest
-export const globalTeardown = async () => {
-  if (serverInstance) {
-    await stopTestServer();
-    serverInstance = null;
-    httpClient = null;
-  }
 };
 
 // Mock data común

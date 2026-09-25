@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
 import { mockDb, resetMocks, setupTestServer, teardownTestServer, getHttpClient } from './setup.js';
 
 describe('Reviews Endpoints', () => {

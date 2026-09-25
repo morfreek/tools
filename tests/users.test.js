@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
-import { mockDb, resetMocks, mockUsers, setupTestServer, getHttpClient } from './setup.js';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
+import { mockDb, resetMocks, mockUsers, setupTestServer, teardownTestServer, getHttpClient } from './setup.js';
 
 describe('Users Endpoints', () => {
   let httpClient;
@@ -8,6 +8,10 @@ describe('Users Endpoints', () => {
     await setupTestServer();
     httpClient = await getHttpClient();
   }, 30000);
+
+  afterAll(async () => {
+    await teardownTestServer();
+  });
 
   beforeEach(() => {
     resetMocks();

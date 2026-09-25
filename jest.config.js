@@ -1,6 +1,5 @@
 export default {
   testEnvironment: 'node',
-  globalTeardown: './tests/globalTeardown.js',
   preset: null,
   transform: {},
   moduleNameMapper: {
