@@ -72,35 +72,3 @@ export const mockProjects = [
     developer_names: ['Ana García']
   }
 ];
-
-export const mockChecklist = [
-  {
-    id: 1,
-    name: 'Aspecto 1',
-    points: [
-      { id: 1, aspect_id: 1, description: 'Punto 1' }
-    ]
-  }
-];
-
-// Mock data para notas
-export const mockNotes = [
-  {
-    id: 1,
-    project_id: 1,
-    detail: 'Nota de prueba',
-    created_at: '2024-01-01T10:00:00Z'
-  }
-];
-
-// Mock data para configuraciones
-export const mockConfigs = [
-  {
-    name: 'desarrollo',
-    config: { database_url: 'localhost', debug: true }
-  },
-  {
-    name: 'produccion',
-    config: { database_url: 'prod.server.com', debug: false }
-  }
-];
