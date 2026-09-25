@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
+// Vite la copia a dist/assets con hash y resuelve la URL con el base /tools/
+import defaultTemplateUrl from '@/assets/templates/formulariosolicitudmaquina.docx?url';
 import { Row, Col, Form, Button, Card, Alert, Badge } from 'react-bootstrap';
 
 const ServersRequest = () => {
@@ -107,16 +109,13 @@ const ServersRequest = () => {
         loadDefaultTemplate();
     }, []);
 
-    // Función para cargar template desde public
+    // Cargar la plantilla incluida en el build
     const loadDefaultTemplate = async () => {
         try {
             setTemplateError('');
             setTemplateSource('default');
             
-            const baseUrl = import.meta.env.VITE_BASE_URL || '/tools';
-            const templatePath = `${baseUrl}/data/docs/template/formulariosolicitudmaquina.docx`;
-            
-            const response = await fetch(templatePath);
+            const response = await fetch(defaultTemplateUrl);
             
             if (!response.ok) {
                 throw new Error(`No se pudo cargar la plantilla: ${response.status} - ${response.statusText}`);
@@ -127,12 +126,7 @@ const ServersRequest = () => {
             await processTemplateBuffer(arrayBuffer);
             
         } catch (err) {
-            setTemplateError(`No se pudo cargar la plantilla por defecto. 
-                Error: ${err.message}
-                
-                Soluciones:
-                1. Asegúrate de que el archivo existe en: /var/www/html/private/apps/tools/public/data/docs/template/formulariosolicitudmaquina.docx
-                2. Sube tu propia plantilla usando el botón "Subir Plantilla"`);
+            setTemplateError(`No se pudo cargar la plantilla por defecto (${err.message}). Recarga la página o sube una plantilla en "Plantilla personalizada".`);
             setTemplateLoaded(false);
         }
     };
@@ -533,7 +527,7 @@ const ServersRequest = () => {
                                     <small className="text-muted">
                                         Tamaño: {templateBuffer ? `${(templateBuffer.byteLength / 1024).toFixed(1)} KB` : 'Desconocido'}
                                         {templateSource === 'uploaded' && ' (archivo subido)'}
-                                        {templateSource === 'default' && ' (desde public)'}
+                                        {templateSource === 'default' && ' (incluida en la app)'}
                                     </small>
                                 </Alert>
                             ) : templateError ? (

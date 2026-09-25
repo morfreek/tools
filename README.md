@@ -88,6 +88,7 @@ src/
   services/                Llamadas a la API, un módulo por recurso
   hooks/                   useProjects, useTheme, useJMeterGenerator, useBreadcrumb
   utils/                   Constantes (estados de revisión), búsqueda sin tildes, exportación Excel
+  assets/                  favicon.svg y templates/ (plantilla DOCX de solicitud de servidores)
   styles/                  base.css y bootstrap-bridge.css del sistema visual
   api/
     server.js              App Express: monta routers bajo /tools/api y el manejador de errores
