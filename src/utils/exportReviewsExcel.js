@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { getStatus } from '@u/Constants';
+import { parseHtml } from '@u/html';
 
 // Exporta las revisiones de un proyecto a Excel, agrupadas por aspecto y fecha.
 // Se genera en el navegador y se descarga como revisiones_tecnicas.xlsx.
@@ -14,10 +15,9 @@ export async function exportReviewsExcel(checklist, reviews) {
     const htmlToRichText = (html) => {
         if (!html) return '';
         
-        // Crear un elemento temporal para parsear el HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        
+        // DOMParser no ejecuta atributos como onerror del HTML de usuario
+        const tempDiv = parseHtml(html);
+
         const richTextArray = [];
         
         // Función recursiva para procesar nodos y crear rich text
