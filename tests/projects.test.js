@@ -31,6 +31,9 @@ describe('Projects Endpoints', () => {
       expect(response.data[0].developer_names).toEqual(['Ana García']);
       // Desarrolladores de todos los proyectos en una sola consulta (sin N+1)
       expect(mockDb.all).toHaveBeenCalledTimes(2);
+      // Última revisión y total de revisiones en la misma consulta del listado
+      expect(mockDb.all.mock.calls[0][0]).toContain('AS last_review_at');
+      expect(mockDb.all.mock.calls[0][0]).toContain('AS review_count');
     });
 
     it('debe solicitar proyectos finalizados cuando se indica el estado', async () => {

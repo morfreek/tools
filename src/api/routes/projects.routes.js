@@ -56,8 +56,11 @@ router.get('/projects', async (req, res) => {
     }
 
     const db = await openDb();
+    // last_review_at y review_count alimentan el panel de trabajo del Inicio
     const projects = await db.all(`
-        SELECT p.id, p.name, p.code, p.coordinator_id, p.termination_date
+        SELECT p.id, p.name, p.code, p.coordinator_id, p.termination_date,
+            (SELECT MAX(r.applied_at) FROM project_reviews r WHERE r.project_id = p.id) AS last_review_at,
+            (SELECT COUNT(*) FROM project_reviews r WHERE r.project_id = p.id) AS review_count
         FROM projects p
         JOIN users u ON p.coordinator_id = u.id
         WHERE ${condition}
