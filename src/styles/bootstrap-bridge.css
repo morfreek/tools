@@ -107,6 +107,17 @@ a, .btn-link { color: var(--acento); }
 }
 .btn-close { filter: var(--cierre-filtro); }
 
+/* Foco de teclado: Bootstrap pinta el botón enfocado con sus colores de hover y un halo
+   con rgb fijos (su azul, gris o rojo). Aquí el botón conserva su aspecto y el halo usa
+   los tokens. Importa en los diálogos, que abren con el foco en Aceptar o Cancelar. */
+.btn { --bs-btn-focus-box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 35%, transparent); }
+.btn-danger { --bs-btn-focus-box-shadow: 0 0 0 3px color-mix(in srgb, var(--rojo) 35%, transparent); }
+.btn:not(.accion):focus-visible:not(:hover) {
+  color: var(--bs-btn-color);
+  background-color: var(--bs-btn-bg);
+  border-color: var(--bs-btn-border-color);
+}
+
 /* Acciones de fila con color distintivo: <Button variant="link" size="sm" className="accion accion-editar">
    probar = verificación (verde), consultar = herramienta aparte (violeta),
    editar = acción habitual (acento), eliminar = destructiva (rojo). */

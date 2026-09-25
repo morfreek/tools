@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col, Accordion, Modal, Badge } from 'react-bootstrap';
-import { FaPlus, FaQuestionCircle, FaCopy, FaExternalLinkAlt, FaKey } from 'react-icons/fa';
+import { FaPlus, FaQuestionCircle, FaExternalLinkAlt, FaKey } from 'react-icons/fa';
 import { CodePreview } from '@u/CodePreview';
 import { useToast } from '@c/ToastContext';
 import { useDialog } from '@c/DialogProvider';
@@ -710,15 +710,10 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                         <CodePreview content={yamlContent} />
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button
-                            size="sm"
-                            variant="outline-secondary"
-                            onClick={handleCopyToClipboard}
-                            className="d-inline-flex align-items-center me-auto"
-                        >
-                            <FaCopy className="me-1" /> Copiar al portapapeles
+                        <CancelButton onClick={() => setShowPreview(false)} className="me-auto">Cerrar</CancelButton>
+                        <Button size="sm" variant="outline-secondary" onClick={handleCopyToClipboard}>
+                            Copiar al portapapeles
                         </Button>
-                        <CancelButton onClick={() => setShowPreview(false)}>Cerrar</CancelButton>
                         <Button size="sm" variant="outline-secondary" onClick={handleDownload}>
                             Descargar .gitlab-ci.yml
                         </Button>
