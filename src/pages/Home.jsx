@@ -111,11 +111,12 @@ function PanelRevisiones() {
 }
 
 export default function Home() {
-    const { authenticated } = useSession();
-    // Sin sesión no se muestran nombres de proyectos, ni siquiera los recientes
+    const { authenticated, account } = useSession();
+    // Los proyectos recientes son solo los de la cuenta de la sesión (el navegador puede
+    // compartirse); sin sesión no se muestran nombres de proyectos
     const recientes = useMemo(
-        () => readRecent().filter((r) => authenticated || r.type !== 'proyecto'),
-        [authenticated]
+        () => readRecent().filter((r) => r.type !== 'proyecto' || (authenticated && r.account === account?.id)),
+        [authenticated, account?.id]
     );
 
     return (

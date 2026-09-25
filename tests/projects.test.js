@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
-import { mockDb, resetMocks, mockProjects, setupTestServer, teardownTestServer, getHttpClient } from './setup.js';
+import { mockDb, resetMocks, mockProjects, setupTestServer, teardownTestServer, getHttpClient, ACTIVE_PROJECT } from './setup.js';
 
 describe('Projects Endpoints', () => {
   let httpClient;
@@ -63,7 +63,7 @@ describe('Projects Endpoints', () => {
 
   describe('GET /tools/api/projects/:id', () => {
     it('debe retornar detalle de proyecto existente', async () => {
-      const projectDetail = { id: 1, name: 'Proyecto A', code: 'PROJ-A', coordinator_id: 1 };
+      const projectDetail = { id: 1, name: 'Proyecto A', code: 'PROJ-A', coordinator_id: 1, owner_account_id: 1 };
       const developers = [{ id: 2, name: 'Ana García' }];
 
       mockDb.get.mockResolvedValue(projectDetail);
@@ -159,7 +159,7 @@ describe('Projects Endpoints', () => {
     const updateData = { name: 'P', code: 'P-1', coordinator_id: 1, developer_ids: [] };
 
     it('debe rechazar modificaciones en un proyecto finalizado', async () => {
-      mockDb.get.mockResolvedValueOnce({ termination_date: '2026-07-01T12:00:00.000Z' });
+      mockDb.get.mockResolvedValueOnce({ ...ACTIVE_PROJECT, termination_date: '2026-07-01T12:00:00.000Z' });
 
       const response = await httpClient.put('/tools/api/projects/1', updateData);
 
@@ -180,7 +180,7 @@ describe('Projects Endpoints', () => {
 
   describe('PATCH /tools/api/projects/:id/terminate', () => {
     it('debe finalizar un proyecto activo', async () => {
-      mockDb.get.mockResolvedValueOnce({ id: 1, name: 'Proyecto A', termination_date: null });
+      mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT);
       mockDb.run.mockResolvedValue({ changes: 1 });
 
       const response = await httpClient.patch('/tools/api/projects/1/terminate');
@@ -191,7 +191,7 @@ describe('Projects Endpoints', () => {
     });
 
     it('debe rechazar un proyecto ya finalizado', async () => {
-      mockDb.get.mockResolvedValueOnce({ id: 1, name: 'Proyecto A', termination_date: '2026-07-01T12:00:00.000Z' });
+      mockDb.get.mockResolvedValueOnce({ ...ACTIVE_PROJECT, termination_date: '2026-07-01T12:00:00.000Z' });
 
       const response = await httpClient.patch('/tools/api/projects/1/terminate');
 

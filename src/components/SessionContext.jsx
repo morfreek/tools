@@ -1,37 +1,49 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { SESSION_EXPIRED_EVENT } from '@/api';
+import * as authService from '@/services/auth.service';
 
-// Acceso solo visual (sin validación en la API): credenciales fijas del frontend.
-// Deuda conocida; ver CONTEXTO_PROYECTO.md.
-const USER = 'admin';
-const PASS = '1234';
-const SESSION_KEY = 'authenticated';
-
-const readSession = () => {
-    try {
-        return sessionStorage.getItem(SESSION_KEY) === 'true';
-    } catch {
-        return false;
-    }
-};
-
+// Sesión real: la API guarda la sesión y el navegador solo una cookie httpOnly.
+// account = null sin sesión; loading mientras se consulta /auth/me al abrir la app.
 const SessionContext = createContext(null);
 
 export const SessionProvider = ({ children }) => {
-    const [authenticated, setAuthenticated] = useState(readSession);
+    const [account, setAccount] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const login = useCallback((user, pass) => {
-        if (user !== USER || pass !== PASS) return false;
-        try { sessionStorage.setItem(SESSION_KEY, 'true'); } catch { /* sin almacenamiento */ }
-        setAuthenticated(true);
-        return true;
+    useEffect(() => {
+        authService.getCurrentAccount()
+            .then(setAccount)
+            .catch(() => setAccount(null))
+            .finally(() => setLoading(false));
+
+        const expire = () => setAccount(null);
+        window.addEventListener(SESSION_EXPIRED_EVENT, expire);
+        return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expire);
     }, []);
 
-    const logout = useCallback(() => {
-        try { sessionStorage.removeItem(SESSION_KEY); } catch { /* sin almacenamiento */ }
-        setAuthenticated(false);
+    // Rechaza con el error de axios para que la pantalla muestre el motivo
+    const login = useCallback(async (username, password) => {
+        setAccount(await authService.login(username, password));
     }, []);
 
-    const value = useMemo(() => ({ authenticated, login, logout }), [authenticated, login, logout]);
+    const logout = useCallback(async () => {
+        try { await authService.logout(); } catch { /* la sesión se descarta igual */ }
+        setAccount(null);
+    }, []);
+
+    const changePassword = useCallback(async (current, next) => {
+        setAccount(await authService.changePassword(current, next));
+    }, []);
+
+    const value = useMemo(() => ({
+        account,
+        loading,
+        authenticated: Boolean(account) && !account.must_change_password,
+        isAdmin: account?.role === 'admin',
+        login,
+        logout,
+        changePassword,
+    }), [account, loading, login, logout, changePassword]);
 
     return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 };

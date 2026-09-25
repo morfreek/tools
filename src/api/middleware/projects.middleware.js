@@ -1,27 +1,30 @@
 import { openDb } from '../db.js';
 
-// Bloquea modificaciones en proyectos finalizados (termination_date no nulo)
-export const validateActiveProject = async (req, res, next) => {
-    const projectId = req.params.id;
-    if (!projectId) return next();
+// Toda ruta /projects/:id/... pasa por aquí: el proyecto debe existir y pertenecer a la
+// cuenta de la sesión. Un proyecto ajeno responde 404, igual que uno inexistente, para
+// no revelar qué proyectos existen. Deja el proyecto en req.project.
+export const requireProjectAccess = async (req, res, next) => {
+    const db = await openDb();
+    const project = await db.get(
+        'SELECT id, termination_date, owner_account_id FROM projects WHERE id = ?',
+        [req.params.id]
+    );
 
-    try {
-        const db = await openDb();
-        const project = await db.get(
-            'SELECT termination_date FROM projects WHERE id = ?',
-            [projectId]
-        );
-
-        if (!project) {
-            return res.status(404).json({ error: 'Proyecto no encontrado' });
-        }
-
-        if (project.termination_date !== null) {
-            return res.status(400).json({ error: 'No se pueden realizar modificaciones en un proyecto finalizado' });
-        }
-    } catch {
-        return res.status(500).json({ error: 'Error al validar el proyecto' });
+    if (!project || project.owner_account_id !== req.account.id) {
+        return res.status(404).json({ error: 'Proyecto no encontrado' });
     }
+    req.project = project;
+    next();
+};
 
+// Bloquea modificaciones en proyectos finalizados (termination_date no nulo).
+// Usa el proyecto que cargó requireProjectAccess.
+export const validateActiveProject = (req, res, next) => {
+    if (!req.project) {
+        return res.status(404).json({ error: 'Proyecto no encontrado' });
+    }
+    if (req.project.termination_date !== null && req.project.termination_date !== undefined) {
+        return res.status(400).json({ error: 'No se pueden realizar modificaciones en un proyecto finalizado' });
+    }
     next();
 };

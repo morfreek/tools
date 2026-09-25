@@ -63,9 +63,9 @@ router.get('/projects', async (req, res) => {
             (SELECT COUNT(*) FROM project_reviews r WHERE r.project_id = p.id) AS review_count
         FROM projects p
         JOIN users u ON p.coordinator_id = u.id
-        WHERE ${condition}
+        WHERE ${condition} AND p.owner_account_id = ?
         ORDER BY p.name
-    `);
+    `, [req.account.id]);
 
     const developers = await getDevelopersByProject(db, projects.map((p) => p.id));
     for (const project of projects) {
@@ -109,8 +109,8 @@ router.post('/projects', async (req, res) => {
     try {
         const projectId = await withTransaction(db, async () => {
             const result = await db.run(
-                'INSERT INTO projects (name, code, coordinator_id) VALUES (?, ?, ?)',
-                [data.name, data.code, data.coordinator_id]
+                'INSERT INTO projects (name, code, coordinator_id, owner_account_id) VALUES (?, ?, ?, ?)',
+                [data.name, data.code, data.coordinator_id, req.account.id]
             );
             await replaceDevelopers(db, result.lastID, data.developer_ids);
             return result.lastID;
@@ -150,16 +150,8 @@ router.patch('/projects/:id/terminate', async (req, res) => {
 
     try {
         const db = await openDb();
-        const project = await db.get(
-            'SELECT id, name, termination_date FROM projects WHERE id = ?',
-            [projectId]
-        );
-
-        if (!project) {
-            return res.status(404).json({ error: 'Proyecto no encontrado' });
-        }
-
-        if (project.termination_date !== null) {
+        // requireProjectAccess ya verificó que existe y es de la cuenta
+        if (req.project.termination_date !== null) {
             return res.status(400).json({ error: 'El proyecto ya está finalizado' });
         }
 
@@ -181,6 +173,23 @@ router.patch('/projects/:id/terminate', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error al finalizar el proyecto' });
     }
+});
+
+// PATCH /projects/:id/owner - transferir el proyecto a otra cuenta activa (deja de verse aquí)
+router.patch('/projects/:id/owner', async (req, res) => {
+    const targetId = Number(req.body?.account_id);
+    if (!targetId || targetId === req.account.id) {
+        return res.status(400).json({ error: 'Debe indicar otra cuenta de destino' });
+    }
+
+    const db = await openDb();
+    const target = await db.get('SELECT id, name FROM accounts WHERE id = ? AND active = 1', [targetId]);
+    if (!target) {
+        return res.status(400).json({ error: 'La cuenta de destino no existe o está desactivada' });
+    }
+
+    await db.run('UPDATE projects SET owner_account_id = ? WHERE id = ?', [targetId, req.params.id]);
+    res.json({ message: `Proyecto transferido a ${target.name}` });
 });
 
 // DELETE /projects/:id - eliminar proyecto con todo su contenido

@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import { getDbPath } from './lib/paths.js';
+import { hashPassword } from './lib/passwords.js';
 
 let dbPromise = null;
 
@@ -95,6 +96,24 @@ async function initDb() {
                 FOREIGN KEY (project_id) REFERENCES projects(id)
             );
 
+            CREATE TABLE IF NOT EXISTS accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'usuario' CHECK (role IN ('admin', 'usuario')),
+                active INTEGER NOT NULL DEFAULT 1,
+                must_change_password INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                account_id INTEGER NOT NULL,
+                expires_at INTEGER NOT NULL,
+                FOREIGN KEY (account_id) REFERENCES accounts(id)
+            );
+
             CREATE TABLE IF NOT EXISTS project_files (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
@@ -122,6 +141,26 @@ async function initDb() {
         if (!terminationDateExists) {
             await db.exec(`ALTER TABLE projects ADD COLUMN termination_date DATE DEFAULT NULL;`);
         }
+
+        // Dueño de cada proyecto: solo esa cuenta puede verlo y gestionarlo
+        if (!projectColumns.some(col => col.name === 'owner_account_id')) {
+            await db.exec('ALTER TABLE projects ADD COLUMN owner_account_id INTEGER REFERENCES accounts(id);');
+        }
+
+        // Primera cuenta: reemplaza el acceso fijo admin/1234 del frontend. La contraseña
+        // es temporal: el primer ingreso obliga a cambiarla.
+        const accountCount = await db.get('SELECT COUNT(*) AS count FROM accounts');
+        if (accountCount.count === 0) {
+            await db.run(
+                "INSERT INTO accounts (username, name, password_hash, role, must_change_password) VALUES ('admin', 'Administrador', ?, 'admin', 1)",
+                [await hashPassword('1234')]
+            );
+        }
+        // Proyectos sin dueño (los previos a las cuentas) quedan en el primer administrador
+        await db.run(`
+            UPDATE projects SET owner_account_id = (SELECT MIN(id) FROM accounts WHERE role = 'admin')
+            WHERE owner_account_id IS NULL
+        `);
 
         // Limpiar resultados huérfanos que dejó el borrado de revisiones previo a la cascada
         await db.run(

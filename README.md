@@ -43,6 +43,7 @@ cp .env-example .env    # ajustar VITE_BASE_URL y VITE_API_URL
 | `PORT` | API | `3001` | Por defecto 3001 |
 | `DB_PATH` | API | `/ruta/projects.sqlite` | Por defecto `projects.sqlite` en la raíz del repo |
 | `CONFIGS_DIR` | API | `/ruta/data/configs` | Por defecto `data/configs` en la raíz del repo |
+| `CORS_ORIGIN` | API | `http://localhost:5173` | Solo en desarrollo: orígenes con CORS y cookies. En producción, vacío |
 
 Las `VITE_*` se leen de `.env` al construir. Las de la API se definen en el entorno del proceso (PM2 o systemd), porque Node no lee `.env`.
 
@@ -53,7 +54,7 @@ npm run api:dev   # API en http://localhost:3001/tools/api, se reinicia al guard
 npm run dev       # frontend en http://localhost:5173/tools/
 ```
 
-Para desarrollo local, `VITE_API_URL=http://localhost:3001/tools/api`.
+Para desarrollo local, `VITE_API_URL=http://localhost:3001/tools/api` y la API con `CORS_ORIGIN=http://localhost:5173`, para que el navegador envíe la cookie de sesión.
 
 ## Scripts
 
@@ -106,6 +107,7 @@ Flujo de una operación: `pages` → `components` → `services/*.service.js` �
 
 Reglas que atraviesan capas:
 
+- **Sesión y dueño**: `authenticate` exige sesión en toda la API salvo `/auth/login` y `/auth/logout`, y `requireProjectAccess` responde 404 en cualquier `/projects/:id/…` que no sea de la cuenta.
 - **Proyectos finalizados**: toda ruta que modifica algo bajo `/projects/:id/…` pasa por `validateActiveProject`, que responde 404 si el proyecto no existe y 400 si tiene `termination_date`.
 - **Escrituras múltiples** (crear o editar proyecto, crear o borrar revisión, subir archivos, borrar proyecto) van dentro de `withTransaction`, que además serializa las transacciones sobre la conexión compartida.
 - **Errores**: la API responde siempre JSON `{ error }` y nunca expone detalles internos.
@@ -113,10 +115,19 @@ Reglas que atraviesan capas:
 
 ## API
 
-Todas las rutas cuelgan de `/tools/api`. Las marcadas con ● rechazan cambios en proyectos finalizados.
+Todas las rutas cuelgan de `/tools/api` y exigen sesión, salvo login y logout. Las de `/projects` solo alcanzan los proyectos de la cuenta. Las marcadas con ● rechazan cambios en proyectos finalizados y las marcadas con ◆ requieren rol administrador.
 
 | Método | Ruta | Descripción |
 |---|---|---|
+| POST | `/auth/login` | Inicia sesión `{ username, password }` y entrega la cookie (sin sesión) |
+| POST | `/auth/logout` | Cierra la sesión actual (sin sesión) |
+| GET | `/auth/me` | Cuenta de la sesión |
+| PUT | `/auth/password` | Cambia la contraseña propia `{ current_password, new_password }` |
+| GET | `/accounts/options` | Cuentas activas, para elegir destino de una transferencia |
+| GET / POST | `/accounts` ◆ | Lista cuentas con su total de proyectos / crea `{ username, name, password, role }` |
+| PUT | `/accounts/:id` ◆ | Edita `{ name, role, active }` |
+| PUT | `/accounts/:id/password` ◆ | Asigna una contraseña temporal `{ password }` |
+| POST | `/accounts/:id/transfer` ◆ | Traspasa todos sus proyectos `{ account_id }` |
 | GET | `/users` | Lista usuarios |
 | POST | `/users` | Crea usuario `{ name }` |
 | PUT | `/users/:id` | Renombra usuario `{ name }` |
@@ -125,6 +136,7 @@ Todas las rutas cuelgan de `/tools/api`. Las marcadas con ● rechazan cambios e
 | POST | `/projects` | Crea `{ name, code, coordinator_id, developer_ids[] }` |
 | PUT | `/projects/:id` ● | Actualiza y reemplaza desarrolladores |
 | PATCH | `/projects/:id/terminate` | Finaliza el proyecto (queda en solo lectura) |
+| PATCH | `/projects/:id/owner` | Transfiere el proyecto a otra cuenta `{ account_id }` |
 | DELETE | `/projects/:id` ● | Elimina el proyecto con revisiones, notas, archivos y configuraciones |
 | GET | `/checklist` | Aspectos y puntos de la revisión técnica |
 | GET | `/projects/:id/reviews` | Revisiones con sus resultados |
@@ -141,12 +153,19 @@ Todas las rutas cuelgan de `/tools/api`. Las marcadas con ● rechazan cambios e
 
 ## Acceso
 
-Las rutas de Proyectos piden usuario y contraseña, pero la verificación ocurre **solo en el navegador** (`SessionContext`) y la API no exige autenticación. Sirve como barrera visual en la red interna, no como control de seguridad. Implementar autenticación real en la API es la deuda principal (ver [Deuda conocida](#deuda-conocida)).
+Proyectos requiere una cuenta. La API valida la sesión en cada solicitud; las herramientas autónomas (JMeter, PHPStan, solicitud de servidores) siguen abiertas.
+
+- **Cuentas**: las crea un administrador en **Gestionar cuentas** (menú de la cuenta, ruta `/cuentas`), con una contraseña temporal que se cambia en el primer ingreso. Un administrador también edita nombre y rol, desactiva cuentas (se cierran sus sesiones) y restablece contraseñas. No hay registro abierto.
+- **Proyectos por cuenta**: cada proyecto tiene una única cuenta dueña, la que lo creó, y solo esa cuenta lo ve y lo gestiona; un proyecto ajeno responde 404. El rol administrador no da acceso a proyectos ajenos. Para compartir o entregar un proyecto, su dueño lo transfiere desde la cabecera del proyecto; un administrador puede traspasar de una vez todos los proyectos de una cuenta (por ejemplo, al desactivarla).
+- **Equipo**: coordinadores y desarrolladores (`users`) son un catálogo común a todas las cuentas.
+- **Primer arranque**: se crea la cuenta `admin` con contraseña temporal `1234`, dueña de todos los proyectos existentes. Cambiarla al desplegar.
+- **Seguridad**: contraseñas con `scrypt`; sesión de 12 horas en una cookie `httpOnly` y la base guarda solo el hash del token; 5 intentos fallidos bloquean el ingreso por 10 minutos; las escrituras exigen la cabecera `X-Requested-With: tools` (CSRF).
 
 ## Pruebas y CI
 
 - `tests/setup.js` simula `openDb()` con `mockDb` (`all/get/run/exec`), y cada suite levanta la app real en un puerto libre de `127.0.0.1`. Ninguna prueba toca `projects.sqlite` ni `data/configs`.
-- `db.get` responde por defecto un proyecto activo; para probar un proyecto finalizado o inexistente, se sobrescribe con `mockDb.get.mockResolvedValueOnce(...)`.
+- `setup.js` también simula las sesiones (`mockSessions`): cada solicitud de prueba llega con la cuenta `TEST_ACCOUNT` (admin, id 1), y el proyecto por defecto (`ACTIVE_PROJECT`) es de esa cuenta.
+- `db.get` responde por defecto un proyecto activo de la cuenta de prueba; para probar un proyecto finalizado, ajeno o inexistente, se sobrescribe con `mockDb.get.mockResolvedValueOnce(...)`.
 - `.github/workflows/ci.yml` ejecuta `npm ci`, lint, test y build con Node 22 en cada push a `dev` o `main` y en cada pull request.
 - El frontend no tiene pruebas automatizadas: los cambios de interfaz se revisan a mano en tema claro y oscuro.
 
@@ -163,11 +182,10 @@ La interfaz usa la skill `estilo-personal`:
 
 En orden de prioridad, que es también la secuencia de mejora recomendada:
 
-1. **Autenticación real en la API**: hoy las credenciales están fijas en el frontend y cualquiera que llame a la API puede modificar datos.
-2. **Componentes grandes sin pruebas**: `ServersRequest.jsx`, `jmxUtils.jsx`, `RequestsTab.jsx` y `ContinuousDeploymentForm.jsx` (700 a 870 líneas cada uno) mezclan estado, lógica y UI. Extraer la lógica pura y probarla antes de dividirlos.
-3. **Pruebas de frontend** (Vitest + Testing Library), empezando por los flujos de Proyectos.
-4. **SQLite**: no hay migraciones formales. Además, una escritura suelta que llegue durante una transacción queda dentro de ella, porque la conexión es compartida (aceptable con el uso interno actual). Los archivos de hasta 10 MB se cargan completos en memoria y se guardan como BLOB.
-5. **Bundle de más de 500 kB**: dividirlo por ruta con `React.lazy` (JMeter, PHPStan y solicitud de servidores).
+1. **Componentes grandes sin pruebas**: `ServersRequest.jsx`, `jmxUtils.jsx`, `RequestsTab.jsx` y `ContinuousDeploymentForm.jsx` (700 a 870 líneas cada uno) mezclan estado, lógica y UI. Extraer la lógica pura y probarla antes de dividirlos.
+2. **Pruebas de frontend** (Vitest + Testing Library), empezando por los flujos de Proyectos.
+3. **SQLite**: no hay migraciones formales. Además, una escritura suelta que llegue durante una transacción queda dentro de ella, porque la conexión es compartida (aceptable con el uso interno actual). Los archivos de hasta 10 MB se cargan completos en memoria y se guardan como BLOB.
+4. **Bundle de más de 500 kB**: dividirlo por ruta con `React.lazy` (JMeter, PHPStan y solicitud de servidores).
 
 ## Despliegue
 

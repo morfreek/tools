@@ -15,8 +15,23 @@ jest.unstable_mockModule('../src/api/db.js', () => ({
   openDb: jest.fn(() => Promise.resolve(mockDb))
 }));
 
-// Proyecto activo: respuesta por defecto de la consulta de validateActiveProject
-export const ACTIVE_PROJECT = { termination_date: null };
+// Sesión simulada: authenticate recibe siempre esta cuenta salvo que un test cambie
+// mockSessions.findSessionAccount (por ejemplo, a null para probar el 401)
+export const TEST_ACCOUNT = { id: 1, username: 'admin', name: 'Administrador', role: 'admin', must_change_password: 0 };
+
+export const mockSessions = {
+  SESSION_COOKIE: 'tools_sesion',
+  SESSION_HOURS: 12,
+  createSession: jest.fn(),
+  findSessionAccount: jest.fn(),
+  deleteSession: jest.fn(),
+  deleteAccountSessions: jest.fn(),
+};
+
+jest.unstable_mockModule('../src/api/lib/sessions.js', () => mockSessions);
+
+// Proyecto activo de la cuenta de prueba: respuesta por defecto de requireProjectAccess
+export const ACTIVE_PROJECT = { id: 1, termination_date: null, owner_account_id: TEST_ACCOUNT.id };
 
 // Helper para resetear mocks. mockReset descarta también las implementaciones,
 // para que un mockRejectedValue de un test no se filtre al siguiente.
@@ -26,6 +41,10 @@ export const resetMocks = () => {
   mockDb.get.mockReset().mockResolvedValue(ACTIVE_PROJECT);
   mockDb.run.mockReset();
   mockDb.exec.mockReset();
+  mockSessions.createSession.mockReset().mockResolvedValue('token-de-prueba');
+  mockSessions.findSessionAccount.mockReset().mockResolvedValue(TEST_ACCOUNT);
+  mockSessions.deleteSession.mockReset();
+  mockSessions.deleteAccountSessions.mockReset();
 };
 
 // Helper para resetear mocks del sistema de archivos
@@ -43,7 +62,13 @@ export let httpClient = null;
 // Cada suite levanta su servidor en beforeAll y lo cierra en afterAll
 export const setupTestServer = async () => {
   const baseURL = await startTestServer();
-  httpClient = axios.create({ baseURL, timeout: 10000, validateStatus: () => true });
+  // Misma cookie y cabecera que envía el frontend (authenticate las exige)
+  httpClient = axios.create({
+    baseURL,
+    timeout: 10000,
+    validateStatus: () => true,
+    headers: { Cookie: 'tools_sesion=token-de-prueba', 'X-Requested-With': 'tools' },
+  });
 };
 
 export const teardownTestServer = async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
-import { mockDb, resetMocks, setupTestServer, teardownTestServer, getHttpClient } from './setup.js';
+import { mockDb, resetMocks, setupTestServer, teardownTestServer, getHttpClient, ACTIVE_PROJECT } from './setup.js';
 import FormData from 'form-data';
 
 describe('Files Endpoints', () => {
@@ -64,7 +64,7 @@ describe('Files Endpoints', () => {
         mime_type: 'text/plain'
       };
 
-      mockDb.get.mockResolvedValue(mockFile);
+      mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT).mockResolvedValue(mockFile);
 
       const response = await httpClient.get('/tools/api/projects/1/files/1/download');
 
@@ -73,7 +73,7 @@ describe('Files Endpoints', () => {
     });
 
     it('debe retornar 404 para archivo inexistente', async () => {
-      mockDb.get.mockResolvedValue(null);
+      mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT).mockResolvedValue(null);
 
       const response = await httpClient.get('/tools/api/projects/1/files/999/download');
 
@@ -95,17 +95,17 @@ describe('Files Endpoints', () => {
 
   describe('GET /tools/api/projects/:id/files/:fileId/preview', () => {
     it('debe entregar la imagen con su tipo MIME', async () => {
-      mockDb.get.mockResolvedValue({ filename: 'logo.png', file_data: Buffer.from('png'), mime_type: 'image/png' });
+      mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT).mockResolvedValue({ filename: 'logo.png', file_data: Buffer.from('png'), mime_type: 'image/png' });
 
       const response = await httpClient.get('/tools/api/projects/1/files/1/preview');
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('image/png');
-      expect(mockDb.get.mock.calls[0][0]).toContain("mime_type LIKE 'image/%'");
+      expect(mockDb.get.mock.calls[1][0]).toContain("mime_type LIKE 'image/%'");
     });
 
     it('debe retornar 404 si el archivo no es una imagen', async () => {
-      mockDb.get.mockResolvedValue(undefined);
+      mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT).mockResolvedValue(undefined);
 
       const response = await httpClient.get('/tools/api/projects/1/files/2/preview');
 
@@ -115,7 +115,7 @@ describe('Files Endpoints', () => {
   });
 
   it('debe codificar nombres de archivo en Content-Disposition', async () => {
-    mockDb.get.mockResolvedValue({ filename: 'informe "final".txt', file_data: Buffer.from('x'), mime_type: 'text/plain' });
+    mockDb.get.mockResolvedValueOnce(ACTIVE_PROJECT).mockResolvedValue({ filename: 'informe "final".txt', file_data: Buffer.from('x'), mime_type: 'text/plain' });
 
     const response = await httpClient.get('/tools/api/projects/1/files/1/download');
 

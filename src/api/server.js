@@ -8,15 +8,32 @@ import notesRouter from './routes/notes.routes.js';
 import filesRouter from './routes/files.routes.js';
 import continuousDeployment from './routes/continuousDeployment.routes.js';
 import checklist from './routes/checklist.routes.js';
+import auth from './routes/auth.routes.js';
+import accounts from './routes/accounts.routes.js';
+import { authenticate } from './middleware/auth.middleware.js';
+import { requireProjectAccess } from './middleware/projects.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
 export const API_PREFIX = '/tools/api';
 
 const app = express();
 
-app.use(cors());
+// Detrás de Apache: req.secure y req.ip salen de X-Forwarded-* (cookie Secure en HTTPS)
+app.set('trust proxy', 'loopback');
+
+// En producción el frontend y la API comparten origen (proxy de Apache) y CORS no aplica.
+// CORS_ORIGIN (lista separada por comas) habilita orígenes de desarrollo, con cookies.
+const corsOrigins = (process.env.CORS_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean);
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 
+// Login, logout y la cuenta actual; el resto de la API exige sesión
+app.use(API_PREFIX, auth);
+app.use(API_PREFIX, authenticate);
+// Todo lo que cuelga de un proyecto exige que pertenezca a la cuenta de la sesión
+app.use(`${API_PREFIX}/projects/:id`, requireProjectAccess);
+
+app.use(API_PREFIX, accounts);
 app.use(API_PREFIX, users);
 app.use(API_PREFIX, projects);
 app.use(API_PREFIX, reviewsRouter);

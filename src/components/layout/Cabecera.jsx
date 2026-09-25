@@ -1,6 +1,8 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Button, Nav } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Button, Dropdown, Nav } from 'react-bootstrap';
+import { FaChevronDown } from 'react-icons/fa';
+import ChangePasswordModal from '@c/account/ChangePasswordModal';
 import { useTheme, THEME_LABELS } from '@hk/useTheme';
 import { useSession } from '@c/SessionContext';
 
@@ -14,11 +16,12 @@ const SECCIONES = [
 
 export default function Cabecera() {
     const { theme, cycle } = useTheme();
-    const { authenticated, logout } = useSession();
+    const { account, authenticated, isAdmin, logout } = useSession();
     const navigate = useNavigate();
+    const [changingPassword, setChangingPassword] = useState(false);
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/');
     };
 
@@ -40,12 +43,21 @@ export default function Cabecera() {
                     Tema
                 </Button>
                 {authenticated && (
-                    <>
-                        <span className="usuario d-none d-md-inline">admin</span>
-                        <Button variant="link" size="sm" onClick={handleLogout}>Salir</Button>
-                    </>
+                    <Dropdown align="end">
+                        <Dropdown.Toggle variant="link" size="sm" className="usuario d-inline-flex align-items-center gap-1" id="menu-cuenta">
+                            {account.name} <FaChevronDown size={10} aria-hidden="true" />
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            <Dropdown.Header>{account.username} · {isAdmin ? 'Administrador' : 'Usuario'}</Dropdown.Header>
+                            <Dropdown.Item onClick={() => setChangingPassword(true)}>Cambiar contraseña</Dropdown.Item>
+                            {isAdmin && <Dropdown.Item as={Link} to="/cuentas">Gestionar cuentas</Dropdown.Item>}
+                            <Dropdown.Divider />
+                            <Dropdown.Item onClick={handleLogout}>Salir</Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 )}
             </div>
+            <ChangePasswordModal show={changingPassword} onClose={() => setChangingPassword(false)} />
         </header>
     );
 }

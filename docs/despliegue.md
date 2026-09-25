@@ -60,6 +60,7 @@ Node no lee `.env`; se definen en `ecosystem.config.cjs` (`env`) o en el entorno
 | `PORT` | `3001` | Puerto de escucha |
 | `DB_PATH` | `<repo>/projects.sqlite` | Base SQLite. La ruta por defecto es absoluta, no depende del directorio de arranque |
 | `CONFIGS_DIR` | `<repo>/data/configs` | JSON de configuraciones de despliegue continuo por proyecto |
+| `CORS_ORIGIN` | vacío | Orígenes permitidos con cookies, separados por coma. En producción queda vacío: frontend y API comparten origen por el proxy de Apache. En desarrollo, `http://localhost:5173` |
 
 ## 4. Alternativa: systemd
 
@@ -98,3 +99,17 @@ curl -sk https://localhost/tools/api/projects | head -c 200       # a través de
 ```
 
 Luego abrir `https://<host>/tools/` y revisar Proyectos (requiere acceso), JMeter y PHPStan.
+
+## Cuentas de acceso
+
+La API exige sesión en todo salvo `/auth/login` y `/auth/logout`. La sesión es una cookie `httpOnly` (`tools_sesion`, `Path=/tools`, 12 horas, `Secure` detrás de HTTPS gracias a `X-Forwarded-Proto` y `trust proxy`), y las escrituras deben traer `X-Requested-With: tools`.
+
+Al primer arranque con esta versión, `db.js` crea la cuenta `admin` con la contraseña temporal `1234` (la que usaba el acceso fijo anterior) y le asigna todos los proyectos existentes. El primer ingreso obliga a cambiarla: hacerlo apenas se despliegue. Las demás cuentas las crea un administrador desde **Gestionar cuentas** en el menú de la cuenta.
+
+Si se pierde la contraseña de la única cuenta administradora, se puede restablecer desde el servidor con `sqlite3` generando un hash nuevo:
+
+```bash
+node -e "import('./src/api/lib/passwords.js').then(async m => console.log(await m.hashPassword('temporal-nueva')))"
+sqlite3 projects.sqlite "UPDATE accounts SET password_hash = '<hash>', must_change_password = 1 WHERE username = 'admin'"
+```
+

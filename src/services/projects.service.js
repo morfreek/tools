@@ -12,3 +12,7 @@ export const saveProject = ({ id, name, code, coordinator_id, developer_ids }) =
 };
 
 export const terminateProject = (id) => api.patch(`/projects/${id}/terminate`).then((r) => r.data);
+
+// Traspasa el proyecto a otra cuenta, que pasa a ser su única dueña
+export const transferProject = (id, accountId) =>
+    api.patch(`/projects/${id}/owner`, { account_id: accountId }).then((r) => r.data);
