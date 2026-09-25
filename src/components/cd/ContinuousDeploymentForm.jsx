@@ -30,6 +30,8 @@ export default function ContinuousDeploymentForm({ projectId }) {
     const [showLoadModal, setShowLoadModal] = useState(false);
     const [showLoadEnvModal, setShowLoadEnvModal] = useState(false);
     const [loading, setLoading] = useState(false);
+    // Nombre de la configuración cargada o guardada; null mientras es una nueva
+    const [currentName, setCurrentName] = useState(null);
 
     useEffect(() => {
         if (projectId) {
@@ -50,18 +52,33 @@ export default function ContinuousDeploymentForm({ projectId }) {
         }
     };
 
-    const handleSaveConfig = async (name) => {
-        if (!name.trim()) {
+    const handleSaveConfig = async (rawName) => {
+        const name = rawName.trim();
+        if (!name) {
             showToast('error', 'Debe ingresar un nombre para la configuración');
             return;
         }
 
+        // Guardar con el nombre de otra configuración existente la reemplaza: se confirma
+        const replacesOther = name !== currentName && savedConfigs.some(c => c.name === name);
+        if (replacesOther) {
+            const ok = await dialog.confirm({
+                title: 'Reemplazar configuración',
+                message: `Ya existe la configuración "${name}". ¿Reemplazarla con la actual?`,
+                acceptText: 'Reemplazar',
+                danger: true,
+            });
+            if (!ok) return;
+        }
+
+        const isUpdate = name === currentName || replacesOther;
         try {
             setLoading(true);
             await saveConfig(projectId, name, config);
             await fetchSavedConfigs();
+            setCurrentName(name);
             setShowSaveModal(false);
-            showToast('success', 'Configuración guardada correctamente');
+            showToast('success', isUpdate ? `Configuración "${name}" actualizada` : `Configuración "${name}" guardada`);
         } catch (error) {
             console.error('Error al guardar configuración:', error);
             showToast('error', 'Error al guardar la configuración');
@@ -70,10 +87,17 @@ export default function ContinuousDeploymentForm({ projectId }) {
         }
     };
 
-    const handleLoadConfig = (savedConfig) => {
+    // Con una configuración cargada, Guardar la actualiza; sin ella, pide un nombre
+    const handleSaveClick = () => {
+        if (currentName) handleSaveConfig(currentName);
+        else setShowSaveModal(true);
+    };
+
+    const handleLoadConfig = ({ name, config: savedConfig }) => {
         setConfig(savedConfig);
+        setCurrentName(name);
         setShowLoadModal(false);
-        showToast('success', 'Configuración cargada correctamente');
+        showToast('success', `Configuración "${name}" cargada`);
     };
 
     const handleDeleteConfig = async (name) => {
@@ -81,6 +105,7 @@ export default function ContinuousDeploymentForm({ projectId }) {
             setLoading(true);
             await deleteConfig(projectId, name);
             await fetchSavedConfigs();
+            if (name === currentName) setCurrentName(null);
             showToast('success', 'Configuración eliminada correctamente');
         } catch (error) {
             console.error('Error al eliminar configuración:', error);
@@ -307,7 +332,12 @@ export default function ContinuousDeploymentForm({ projectId }) {
         <>
             <Card className="my-3">
                 <Card.Header className="d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Configuración de Despliegue Continuo</h5>
+                    <div>
+                        <h5 className="mb-0">Configuración de Despliegue Continuo</h5>
+                        <span className="sub">
+                            {currentName ? `Editando "${currentName}"` : 'Configuración nueva, sin guardar'}
+                        </span>
+                    </div>
                     <div className="d-flex gap-2">
                         <Button 
                             size="sm" 
@@ -317,11 +347,22 @@ export default function ContinuousDeploymentForm({ projectId }) {
                         >
                             {loading ? 'Cargando...' : 'Cargar Configuración'}
                         </Button>
+                        {currentName && (
+                            <Button
+                                size="sm"
+                                variant="outline-secondary"
+                                onClick={() => setShowSaveModal(true)}
+                                disabled={loading}
+                            >
+                                Guardar como…
+                            </Button>
+                        )}
                         <Button 
                             size="sm" 
                             variant="outline-primary" 
-                            onClick={() => setShowSaveModal(true)}
+                            onClick={handleSaveClick}
                             disabled={loading}
+                            title={currentName ? `Actualizar "${currentName}"` : undefined}
                         >
                             {loading ? 'Guardando...' : 'Guardar Configuración'}
                         </Button>
@@ -632,7 +673,8 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                 onHide={() => setShowSaveModal(false)}
                 onSave={handleSaveConfig}
                 loading={loading}
-                defaultName={config.deploy.env.APP_URL || ''}
+                defaultName={currentName ? '' : config.deploy.env.APP_URL || ''}
+                title={currentName ? 'Guardar como nueva configuración' : 'Guardar configuración'}
             />
             <LoadConfigModal
                 show={showLoadModal}
@@ -640,6 +682,7 @@ MIICXAIBAAKBgQC8kGa1pSjbSYZVebtTRBLxBz5H4i2p/llLCrEeQhta5kaQu/Rn
                 configs={savedConfigs}
                 onLoad={handleLoadConfig}
                 onDelete={handleDeleteConfig}
+                currentName={currentName}
                 loading={loading}
             />
             <LoadEnvModal

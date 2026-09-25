@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import CancelButton from '@c/ui/CancelButton';
 
-export default function SaveConfigModal({ show, onHide, onSave, loading = false, defaultName = '' }) {
+export default function SaveConfigModal({ show, onHide, onSave, loading = false, defaultName = '', title = 'Guardar configuración' }) {
     const [configName, setConfigName] = useState('');
 
+    // Cada apertura parte del nombre sugerido, sin arrastrar lo escrito antes
     useEffect(() => {
-        if (show && defaultName) {
-            setConfigName(defaultName);
-        }
+        if (show) setConfigName(defaultName);
     }, [show, defaultName]);
 
-    const handleSave = () => {
-        onSave(configName);
-        setConfigName('');
-    };
+    const handleSave = () => onSave(configName);
 
     return (
         <Modal show={show} onHide={onHide} centered>
             <Modal.Header closeButton>
-                <Modal.Title>Guardar Configuración</Modal.Title>
+                <Modal.Title>{title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form.Group>
@@ -36,7 +32,7 @@ export default function SaveConfigModal({ show, onHide, onSave, loading = false,
             <Modal.Footer>
                 <CancelButton onClick={onHide} disabled={loading} />
                 <Button size="sm" onClick={handleSave} disabled={!configName.trim() || loading}>
-                    {loading ? 'Guardando…' : 'Guardar'}
+                    {loading ? 'Guardando…' : 'Guardar configuración'}
                 </Button>
             </Modal.Footer>
         </Modal>
