@@ -75,9 +75,11 @@ export default function Accounts() {
                                         <td>{a.name}{a.id === me.id && <span className="sub ms-2">(usted)</span>}</td>
                                         <td><code>{a.username}</code></td>
                                         <td><Badge bg={a.role === 'admin' ? 'info' : 'secondary'}>{a.role === 'admin' ? 'Administrador' : 'Usuario'}</Badge></td>
-                                        <td className="d-flex flex-wrap gap-1">
-                                            <Badge bg={a.active ? 'success' : 'secondary'}>{a.active ? 'Activa' : 'Desactivada'}</Badge>
-                                            {a.active && a.must_change_password && <Badge bg="warning">Contraseña temporal</Badge>}
+                                        <td>
+                                            <div className="d-flex flex-wrap gap-1">
+                                                <Badge bg={a.active ? 'success' : 'secondary'}>{a.active ? 'Activa' : 'Desactivada'}</Badge>
+                                                {a.active && a.must_change_password && <Badge bg="warning">Contraseña temporal</Badge>}
+                                            </div>
                                         </td>
                                         <td className="text-end">{a.project_count}</td>
                                         <td className="text-end text-nowrap">
