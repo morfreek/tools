@@ -37,8 +37,9 @@ export default function ProjectReviews() {
     };
 
     const startNewReview = () => {
-        const lastReview = reviews[0];
-        const lastResults = lastReview?.results || [];
+        // El checklist se precarga con la última revisión que lo evaluó (no con la última a secas)
+        const lastEvaluated = reviews.find((r) => r.results?.some((res) => STATUS_OPTIONS.includes(res.status)));
+        const lastResults = lastEvaluated?.results || [];
 
         const results = checklist.flatMap(aspect =>
             aspect.points.map(point => {
@@ -53,15 +54,20 @@ export default function ProjectReviews() {
 
         setForm({
             applied_at: new Date().toISOString().split('T')[0],
+            general_notes: '',
+            evaluateChecklist: false,
             results,
-            general_notes: ''
         });
         setNewReviewVisible(true);
     };
 
     const saveReview = async () => {
         try {
-            await createReview(id, form);
+            await createReview(id, {
+                applied_at: form.applied_at,
+                general_notes: form.general_notes,
+                results: form.evaluateChecklist ? form.results : [],
+            });
             showToast('success', 'Revisión guardada');
             setNewReviewVisible(false);
             fetchReviews();

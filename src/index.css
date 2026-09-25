@@ -186,57 +186,21 @@ a.tarjeta:hover, .tarjeta[role="button"]:hover, a.tarjeta:focus-visible {
 .nota-contenido { border-left: 3px solid var(--acento); padding-left: 14px; }
 .nota-contenido > :last-child { margin-bottom: 0; }
 
-/* Vista previa de la última nota en el resumen: máximo 3 líneas */
+/* Extracto de la observación general en las tarjetas de revisión: máximo 3 líneas */
 .resumen-nota { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* ---------------------------------------------------------------------
-   Gráfico de evolución de revisiones (ReviewTrendChart).
-   Pasos de estado propios del gráfico: los tokens --ok/--ambar/--rojo no
-   pasan la separación para daltonismo como trío apilado. Validados con el
-   script de la skill dataviz (CVD y visión normal) contra --panel.
-   --------------------------------------------------------------------- */
-:root {
-  --grafico-bien: #1e6736;
-  --grafico-regular: #b68e20;
-  --grafico-deficiente: #a51d26;
+/* Pestaña Seguimiento: bitácora de revisiones */
+.bitacora { margin: 0; padding: 0; list-style: none; }
+.bitacora-item { padding: 14px 0 14px 16px; border-left: 2px solid var(--borde); position: relative; }
+.bitacora-item::before {
+  content: ""; position: absolute; left: -6px; top: 19px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--panel); border: 2px solid var(--acento);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --grafico-bien: #298e5c;
-    --grafico-regular: #b68e20;
-    --grafico-deficiente: #dd405a;
-  }
-}
-:root[data-theme="dark"] {
-  --grafico-bien: #298e5c;
-  --grafico-regular: #b68e20;
-  --grafico-deficiente: #dd405a;
-}
+.bitacora-item:first-child { padding-top: 0; }
+.bitacora-item:first-child::before { top: 5px; }
+.bitacora-item:last-child { padding-bottom: 0; }
+.bitacora .nota-contenido { border-left: 0; padding-left: 0; }
 
-.grafico { position: relative; }
-.grafico svg { display: block; overflow: visible; }
-.grafico-grilla { stroke: var(--borde); stroke-width: 1; }
-.grafico-eje { fill: var(--suave); font-size: 11px; }
-.grafico-columna { outline: none; cursor: default; }
-.grafico-columna.activa path, .grafico-columna:focus-visible path { filter: brightness(1.12); }
-.grafico-columna:focus-visible rect { stroke: var(--acento); stroke-width: 2; }
-
-.grafico-leyenda { display: flex; flex-wrap: wrap; gap: 14px; margin: 0; padding: 0; list-style: none; font-size: 12px; color: var(--suave); }
-.grafico-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
-.grafico-clave { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-
-.grafico-tooltip {
-  position: absolute; top: 0; transform: translateX(-50%);
-  min-width: 170px; padding: 8px 10px; pointer-events: none;
-  background: var(--panel); color: var(--texto);
-  border: 1px solid var(--borde); border-radius: var(--radio-control);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .18); font-size: 12px;
-}
-.grafico-tooltip-fila { display: flex; align-items: center; gap: 8px; }
-.grafico-tooltip-clave { width: 12px; height: 2px; border-radius: 1px; display: inline-block; }
-
-/* Pestaña Seguimiento */
-.seguimiento-grupo + .seguimiento-grupo { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--borde); }
-.seguimiento-aspecto { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
-.seguimiento-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.seguimiento-observacion { margin: 4px 0 0; color: var(--suave); font-size: 13px; white-space: pre-line; }
+/* Editor enriquecido con error de validación */
+.editor-invalido .rsw-editor { border-color: var(--rojo) !important; }
