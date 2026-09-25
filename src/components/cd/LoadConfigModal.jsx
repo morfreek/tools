@@ -1,10 +1,10 @@
 import React from 'react';
 import { useDialog } from '@c/DialogProvider';
-import { Modal, Button, ListGroup, Spinner } from 'react-bootstrap';
+import { Modal, Button, ListGroup, Spinner, Badge } from 'react-bootstrap';
 import { FaTrash } from 'react-icons/fa';
 import CancelButton from '@c/ui/CancelButton';
 
-export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelete, loading = false }) {
+export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelete, currentName = null, loading = false }) {
     const dialog = useDialog();
 
     const handleDeleteClick = async (configName) => {
@@ -42,13 +42,11 @@ export default function LoadConfigModal({ show, onHide, configs, onLoad, onDelet
                                 >
                                     <div 
                                         className="flex-grow-1 cursor-pointer"
-                                        onClick={() => onLoad(config.config)}
+                                        onClick={() => onLoad(config)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <div>{config.name}</div>
-                                        <small className="text-muted">
-                                            {/* {new Date(config.savedAt).toLocaleString()} */}
-                                        </small>
+                                        {config.name}
+                                        {config.name === currentName && <Badge bg="info" className="ms-2">En edición</Badge>}
                                     </div>
                                     <Button
                                         variant="link"
